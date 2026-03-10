@@ -12,4 +12,5 @@ public class Company {
 	private String companyName;
 	private Boolean showCompany;
 	private Boolean active;
+	private String language;
 }
