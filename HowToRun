@@ -1,0 +1,5 @@
+npm install -g dotenv-cli
+dotenv -e .env mvn spring-boot:run
+
+compile
+mvn clean package -DskipTests
