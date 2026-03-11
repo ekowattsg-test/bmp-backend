@@ -1,0 +1,44 @@
+[
+  {
+    "description": "System Base Set Up",
+    "level": 9,
+    "menu": "BaseSetup",
+    "role": "BaseSetup"
+  },
+  {
+    "description": "Administrator",
+    "level": 9,
+    "menu": "Admin",
+    "role": "Admin"
+  },
+  {
+    "description": "Customer Details",
+    "level": 1,
+    "menu": "InformationPages",
+    "role": "InformationPages"
+  },
+  {
+    "description": "Business Parameter Set Up",
+    "level": 1,
+    "menu": "BusinessSetup",
+    "role": "BusinessSetup"
+  },
+  {
+    "description": "Administrator for Business Parameter Set Up",
+    "level": 1,
+    "menu": "BusinessAdmin",
+    "role": "BusinessAdmin"
+  },
+  {
+    "description": "Staff Management",
+    "level": 1,
+    "menu": "StaffManagement",
+    "role": "StaffManagement"
+  },
+  {
+    "description": "Inventory Control",
+    "level": 1,
+    "menu": "Inventory",
+    "role": "Inventory"
+  }
+]

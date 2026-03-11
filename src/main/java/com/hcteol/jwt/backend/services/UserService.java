@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import com.hcteol.jwt.backend.exceptions.AppException;
 
 import java.nio.CharBuffer;
+import java.util.Date;
 // import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -49,6 +50,7 @@ public class UserService {
 
         var user = userMapper.signUpToUser(userDto);
         user.setPassword(passwordEncoder.encode(CharBuffer.wrap(userDto.getPassword())));
+        user.setLastPasswordChanged(new Date());
     user.setCompanyId(userDto.getCompanyId());
     user.setLevel(userDto.getLevel());
 
@@ -98,8 +100,9 @@ public class UserService {
             throw new AppException("Current password is incorrect", HttpStatus.BAD_REQUEST);
         }
         
-        // Set the new password
+        // Set the new password and update lastPasswordChanged
         user.setPassword(passwordEncoder.encode(CharBuffer.wrap(changePasswordDto.getNewPassword())));
+        user.setLastPasswordChanged(new Date());
         userRepository.save(user);
     }
 
