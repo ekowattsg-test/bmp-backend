@@ -16,6 +16,7 @@ import com.hcteol.jwt.backend.repositories.CompanyRepository;
 import com.hcteol.jwt.backend.repositories.RoleRepository;
 import com.hcteol.jwt.backend.repositories.UserRepository;
 import com.hcteol.jwt.backend.repositories.UserRoleRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,6 +37,9 @@ public class DataInitializer implements ApplicationRunner {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
@@ -106,6 +110,25 @@ public class DataInitializer implements ApplicationRunner {
             }
         } else {
             System.out.println("[DataInitializer] Builder user sukasuka@gmail.com not found; skipping role assignment");
+        }
+
+        // Recreate userrole_view: drop if exists then create
+        try {
+            // If a table with the view name exists, drop it first so the VIEW can be created
+            jdbcTemplate.execute("DROP TABLE IF EXISTS userrole_view");
+            jdbcTemplate.execute("DROP VIEW IF EXISTS userrole_view");
+
+                // Simplified CREATE VIEW to avoid DB-specific clauses (DEFINER/ALGORITHM/SQL SECURITY) and ORDER BY
+                String createView = "CREATE VIEW userrole_view AS "
+                    + "SELECT ur.id AS userrole_id, u.id AS user_id, u.level AS level, r.id AS role_id, r.role AS role, u.company_id AS company_id "
+                    + "FROM user_role ur "
+                    + "JOIN app_user u ON u.id = ur.user_id "
+                    + "JOIN role r ON r.id = ur.role_id";
+
+            jdbcTemplate.execute(createView);
+            System.out.println("[DataInitializer] Recreated view userrole_view");
+        } catch (Exception ex) {
+            System.out.println("[DataInitializer] Failed to recreate userrole_view: " + ex.getMessage());
         }
     }
 }
