@@ -26,6 +26,9 @@ public class UserAuthenticationProvider {
 
     private final UserService userService;
 
+    @Value("${security.jwt.token.validity-ms:3600000}")
+    private long validityInMs;
+
     @PostConstruct
     protected void init() {
         // this is to avoid having the raw secret key available in the JVM
@@ -34,7 +37,7 @@ public class UserAuthenticationProvider {
 
     public String createToken(UserDto user) {
         Date now = new Date();
-        Date validity = new Date(now.getTime() + 3600000); // 1 hour
+        Date validity = new Date(now.getTime() + validityInMs); // default 1 hour (3600000 ms)
 
         Algorithm algorithm = Algorithm.HMAC256(secretKey);
         return JWT.create()

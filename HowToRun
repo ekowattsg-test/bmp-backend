@@ -3,3 +3,6 @@ dotenv -e .env mvn spring-boot:run
 
 compile
 mvn clean package -DskipTests
+ 
+# Example .env setting to override JWT timeout (milliseconds)
+# SECURITY_JWT_TOKEN_VALIDITY_MS=3600000  # 1 hour

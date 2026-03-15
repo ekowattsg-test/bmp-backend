@@ -50,9 +50,12 @@ public class UserService {
 
         var user = userMapper.signUpToUser(userDto);
         user.setPassword(passwordEncoder.encode(CharBuffer.wrap(userDto.getPassword())));
-        user.setLastPasswordChanged(new Date());
     user.setCompanyId(userDto.getCompanyId());
     user.setLevel(userDto.getLevel());
+        // ensure new users are active by default
+        if (user.getActive() == null) {
+            user.setActive(1);
+        }
 
         var savedUser = userRepository.save(user);
 
@@ -85,7 +88,10 @@ public class UserService {
         user.setLogin(userDto.getLogin());
         user.setCompanyId(userDto.getCompanyId());
         user.setLevel(userDto.getLevel());
-        user.setActive(userDto.getActive());
+        // only update active when client explicitly provides it
+        if (userDto.getActive() != null) {
+            user.setActive(userDto.getActive());
+        }
         // Optionally update other fields
         var updatedUser = userRepository.save(user);
         return userMapper.toUserDto(updatedUser);
