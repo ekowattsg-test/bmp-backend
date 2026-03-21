@@ -7,6 +7,8 @@ import com.hcteol.jwt.backend.dtos.UserDto;
 // import com.hcteol.jwt.backend.entities.User;
 import com.hcteol.jwt.backend.mappers.UserMapper;
 import com.hcteol.jwt.backend.repositories.UserRepository;
+import com.hcteol.jwt.backend.entities.UserLogin;
+import com.hcteol.jwt.backend.services.UserLoginService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,6 +28,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     private final UserMapper userMapper;
+    private final UserLoginService userLoginService;
 
     public UserDto login(CredentialsDto credentialsDto) {
         var user = userRepository.findByLogin(credentialsDto.getLogin())
@@ -36,6 +39,15 @@ public class UserService {
         }
 
         if (passwordEncoder.matches(CharBuffer.wrap(credentialsDto.getPassword()), user.getPassword())) {
+            // record successful login
+            UserLogin userLogin = UserLogin.builder()
+                    .userId(user.getId())
+                    .firstName(user.getFirstName())
+                    .lastName(user.getLastName())
+                    .loginType("PASSWORD")
+                    .timeLogin(java.time.LocalDateTime.now())
+                    .build();
+            userLoginService.addUserLogin(userLogin);
             return userMapper.toUserDto(user);
         }
         throw new AppException("Invalid password", HttpStatus.BAD_REQUEST);
