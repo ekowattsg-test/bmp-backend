@@ -17,6 +17,7 @@ public class UserDto {
     private String login;
     private String token;
     private String companyId;
+    private String mobileNumber;
     private Integer level;
     private Integer active;
     private java.util.Date lastPasswordChanged;

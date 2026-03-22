@@ -20,9 +20,9 @@ import lombok.NoArgsConstructor;
 @Entity
 public class Staff {
     @Id
+    private String mobileNumber;
     private String staffName;
     private String staffId;
-    private String mobileNumber;
     private String staffRoleCode;
     private Date serviceStartDate;
     private Date serviceEndDate;

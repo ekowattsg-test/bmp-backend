@@ -16,6 +16,7 @@ public class SignUpDto {
     private String login;
     private char[] password;
     private String companyId;
+    private String mobileNumber;
     private Integer level;
 
 }

@@ -16,6 +16,7 @@ public interface UserMapper {
     @Mapping(target = "firstName", source = "firstName")
     @Mapping(target = "lastName", source = "lastName")
     @Mapping(target = "login", source = "login")
+    @Mapping(target = "mobileNumber", source = "mobileNumber")
     @Mapping(target = "lastPasswordChanged", source = "lastPasswordChanged")
     UserDto toUserDto(User user);
 

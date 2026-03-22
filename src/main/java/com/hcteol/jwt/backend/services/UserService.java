@@ -97,6 +97,7 @@ public class UserService {
                 .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
         user.setFirstName(userDto.getFirstName());
         user.setLastName(userDto.getLastName());
+        user.setMobileNumber(userDto.getMobileNumber());
         user.setLogin(userDto.getLogin());
         user.setCompanyId(userDto.getCompanyId());
         user.setLevel(userDto.getLevel());
