@@ -21,6 +21,10 @@ import com.hcteol.jwt.backend.repositories.LanguageRepository;
 import com.hcteol.jwt.backend.repositories.UserRepository;
 import com.hcteol.jwt.backend.repositories.UserRoleRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
+import javax.sql.DataSource;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Date;
@@ -29,8 +33,11 @@ import java.util.ArrayList;
 import java.nio.charset.StandardCharsets;
 import java.io.File;
 import java.io.InputStream;
+import java.sql.Connection;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 @Component
 public class DataInitializer implements ApplicationRunner {
@@ -58,6 +65,9 @@ public class DataInitializer implements ApplicationRunner {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private DataSource dataSource;
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
@@ -382,21 +392,24 @@ public class DataInitializer implements ApplicationRunner {
             System.out.println("[DataInitializer] Failed to read initData/movement.json: " + ex.getMessage());
         }
         try {
-            // If a table with the view name exists, drop it first so the VIEW can be created
-            jdbcTemplate.execute("DROP TABLE IF EXISTS userrole_view");
-            jdbcTemplate.execute("DROP VIEW IF EXISTS userrole_view");
+            // Keep view DDL in resources so DB schema SQL is not hardcoded in Java.
+            // Execute all SQL files under sqlView in lexical order.
+            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+            Resource[] viewScripts = resolver.getResources("classpath*:sqlView/*.sql");
+            Arrays.sort(viewScripts, Comparator.comparing(Resource::getFilename, Comparator.nullsLast(String::compareToIgnoreCase)));
 
-                // Simplified CREATE VIEW to avoid DB-specific clauses (DEFINER/ALGORITHM/SQL SECURITY) and ORDER BY
-                String createView = "CREATE VIEW userrole_view AS "
-                    + "SELECT ur.id AS userrole_id, u.id AS user_id, u.level AS level, r.id AS role_id, r.role AS role, u.company_id AS company_id "
-                    + "FROM user_role ur "
-                    + "JOIN app_user u ON u.id = ur.user_id "
-                    + "JOIN role r ON r.id = ur.role_id";
+            try (Connection connection = dataSource.getConnection()) {
+                for (Resource viewScript : viewScripts) {
+                    ScriptUtils.executeSqlScript(connection, viewScript);
+                    System.out.println("[DataInitializer] Executed view script " + viewScript.getFilename());
+                }
+            }
 
-            jdbcTemplate.execute(createView);
-            System.out.println("[DataInitializer] Recreated view userrole_view");
+            if (viewScripts.length == 0) {
+                System.out.println("[DataInitializer] No SQL view scripts found in sqlView/");
+            }
         } catch (Exception ex) {
-            System.out.println("[DataInitializer] Failed to recreate userrole_view: " + ex.getMessage());
+            System.out.println("[DataInitializer] Failed to execute SQL view scripts: " + ex.getMessage());
         }
     }
 }
