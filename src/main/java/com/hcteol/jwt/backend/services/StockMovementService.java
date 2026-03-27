@@ -30,6 +30,7 @@ public class StockMovementService {
             stockMovement.setStockId(stockMovementDetails.getStockId());
             stockMovement.setMovementType(stockMovementDetails.getMovementType());
             stockMovement.setQuantity(stockMovementDetails.getQuantity());
+            stockMovement.setReference(stockMovementDetails.getReference());
             stockMovement.setRecordDate(stockMovementDetails.getRecordDate());
             return stockMovementRepository.save(stockMovement);
         }).orElseThrow(() -> new RuntimeException("StockMovement not found with id " + id));

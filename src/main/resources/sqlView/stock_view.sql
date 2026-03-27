@@ -18,6 +18,7 @@ VIEW `stock_view` AS
         COALESCE(`stock_movement`.`quantity`, 0) AS `quantity`,
         `stock_movement`.`record_date` AS `record_date`,
         `stock_movement`.`location` AS `location`,
+        `stock_movement`.`reference` AS `reference`,
         COALESCE(`stock_movement_code`.`hold_modifier`, 0) AS `hold_modifier`,
         `stock_movement_code`.`movement_description` AS `movement_description`,
         COALESCE(`stock_movement_code`.`stock_modifier`, 0) AS `stock_modifier`,

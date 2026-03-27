@@ -46,5 +46,17 @@
     "hold_modifier": 0,
     "movement_description": "Stock Received",
     "stock_modifier": 1
+  },
+  {
+    "movement_type": "M",
+    "hold_modifier": 0,
+    "movement_description": "In Adjustment",
+    "stock_modifier": 1
+  },
+  {
+    "movement_type": "L",
+    "hold_modifier": 0,
+    "movement_description": "Out Adjustment",
+    "stock_modifier": -1
   }
 ]

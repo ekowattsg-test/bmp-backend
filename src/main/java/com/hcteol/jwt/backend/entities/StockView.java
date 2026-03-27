@@ -66,6 +66,8 @@ public class StockView {
 
     private String location;
 
+    private String reference;
+
     // StockMovementCode fields
     @Column(name = "hold_modifier")
     private Integer holdModifier;

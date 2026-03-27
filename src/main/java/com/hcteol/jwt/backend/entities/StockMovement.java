@@ -20,5 +20,6 @@ public class StockMovement {
     private String movementType;
     private Integer quantity;
     private String location = "central";
+    private String reference;
     private String recordDate;
 }
