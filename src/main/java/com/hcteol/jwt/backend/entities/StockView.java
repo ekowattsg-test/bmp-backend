@@ -3,14 +3,16 @@ package com.hcteol.jwt.backend.entities;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 import lombok.Data;
 import org.hibernate.annotations.Immutable;
+import org.hibernate.annotations.Subselect;
+import org.hibernate.annotations.Synchronize;
 
 @Data
 @Entity
 @Immutable
-@Table(name = "stock_view")
+@Subselect("select * from stock_view")
+@Synchronize({"product", "stock", "stock_movement", "stock_movement_code"})
 public class StockView {
 
     // Product fields
