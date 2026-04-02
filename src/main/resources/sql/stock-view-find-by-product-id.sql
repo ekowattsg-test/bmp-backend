@@ -1,5 +1,5 @@
 SELECT movement_id, product_id, product_category, product_code, product_description,
-       product_name, product_picture, baselined_date, baselined_quantity, product_class,
+       product_name, product_picture, baselined_date, baselined_quantity, product_class, uom,
        stock_id, create_date, stock_code,
        movement_type, quantity, record_date, location, reference,
        hold_modifier, movement_description, stock_modifier,

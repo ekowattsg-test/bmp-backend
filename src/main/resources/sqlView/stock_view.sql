@@ -10,6 +10,7 @@ VIEW `stock_view` AS
         `product`.`baselined_date` AS `baselined_date`,
         `product`.`baselined_quantity` AS `baselined_quantity`,
         `product`.`product_class` AS `product_class`,
+        `product`.`uom` AS `uom`,
         `stock`.`stock_id` AS `stock_id`,
         `stock`.`create_date` AS `create_date`,
         `stock`.`stock_code` AS `stock_code`,

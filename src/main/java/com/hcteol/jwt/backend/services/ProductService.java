@@ -33,6 +33,7 @@ public class ProductService {
         return productRepository.findById(id).map(product -> {
             product.setProductName(productDetails.getProductName());
             product.setProductDescription(productDetails.getProductDescription());
+            product.setUom(productDetails.getUom());
             product.setBaselinedQuantity(productDetails.getBaselinedQuantity());
             product.setBaselinedDate(productDetails.getBaselinedDate());
             product.setProductCategory(productDetails.getProductCategory());

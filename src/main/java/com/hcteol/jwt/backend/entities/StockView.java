@@ -47,6 +47,8 @@ public class StockView {
     @Column(name = "product_class")
     private String productClass;
 
+    private String uom;
+
     // Stock fields
     @Column(name = "stock_id")
     private Long stockId;

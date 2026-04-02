@@ -16,6 +16,7 @@ public class Product {
     private Long productId;
     private String productName;
     private String productDescription;
+    private String uom;
     @Column(nullable = false)
     private Long baselinedQuantity = 0L;
     private String baselinedDate = null;
