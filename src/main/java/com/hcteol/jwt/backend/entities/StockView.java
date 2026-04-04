@@ -38,12 +38,6 @@ public class StockView {
     @Column(name = "product_picture", length = 2000)
     private String productPicture;
 
-    @Column(name = "baselined_date")
-    private String baselinedDate;
-
-    @Column(name = "baselined_quantity")
-    private Long baselinedQuantity;
-
     @Column(name = "product_class")
     private String productClass;
 

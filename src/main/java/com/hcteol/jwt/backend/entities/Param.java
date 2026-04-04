@@ -1,6 +1,7 @@
 package com.hcteol.jwt.backend.entities;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -19,5 +20,6 @@ public class Param {
     private String param_key;
     private String value_string;
     private Long value_long;
+    private Date value_date;
     private BigDecimal value_decimal;
 }

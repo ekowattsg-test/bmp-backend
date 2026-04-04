@@ -9,7 +9,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import com.hcteol.jwt.backend.entities.Company;
+import com.hcteol.jwt.backend.entities.Param;
 import com.hcteol.jwt.backend.entities.Role;
+import com.hcteol.jwt.backend.repositories.ParamRepository;
+import java.time.LocalDate;
 import com.hcteol.jwt.backend.entities.StockMovementCode;
 import com.hcteol.jwt.backend.entities.Language;
 import com.hcteol.jwt.backend.entities.User;
@@ -62,6 +65,9 @@ public class DataInitializer implements ApplicationRunner {
 
     @Autowired
     private StockMovementCodeRepository stockMovementCodeRepository;
+
+    @Autowired
+    private ParamRepository paramRepository;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -391,6 +397,17 @@ public class DataInitializer implements ApplicationRunner {
         } catch (Exception ex) {
             System.out.println("[DataInitializer] Failed to read initData/movement.json: " + ex.getMessage());
         }
+        // Ensure baselineDate param exists; default to first day of current year at midnight
+        if (!paramRepository.existsById("baselineDate")) {
+            LocalDate firstDayOfYear = LocalDate.of(LocalDate.now().getYear(), 1, 1);
+            String baselineDateValue = firstDayOfYear + "T00:00:00";
+            Param baselineDate = new Param();
+            baselineDate.setParam_key("baselineDate");
+            baselineDate.setValue_string(baselineDateValue);
+            paramRepository.save(baselineDate);
+            System.out.println("[DataInitializer] Created param 'baselineDate' with value " + baselineDateValue);
+        }
+
         try {
             // Keep view DDL in resources so DB schema SQL is not hardcoded in Java.
             // Execute all SQL files under sqlView in lexical order.

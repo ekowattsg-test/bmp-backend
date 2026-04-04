@@ -17,9 +17,6 @@ public class Product {
     private String productName;
     private String productDescription;
     private String uom;
-    @Column(nullable = false)
-    private Long baselinedQuantity = 0L;
-    private String baselinedDate = null;
     @Column(length = 1)
     @Pattern(regexp = "[AC]", message = "productCategory must be 'A' (Assets) or 'C' (Consumable)")
     private String productCategory;

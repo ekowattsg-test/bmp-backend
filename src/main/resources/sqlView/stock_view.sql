@@ -7,8 +7,6 @@ VIEW `stock_view` AS
         `product`.`product_description` AS `product_description`,
         `product`.`product_name` AS `product_name`,
         `product`.`product_picture` AS `product_picture`,
-        `product`.`baselined_date` AS `baselined_date`,
-        `product`.`baselined_quantity` AS `baselined_quantity`,
         `product`.`product_class` AS `product_class`,
         `product`.`uom` AS `uom`,
         `stock`.`stock_id` AS `stock_id`,
@@ -29,4 +27,11 @@ VIEW `stock_view` AS
         `product`
         LEFT JOIN `stock` ON `product`.`product_id` = `stock`.`product_id`
         LEFT JOIN `stock_movement` ON `stock`.`stock_id` = `stock_movement`.`stock_id`
-        LEFT JOIN `stock_movement_code` ON `stock_movement`.`movement_type` = `stock_movement_code`.`movement_type`;
+        LEFT JOIN `stock_movement_code` ON `stock_movement`.`movement_type` = `stock_movement_code`.`movement_type`
+            WHERE
+        (`stock_movement`.`record_date` >= (SELECT 
+                `param`.`value_string`
+            FROM
+                `param`
+            WHERE
+                (`param`.`param_key` = 'baselineDate')));
