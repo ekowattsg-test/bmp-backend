@@ -22,6 +22,9 @@ public class Product {
     private String productCategory;
     private String productClass = "General";
     private String productCode;
+    private String productBrand;
+    private String commonName;
+    private String specification;
     @Column(length = 2000)
     private String productPicture;
 }

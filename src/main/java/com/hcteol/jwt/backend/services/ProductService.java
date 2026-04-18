@@ -37,6 +37,9 @@ public class ProductService {
             product.setProductCategory(productDetails.getProductCategory());
             product.setProductClass(productDetails.getProductClass());
             product.setProductCode(productDetails.getProductCode());
+            product.setProductBrand(productDetails.getProductBrand());
+            product.setCommonName(productDetails.getCommonName());
+            product.setSpecification(productDetails.getSpecification());
             product.setProductPicture(productDetails.getProductPicture());
             return productRepository.save(product);
         }).orElseThrow(() -> new RuntimeException("Product not found with id " + id));

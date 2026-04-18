@@ -41,6 +41,15 @@ public class StockView {
     @Column(name = "product_class")
     private String productClass;
 
+    @Column(name = "product_brand")
+    private String productBrand;
+
+    @Column(name = "common_name")
+    private String commonName;
+
+    @Column(name = "specification")
+    private String specification;
+
     private String uom;
 
     // Stock fields
