@@ -7,6 +7,7 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import com.hcteol.jwt.backend.entities.Company;
 import com.hcteol.jwt.backend.entities.Param;
@@ -43,6 +44,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 @Component
+@ConditionalOnProperty(prefix = "app.data.init", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class DataInitializer implements ApplicationRunner {
 
     @Autowired

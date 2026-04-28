@@ -75,6 +75,9 @@ public class StockView {
 
     private String reference;
 
+    @Column(name = "action_by")
+    private String actionBy;
+
     // StockMovementCode fields
     @Column(name = "hold_modifier")
     private Integer holdModifier;

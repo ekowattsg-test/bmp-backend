@@ -31,8 +31,8 @@ public class SecurityConfig {
                 .sessionManagement(customizer -> customizer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .cors().and() // add this to your security filter chain
                 .authorizeHttpRequests((requests) -> requests
-                        .requestMatchers("/login", "/register").permitAll()
-                        .anyRequest().authenticated()
+                    .requestMatchers("/login", "/register", "/api/mobile-logins/verify", "/api/mobile-logins/login").permitAll()
+                    .anyRequest().authenticated()
                 );
         return http.build();
     }

@@ -40,5 +40,11 @@
     "level": 1,
     "menu": "Inventory",
     "role": "Inventory"
+  },
+  {
+    "description": "Project Control",
+    "level": 1,
+    "menu": "ProjectControl",
+    "role": "ProjectControl"
   }
 ]

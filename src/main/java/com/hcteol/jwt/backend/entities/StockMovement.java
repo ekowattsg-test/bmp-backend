@@ -22,4 +22,5 @@ public class StockMovement {
     private String location = "central";
     private String reference;
     private String recordDate;
+    private String actionBy;
 }
