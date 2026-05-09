@@ -1,0 +1,58 @@
+[
+  {
+    "workOrderType": "Receive",
+    "stepNumber": 1,
+    "stepDescription": "Receive stock by Purchase Order",
+    "fromEntity": "PO",
+    "toEntity": "location"
+  },
+  {
+    "workOrderType": "Drawing",
+    "stepNumber": 1,
+    "stepDescription": "Drawing stock for work",
+    "fromEntity": "location",
+    "toEntity": "worker"
+  },
+  {
+    "workOrderType": "Delivery",
+    "stepNumber": 1,
+    "stepDescription": "Collect and load stock on vehicle",
+    "fromEntity": "location",
+    "toEntity": "vehicle"
+  },
+  {
+    "workOrderType": "Delivery",
+    "stepNumber": 2,
+    "stepDescription": "Unload and receive stock at a location",
+    "fromEntity": "vehicle",
+    "toEntity": "location"
+  },
+  {
+    "workOrderType": "Transport",
+    "stepNumber": 1,
+    "stepDescription": "Worker board vehicle at a location",
+    "fromEntity": "location",
+    "toEntity": "vehicle"
+  },
+  {
+    "workOrderType": "Transport",
+    "stepNumber": 2,
+    "stepDescription": "Worker disembark vehicle at a location",
+    "fromEntity": "vehicle",
+    "toEntity": "location"
+  },
+  {
+    "workOrderType": "Collection",
+    "stepNumber": 1,
+    "stepDescription": "Collect and load stock on vehicle",
+    "fromEntity": "PO",
+    "toEntity": "vehicle"
+  },
+  {
+    "workOrderType": "Collection",
+    "stepNumber": 2,
+    "stepDescription": "Unload and receive stock at a location",
+    "fromEntity": "vehicle",
+    "toEntity": "location"
+  }
+]

@@ -1,16 +1,17 @@
 package com.hcteol.jwt.backend.entities;
 
-import jakarta.persistence.Entity;
 import jakarta.persistence.Column;
-import jakarta.validation.constraints.Pattern;
+import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 @Data
 @Entity
 public class Product {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long productId;

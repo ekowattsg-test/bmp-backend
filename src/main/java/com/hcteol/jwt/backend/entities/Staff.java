@@ -5,9 +5,8 @@ import java.sql.Date;
 import org.hibernate.annotations.ColumnDefault;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,9 +19,10 @@ import lombok.NoArgsConstructor;
 @Entity
 public class Staff {
     @Id
+    private String staffId;
+    @Column(unique = true)
     private String mobileNumber;
     private String staffName;
-    private String staffId;
     private String staffRoleCode;
     private Date serviceStartDate;
     private Date serviceEndDate;

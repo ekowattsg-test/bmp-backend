@@ -21,16 +21,20 @@ public class StaffService {
     public List<Staff> getAllStaff() {
         return staffRepository.findAll();
     }
-
-    public Staff getStaffByName(String staffName) {
-        return staffRepository.findById(staffName).orElse(null);
+    public java.util.Optional<Staff> getStaffById(String staffId) {
+        return staffRepository.findById(staffId);
     }
 
-    public Staff updateStaff(String staffName, Staff staffDetails) {
-        Staff existingStaff = staffRepository.findById(staffName).orElse(null);
+    public java.util.Optional<Staff> getStaffByMobileNumber(String mobileNumber) {
+        return staffRepository.findByMobileNumber(mobileNumber);
+    }
+
+    public Staff updateStaff(String staffId, Staff staffDetails) {
+        Staff existingStaff = staffRepository.findById(staffId).orElse(null);
         if (existingStaff != null) {
-            existingStaff.setStaffId(staffDetails.getStaffId());
+            // do not overwrite primary key
             existingStaff.setMobileNumber(staffDetails.getMobileNumber());
+            existingStaff.setStaffName(staffDetails.getStaffName());
             existingStaff.setStaffRoleCode(staffDetails.getStaffRoleCode());
             existingStaff.setServiceStartDate(staffDetails.getServiceStartDate());
             existingStaff.setServiceEndDate(staffDetails.getServiceEndDate());
@@ -43,7 +47,7 @@ public class StaffService {
         return null;
     }
 
-    public void deleteStaff(String staffName) {
-        staffRepository.deleteById(staffName);
+    public void deleteStaff(String staffId) {
+        staffRepository.deleteById(staffId);
     }
 }

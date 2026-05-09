@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
 
 import com.hcteol.jwt.backend.entities.Staff;
 import com.hcteol.jwt.backend.services.StaffService;
@@ -32,18 +33,32 @@ public class StaffController {
         return staffService.getAllStaff();
     }
 
-    @GetMapping("/{staffName}")
-    public Staff getStaffByName(@PathVariable String staffName) {
-        return staffService.getStaffByName(staffName);
+    @GetMapping("/{staffId}")
+    public ResponseEntity<Staff> getStaffById(@PathVariable String staffId) {
+        return staffService.getStaffById(staffId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    @PutMapping("/{staffName}")
-    public Staff updateStaff(@PathVariable String staffName, @RequestBody Staff staffDetails) {
-        return staffService.updateStaff(staffName, staffDetails);
+    @GetMapping("/mobile/{mobileNumber}")
+    public ResponseEntity<Staff> getStaffByMobile(@PathVariable String mobileNumber) {
+        return staffService.getStaffByMobileNumber(mobileNumber)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/{staffName}")
-    public void deleteStaff(@PathVariable String staffName) {
-        staffService.deleteStaff(staffName);
+    @PutMapping("/{staffId}")
+    public ResponseEntity<Staff> updateStaff(@PathVariable String staffId, @RequestBody Staff staffDetails) {
+        Staff updated = staffService.updateStaff(staffId, staffDetails);
+        if (updated == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{staffId}")
+    public ResponseEntity<Void> deleteStaff(@PathVariable String staffId) {
+        staffService.deleteStaff(staffId);
+        return ResponseEntity.noContent().build();
     }
 }

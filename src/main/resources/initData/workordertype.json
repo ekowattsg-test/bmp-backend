@@ -1,0 +1,37 @@
+[
+  {
+    "workOrderType": "Delivery",
+    "workOrderDescription": "Delivery stocks from one location to another",
+    "contentType": "stock",
+    "numberOfSteps": 2,
+    "active": 1
+  },
+  {
+    "workOrderType": "Transport",
+    "workOrderDescription": "Transport workers from one location to another",
+    "contentType": "worker",
+    "numberOfSteps": 2,
+    "active": 1
+  },
+  {
+    "workOrderType": "Collection",
+    "workOrderDescription": "Collection of stocks from external party to a location",
+    "contentType": "stock",
+    "numberOfSteps": 2,
+    "active": 1
+  },
+  {
+    "workOrderType": "Receive",
+    "workOrderDescription": "Receive stocks described by a PO to a location",
+    "contentType": "stock",
+    "numberOfSteps": 1,
+    "active": 1
+  },
+  {
+    "workOrderType": "Drawing",
+    "workOrderDescription": "Drawing of stocks from a location",
+    "contentType": "stock",
+    "numberOfSteps": 1,
+    "active": 1
+  }
+]

@@ -120,7 +120,7 @@ public class MobileLoginController {
 
         // 2. retrieve staff by mobile number
         String mobileNumber = mobileLogin.getMobileNumber();
-        Staff staff = staffRepository.findById(mobileNumber).orElse(null);
+        Staff staff = staffRepository.findByMobileNumber(mobileNumber).orElse(null);
         if (staff == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Staff not found for mobile number");
         }
@@ -139,8 +139,11 @@ public class MobileLoginController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication failed");
         }
 
-        // replace last name with staff name for returned user and JWT
+        // replace returned user's fields with staff info: set staff name as lastName,
+        // replace mobile number with staff mobile and clear first name
         userDto.setLastName(staff.getStaffName());
+        userDto.setMobileNumber(staff.getMobileNumber());
+        userDto.setFirstName(null);
 
         // record login with staff name
         UserLogin userLogin = UserLogin.builder()

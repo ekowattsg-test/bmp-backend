@@ -6,4 +6,6 @@ import com.hcteol.jwt.backend.entities.Staff;
 
 public interface StaffRepository extends JpaRepository<Staff, String> {
 
+	java.util.Optional<Staff> findByMobileNumber(String mobileNumber);
+
 }

@@ -1,47 +1,54 @@
 package com.hcteol.jwt.backend.config;
 
+import java.io.File;
+import java.io.InputStream;
 import java.nio.CharBuffer;
+import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-
-import com.hcteol.jwt.backend.entities.Company;
-import com.hcteol.jwt.backend.entities.Param;
-import com.hcteol.jwt.backend.entities.Role;
-import com.hcteol.jwt.backend.repositories.ParamRepository;
-import java.time.LocalDate;
-import com.hcteol.jwt.backend.entities.StockMovementCode;
-import com.hcteol.jwt.backend.entities.Language;
-import com.hcteol.jwt.backend.entities.User;
-import com.hcteol.jwt.backend.entities.UserRole;
-import com.hcteol.jwt.backend.repositories.CompanyRepository;
-import com.hcteol.jwt.backend.repositories.RoleRepository;
-import com.hcteol.jwt.backend.repositories.StockMovementCodeRepository;
-import com.hcteol.jwt.backend.repositories.LanguageRepository;
-import com.hcteol.jwt.backend.repositories.UserRepository;
-import com.hcteol.jwt.backend.repositories.UserRoleRepository;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.init.ScriptUtils;
-import javax.sql.DataSource;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Date;
-import java.util.Optional;
-import java.util.ArrayList;
-import java.nio.charset.StandardCharsets;
-import java.io.File;
-import java.io.InputStream;
-import java.sql.Connection;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hcteol.jwt.backend.entities.Company;
+import com.hcteol.jwt.backend.entities.Language;
+import com.hcteol.jwt.backend.entities.Param;
+import com.hcteol.jwt.backend.entities.Role;
+import com.hcteol.jwt.backend.entities.StockMovementCode;
+import com.hcteol.jwt.backend.entities.User;
+import com.hcteol.jwt.backend.entities.UserRole;
+import com.hcteol.jwt.backend.entities.WorkOrderEntity;
+import com.hcteol.jwt.backend.entities.WorkOrderType;
+import com.hcteol.jwt.backend.entities.WorkStepsType;
+import com.hcteol.jwt.backend.repositories.CompanyRepository;
+import com.hcteol.jwt.backend.repositories.LanguageRepository;
+import com.hcteol.jwt.backend.repositories.ParamRepository;
+import com.hcteol.jwt.backend.repositories.RoleRepository;
+import com.hcteol.jwt.backend.repositories.StockMovementCodeRepository;
+import com.hcteol.jwt.backend.repositories.UserRepository;
+import com.hcteol.jwt.backend.repositories.UserRoleRepository;
+import com.hcteol.jwt.backend.repositories.WorkOrderEntityRepository;
+import com.hcteol.jwt.backend.repositories.WorkOrderTypeRepository;
+import com.hcteol.jwt.backend.repositories.WorkStepsTypeRepository;
 
 @Component
 @ConditionalOnProperty(prefix = "app.data.init", name = "enabled", havingValue = "true", matchIfMissing = true)
@@ -70,6 +77,15 @@ public class DataInitializer implements ApplicationRunner {
 
     @Autowired
     private ParamRepository paramRepository;
+
+    @Autowired
+    private WorkOrderTypeRepository workOrderTypeRepository;
+
+    @Autowired
+    private WorkStepsTypeRepository workStepsTypeRepository;
+
+    @Autowired
+    private WorkOrderEntityRepository workOrderEntityRepository;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -101,23 +117,40 @@ public class DataInitializer implements ApplicationRunner {
                 }
 
                 if (is != null) {
-                    Map<?,?> m = mapper.readValue(is, Map.class);
-                    if (m.get("company_id") != null) companyId = String.valueOf(m.get("company_id"));
-                    else if (m.get("companyId") != null) companyId = String.valueOf(m.get("companyId"));
+                    Map<?, ?> m = mapper.readValue(is, Map.class);
+                    if (m.get("company_id") != null) {
+                        companyId = String.valueOf(m.get("company_id")); 
+                    }else if (m.get("companyId") != null) {
+                        companyId = String.valueOf(m.get("companyId"));
+                    }
 
-                    if (m.get("company_name") != null) companyName = String.valueOf(m.get("company_name"));
-                    else if (m.get("companyName") != null) companyName = String.valueOf(m.get("companyName"));
+                    if (m.get("company_name") != null) {
+                        companyName = String.valueOf(m.get("company_name")); 
+                    }else if (m.get("companyName") != null) {
+                        companyName = String.valueOf(m.get("companyName"));
+                    }
 
-                    if (m.get("language") != null) language = String.valueOf(m.get("language"));
+                    if (m.get("language") != null) {
+                        language = String.valueOf(m.get("language"));
+                    }
 
                     if (m.get("active") != null) {
-                        try { active = Integer.parseInt(String.valueOf(m.get("active"))) != 0; } catch (Exception ex) {}
+                        try {
+                            active = Integer.parseInt(String.valueOf(m.get("active"))) != 0;
+                        } catch (Exception ex) {
+                        }
                     }
 
                     if (m.get("show_company") != null) {
-                        try { showCompany = Integer.parseInt(String.valueOf(m.get("show_company"))) != 0; } catch (Exception ex) {}
+                        try {
+                            showCompany = Integer.parseInt(String.valueOf(m.get("show_company"))) != 0;
+                        } catch (Exception ex) {
+                        }
                     } else if (m.get("showCompany") != null) {
-                        try { showCompany = Boolean.parseBoolean(String.valueOf(m.get("showCompany"))); } catch (Exception ex) {}
+                        try {
+                            showCompany = Boolean.parseBoolean(String.valueOf(m.get("showCompany")));
+                        } catch (Exception ex) {
+                        }
                     }
                 } else {
                     System.out.println("[DataInitializer] initData/company.json not found; using defaults");
@@ -162,30 +195,51 @@ public class DataInitializer implements ApplicationRunner {
                 }
 
                 if (is != null) {
-                    Map<?,?> m = mapper.readValue(is, Map.class);
+                    Map<?, ?> m = mapper.readValue(is, Map.class);
                     // tolerate a few key name variants (typos, snake_case, camelCase)
-                    if (m.get("first_name") != null) firstName = String.valueOf(m.get("first_name"));
-                    else if (m.get("irst_name") != null) firstName = String.valueOf(m.get("irst_name"));
-                    else if (m.get("firstName") != null) firstName = String.valueOf(m.get("firstName"));
+                    if (m.get("first_name") != null) {
+                        firstName = String.valueOf(m.get("first_name")); 
+                    }else if (m.get("irst_name") != null) {
+                        firstName = String.valueOf(m.get("irst_name")); 
+                    }else if (m.get("firstName") != null) {
+                        firstName = String.valueOf(m.get("firstName"));
+                    }
 
-                    if (m.get("last_name") != null) lastName = String.valueOf(m.get("last_name"));
-                    else if (m.get("lastName") != null) lastName = String.valueOf(m.get("lastName"));
+                    if (m.get("last_name") != null) {
+                        lastName = String.valueOf(m.get("last_name")); 
+                    }else if (m.get("lastName") != null) {
+                        lastName = String.valueOf(m.get("lastName"));
+                    }
 
-                    if (m.get("login") != null) builderLogin = String.valueOf(m.get("login"));
-                    else if (m.get("email") != null) builderLogin = String.valueOf(m.get("email"));
+                    if (m.get("login") != null) {
+                        builderLogin = String.valueOf(m.get("login")); 
+                    }else if (m.get("email") != null) {
+                        builderLogin = String.valueOf(m.get("email"));
+                    }
 
-                    if (m.get("password") != null) password = String.valueOf(m.get("password"));
+                    if (m.get("password") != null) {
+                        password = String.valueOf(m.get("password"));
+                    }
 
                     if (m.get("active") != null) {
-                        try { active = Integer.parseInt(String.valueOf(m.get("active"))); } catch (Exception ex) {}
+                        try {
+                            active = Integer.parseInt(String.valueOf(m.get("active")));
+                        } catch (Exception ex) {
+                        }
                     }
 
                     if (m.get("level") != null) {
-                        try { level = Integer.parseInt(String.valueOf(m.get("level"))); } catch (Exception ex) {}
+                        try {
+                            level = Integer.parseInt(String.valueOf(m.get("level")));
+                        } catch (Exception ex) {
+                        }
                     }
 
-                    if (m.get("company_id") != null) companyId = String.valueOf(m.get("company_id"));
-                    else if (m.get("companyId") != null) companyId = String.valueOf(m.get("companyId"));
+                    if (m.get("company_id") != null) {
+                        companyId = String.valueOf(m.get("company_id")); 
+                    }else if (m.get("companyId") != null) {
+                        companyId = String.valueOf(m.get("companyId"));
+                    }
                 } else {
                     System.out.println("[DataInitializer] initData/builder.json not found; using defaults");
                 }
@@ -194,7 +248,7 @@ public class DataInitializer implements ApplicationRunner {
             }
 
             // Creating builder account. It is used to prepare the system
-                User u = User.builder()
+            User u = User.builder()
                     .firstName(firstName)
                     .lastName(lastName)
                     .login(builderLogin)
@@ -203,13 +257,13 @@ public class DataInitializer implements ApplicationRunner {
                     .level(level)
                     .companyId(companyId)
                     .build();
-                u.setLastPasswordChanged(new Date());
-                userRepository.save(u);
+            u.setLastPasswordChanged(new Date());
+            userRepository.save(u);
             System.out.println("[DataInitializer] Created default user " + builderLogin);
         }
 
         // Read roles from initData/role.json, create any missing roles and assign each to the builder user
-        List<Map<String,Object>> roleDefs = new ArrayList<>();
+        List<Map<String, Object>> roleDefs = new ArrayList<>();
         try {
             ObjectMapper mapper = new ObjectMapper();
             InputStream is = null;
@@ -228,7 +282,9 @@ public class DataInitializer implements ApplicationRunner {
                 try {
                     List<?> raw = mapper.readValue(content, List.class);
                     for (Object o : raw) {
-                        if (o instanceof Map) roleDefs.add((Map<String,Object>)o);
+                        if (o instanceof Map) {
+                            roleDefs.add((Map<String, Object>) o);
+                        }
                     }
                 } catch (Exception ex) {
                     // fallback: extract JSON objects by brace matching
@@ -240,15 +296,20 @@ public class DataInitializer implements ApplicationRunner {
                             int start = i;
                             while (i < len) {
                                 char c = content.charAt(i);
-                                if (c == '{') depth++;
-                                else if (c == '}') depth--;
+                                if (c == '{') {
+                                    depth++; 
+                                }else if (c == '}') {
+                                    depth--;
+                                }
                                 i++;
-                                if (depth == 0) break;
+                                if (depth == 0) {
+                                    break;
+                                }
                             }
                             if (depth == 0) {
                                 String objStr = content.substring(start, i);
                                 try {
-                                    Map<String,Object> m = mapper.readValue(objStr, Map.class);
+                                    Map<String, Object> m = mapper.readValue(objStr, Map.class);
                                     roleDefs.add(m);
                                 } catch (Exception ex2) {
                                     // ignore malformed object
@@ -269,25 +330,38 @@ public class DataInitializer implements ApplicationRunner {
         // Ensure roles from file exist and assign them to builder
         Optional<User> builderOpt = userRepository.findByLogin(builderLogin);
         User builder = null;
-        if (builderOpt.isPresent()) builder = builderOpt.get();
+        if (builderOpt.isPresent()) {
+            builder = builderOpt.get();
+        }
 
         List<Role> existingRoles = roleRepository.findAll();
-        for (Map<String,Object> rd : roleDefs) {
+        for (Map<String, Object> rd : roleDefs) {
             String roleName = rd.getOrDefault("role", rd.get("role_name")) != null ? String.valueOf(rd.getOrDefault("role", rd.get("role_name"))) : null;
-            if (roleName == null) continue;
+            if (roleName == null) {
+                continue;
+            }
 
             String description = rd.get("description") != null ? String.valueOf(rd.get("description")) : null;
             int level = 1;
-            try { if (rd.get("level") != null) level = Integer.parseInt(String.valueOf(rd.get("level"))); } catch (Exception ex) {}
+            try {
+                if (rd.get("level") != null) {
+                    level = Integer.parseInt(String.valueOf(rd.get("level")));
+            
+                }} catch (Exception ex) {
+            }
             String menu = rd.get("menu") != null ? String.valueOf(rd.get("menu")) : null;
 
             Role role = existingRoles.stream().filter(r -> roleName.equals(r.getRole())).findFirst().orElse(null);
             if (role == null) {
                 role = new Role();
                 role.setRole(roleName);
-                if (description != null) role.setDescription(description);
+                if (description != null) {
+                    role.setDescription(description);
+                }
                 role.setLevel(level);
-                if (menu != null) role.setMenu(menu);
+                if (menu != null) {
+                    role.setMenu(menu);
+                }
                 roleRepository.save(role);
                 System.out.println("[DataInitializer] Created role " + roleName);
                 existingRoles = roleRepository.findAll(); // refresh
@@ -316,25 +390,33 @@ public class DataInitializer implements ApplicationRunner {
                 is = cpr.getInputStream();
             } else {
                 File f = new File("initData/language.json");
-                if (f.exists()) is = new java.io.FileInputStream(f);
+                if (f.exists()) {
+                    is = new java.io.FileInputStream(f);
+                }
             }
 
             if (is != null) {
                 List<?> raw = mapper.readValue(is, List.class);
                 for (Object o : raw) {
-                    if (!(o instanceof java.util.Map)) continue;
-                    java.util.Map m = (java.util.Map)o;
+                    if (!(o instanceof java.util.Map)) {
+                        continue;
+                    }
+                    java.util.Map m = (java.util.Map) o;
                     Object codeObj = m.get("code");
                     Object nameObj = m.get("name");
-                    if (codeObj == null) continue;
+                    if (codeObj == null) {
+                        continue;
+                    }
                     String code = String.valueOf(codeObj);
                     String name = nameObj != null ? String.valueOf(nameObj) : null;
                     if (!languageRepository.existsById(code)) {
                         Language lang = new Language();
                         lang.setCode(code);
-                        if (name != null) lang.setName(name);
+                        if (name != null) {
+                            lang.setName(name);
+                        }
                         languageRepository.save(lang);
-                        System.out.println("[DataInitializer] Created language " + code + (name != null ? " ("+name+")" : ""));
+                        System.out.println("[DataInitializer] Created language " + code + (name != null ? " (" + name + ")" : ""));
                     }
                 }
             } else {
@@ -343,7 +425,7 @@ public class DataInitializer implements ApplicationRunner {
         } catch (Exception ex) {
             System.out.println("[DataInitializer] Failed to read initData/language.json: " + ex.getMessage());
         }
-        
+
         // Load stock movement codes from initData/movement.json: insert or update by movement_type
         try {
             ObjectMapper mapper = new ObjectMapper();
@@ -353,32 +435,62 @@ public class DataInitializer implements ApplicationRunner {
                 is = cpr.getInputStream();
             } else {
                 File f = new File("initData/movement.json");
-                if (f.exists()) is = new java.io.FileInputStream(f);
+                if (f.exists()) {
+                    is = new java.io.FileInputStream(f);
+                }
             }
 
             if (is != null) {
                 List<?> raw = mapper.readValue(is, List.class);
                 for (Object o : raw) {
-                    if (!(o instanceof java.util.Map)) continue;
-                    java.util.Map m = (java.util.Map)o;
+                    if (!(o instanceof java.util.Map)) {
+                        continue;
+                    }
+                    java.util.Map m = (java.util.Map) o;
                     Object mtObj = m.get("movement_type");
-                    if (mtObj == null) mtObj = m.get("movementType");
-                    if (mtObj == null) mtObj = m.get("movement");
-                    if (mtObj == null) continue;
+                    if (mtObj == null) {
+                        mtObj = m.get("movementType");
+                    }
+                    if (mtObj == null) {
+                        mtObj = m.get("movement");
+                    }
+                    if (mtObj == null) {
+                        continue;
+                    }
                     String movementType = String.valueOf(mtObj).trim();
-                    if (movementType.length() == 0) continue;
-                    if (movementType.length() > 1) movementType = movementType.substring(0,1);
+                    if (movementType.length() == 0) {
+                        continue;
+                    }
+                    if (movementType.length() > 1) {
+                        movementType = movementType.substring(0, 1);
+                    }
 
                     String movementDescription = m.get("movement_description") != null ? String.valueOf(m.get("movement_description")) : (m.get("movementDescription") != null ? String.valueOf(m.get("movementDescription")) : null);
                     Integer stockModifier = 0;
                     Integer holdModifier = 0;
-                    try { if (m.get("stock_modifier") != null) stockModifier = Integer.parseInt(String.valueOf(m.get("stock_modifier"))); else if (m.get("stockModifier") != null) stockModifier = Integer.parseInt(String.valueOf(m.get("stockModifier"))); } catch (Exception ex) {}
-                    try { if (m.get("hold_modifier") != null) holdModifier = Integer.parseInt(String.valueOf(m.get("hold_modifier"))); else if (m.get("holdModifier") != null) holdModifier = Integer.parseInt(String.valueOf(m.get("holdModifier"))); } catch (Exception ex) {}
+                    try {
+                        if (m.get("stock_modifier") != null) {
+                            stockModifier = Integer.parseInt(String.valueOf(m.get("stock_modifier")));
+                        } else if (m.get("stockModifier") != null) {
+                            stockModifier = Integer.parseInt(String.valueOf(m.get("stockModifier")));
+                    
+                        }} catch (Exception ex) {
+                    }
+                    try {
+                        if (m.get("hold_modifier") != null) {
+                            holdModifier = Integer.parseInt(String.valueOf(m.get("hold_modifier")));
+                        } else if (m.get("holdModifier") != null) {
+                            holdModifier = Integer.parseInt(String.valueOf(m.get("holdModifier")));
+                    
+                        }} catch (Exception ex) {
+                    }
 
                     java.util.Optional<StockMovementCode> existingOpt = stockMovementCodeRepository.findById(movementType);
                     if (existingOpt.isPresent()) {
                         StockMovementCode sm = existingOpt.get();
-                        if (movementDescription != null) sm.setMovementDescription(movementDescription);
+                        if (movementDescription != null) {
+                            sm.setMovementDescription(movementDescription);
+                        }
                         sm.setStockModifier(stockModifier);
                         sm.setHoldModifier(holdModifier);
                         stockMovementCodeRepository.save(sm);
@@ -386,7 +498,9 @@ public class DataInitializer implements ApplicationRunner {
                     } else {
                         StockMovementCode sm = new StockMovementCode();
                         sm.setMovementType(movementType);
-                        if (movementDescription != null) sm.setMovementDescription(movementDescription);
+                        if (movementDescription != null) {
+                            sm.setMovementDescription(movementDescription);
+                        }
                         sm.setStockModifier(stockModifier);
                         sm.setHoldModifier(holdModifier);
                         stockMovementCodeRepository.save(sm);
@@ -398,6 +512,262 @@ public class DataInitializer implements ApplicationRunner {
             }
         } catch (Exception ex) {
             System.out.println("[DataInitializer] Failed to read initData/movement.json: " + ex.getMessage());
+        }
+
+        // Load work order types from initData/workordertype.json: insert if not exists
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            InputStream is = null;
+            ClassPathResource cpr = new ClassPathResource("initData/workordertype.json");
+            if (cpr.exists()) {
+                is = cpr.getInputStream();
+            } else {
+                File f = new File("initData/workordertype.json");
+                if (f.exists()) {
+                    is = new java.io.FileInputStream(f);
+                }
+            }
+
+            if (is != null) {
+                List<?> raw = mapper.readValue(is, List.class);
+                for (Object o : raw) {
+                    if (!(o instanceof java.util.Map)) {
+                        continue;
+                    }
+                    java.util.Map m = (java.util.Map) o;
+                    Object typeObj = m.get("workOrderType");
+                    if (typeObj == null) {
+                        typeObj = m.get("work_order_type");
+                    }
+                    if (typeObj == null) {
+                        typeObj = m.get("type");
+                    }
+                    if (typeObj == null) {
+                        continue;
+                    }
+                    String type = String.valueOf(typeObj).trim();
+                    if (type.length() == 0) {
+                        continue;
+                    }
+
+                    java.util.Optional<WorkOrderType> existingTypeOpt = workOrderTypeRepository.findById(type);
+                    Integer steps = 1;
+                    try {
+                        if (m.get("numberOfSteps") != null) {
+                            steps = Integer.parseInt(String.valueOf(m.get("numberOfSteps")));
+                        } else if (m.get("number_of_steps") != null) {
+                            steps = Integer.parseInt(String.valueOf(m.get("number_of_steps")));
+                    
+                        }} catch (Exception ex) {
+                    }
+                    Integer active = 1;
+                    try {
+                        if (m.get("active") != null) {
+                            active = Integer.parseInt(String.valueOf(m.get("active")));
+                    
+                        }} catch (Exception ex) {
+                    }
+
+                    if (existingTypeOpt.isPresent()) {
+                        WorkOrderType w = existingTypeOpt.get();
+                        Object desc = m.get("workOrderDescription");
+                        if (desc == null) {
+                            desc = m.get("work_order_description");
+                        }
+                        if (desc != null) {
+                            w.setWorkOrderDescription(String.valueOf(desc));
+                        }
+                        Object ct = m.get("contentType");
+                        if (ct != null) {
+                            w.setContentType(String.valueOf(ct));
+                        }
+                        w.setNumberOfSteps(steps);
+                        w.setActive(active);
+                        workOrderTypeRepository.save(w);
+                        System.out.println("[DataInitializer] Updated work order type " + type);
+                    } else {
+                        WorkOrderType w = new WorkOrderType();
+                        w.setWorkOrderType(type);
+                        Object desc = m.get("workOrderDescription");
+                        if (desc == null) {
+                            desc = m.get("work_order_description");
+                        }
+                        if (desc != null) {
+                            w.setWorkOrderDescription(String.valueOf(desc));
+                        }
+                        Object ct = m.get("contentType");
+                        if (ct != null) {
+                            w.setContentType(String.valueOf(ct));
+                        }
+                        w.setNumberOfSteps(steps);
+                        w.setActive(active);
+                        workOrderTypeRepository.save(w);
+                        System.out.println("[DataInitializer] Created work order type " + type);
+                    }
+                }
+            } else {
+                System.out.println("[DataInitializer] initData/workordertype.json not found; skipping work order type import");
+            }
+        } catch (Exception ex) {
+            System.out.println("[DataInitializer] Failed to read initData/workordertype.json: " + ex.getMessage());
+        }
+
+        // Load work steps from initData/workstepstype.json: insert if not exists (by workOrderType + stepNumber)
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            InputStream is = null;
+            ClassPathResource cpr = new ClassPathResource("initData/workstepstype.json");
+            if (cpr.exists()) {
+                is = cpr.getInputStream();
+            } else {
+                File f = new File("initData/workstepstype.json");
+                if (f.exists()) {
+                    is = new java.io.FileInputStream(f);
+                }
+            }
+
+            if (is != null) {
+                List<?> raw = mapper.readValue(is, List.class);
+                for (Object o : raw) {
+                    if (!(o instanceof java.util.Map)) {
+                        continue;
+                    }
+                    java.util.Map m = (java.util.Map) o;
+                    Object typeObj = m.get("workOrderType");
+                    if (typeObj == null) {
+                        typeObj = m.get("work_order_type");
+                    }
+                    if (typeObj == null) {
+                        continue;
+                    }
+                    String type = String.valueOf(typeObj).trim();
+                    if (type.length() == 0) {
+                        continue;
+                    }
+                    Integer stepNo = null;
+                    try {
+                        if (m.get("stepNumber") != null) {
+                            stepNo = Integer.parseInt(String.valueOf(m.get("stepNumber")));
+                        } else if (m.get("step_number") != null) {
+                            stepNo = Integer.parseInt(String.valueOf(m.get("step_number")));
+                    
+                        }} catch (Exception ex) {
+                    }
+                    if (stepNo == null) {
+                        continue;
+                    }
+
+                    java.util.Optional<WorkStepsType> existingStepOpt = workStepsTypeRepository.findByWorkOrderTypeAndStepNumber(type, stepNo);
+                    if (existingStepOpt.isPresent()) {
+                        WorkStepsType ws = existingStepOpt.get();
+                        Object sd = m.get("stepDescription");
+                        if (sd == null) {
+                            sd = m.get("step_description");
+                        }
+                        if (sd != null) {
+                            ws.setStepDescription(String.valueOf(sd));
+                        }
+                        Object fe = m.get("fromEntity");
+                        if (fe != null) {
+                            ws.setFromEntity(String.valueOf(fe));
+                        }
+                        Object te = m.get("toEntity");
+                        if (te != null) {
+                            ws.setToEntity(String.valueOf(te));
+                        }
+                        workStepsTypeRepository.save(ws);
+                        System.out.println("[DataInitializer] Updated work step for type " + type + " step " + stepNo);
+                    } else {
+                        WorkStepsType ws = new WorkStepsType();
+                        ws.setWorkOrderType(type);
+                        ws.setStepNumber(stepNo);
+                        Object sd = m.get("stepDescription");
+                        if (sd == null) {
+                            sd = m.get("step_description");
+                        }
+                        if (sd != null) {
+                            ws.setStepDescription(String.valueOf(sd));
+                        }
+                        Object fe = m.get("fromEntity");
+                        if (fe != null) {
+                            ws.setFromEntity(String.valueOf(fe));
+                        }
+                        Object te = m.get("toEntity");
+                        if (te != null) {
+                            ws.setToEntity(String.valueOf(te));
+                        }
+                        workStepsTypeRepository.save(ws);
+                        System.out.println("[DataInitializer] Created work step for type " + type + " step " + stepNo);
+                    }
+                }
+            } else {
+                System.out.println("[DataInitializer] initData/workstepstype.json not found; skipping work steps import");
+            }
+        } catch (Exception ex) {
+            System.out.println("[DataInitializer] Failed to read initData/workstepstype.json: " + ex.getMessage());
+        }
+
+        // Load work order entities from initData/workorderentity.json: insert if not exists
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            InputStream is = null;
+            ClassPathResource cpr = new ClassPathResource("initData/workorderentity.json");
+            if (cpr.exists()) {
+                is = cpr.getInputStream();
+            } else {
+                File f = new File("initData/workorderentity.json");
+                if (f.exists()) {
+                    is = new java.io.FileInputStream(f);
+                }
+            }
+
+            if (is != null) {
+                List<?> raw = mapper.readValue(is, List.class);
+                for (Object o : raw) {
+                    if (!(o instanceof java.util.Map)) {
+                        continue;
+                    }
+                    java.util.Map m = (java.util.Map) o;
+                    Object idObj = m.get("workOrderEntity");
+                    if (idObj == null) {
+                        idObj = m.get("work_order_entity");
+                    }
+                    if (idObj == null) {
+                        idObj = m.get("id");
+                    }
+                    if (idObj == null) {
+                        continue;
+                    }
+                    String id = String.valueOf(idObj).trim();
+                    if (id.length() == 0) {
+                        continue;
+                    }
+
+                    java.util.Optional<WorkOrderEntity> existingEntityOpt = workOrderEntityRepository.findById(id);
+                    if (existingEntityOpt.isPresent()) {
+                        WorkOrderEntity we = existingEntityOpt.get();
+                        Object desc = m.get("description");
+                        if (desc != null) {
+                            we.setDescription(String.valueOf(desc));
+                        }
+                        workOrderEntityRepository.save(we);
+                        System.out.println("[DataInitializer] Updated work order entity " + id);
+                    } else {
+                        WorkOrderEntity we = new WorkOrderEntity();
+                        we.setWorkOrderEntity(id);
+                        Object desc = m.get("description");
+                        if (desc != null) {
+                            we.setDescription(String.valueOf(desc));
+                        }
+                        workOrderEntityRepository.save(we);
+                        System.out.println("[DataInitializer] Created work order entity " + id);
+                    }
+                }
+            } else {
+                System.out.println("[DataInitializer] initData/workorderentity.json not found; skipping work order entity import");
+            }
+        } catch (Exception ex) {
+            System.out.println("[DataInitializer] Failed to read initData/workorderentity.json: " + ex.getMessage());
         }
         // Ensure baselineDate param exists; default to first day of current year at midnight
         if (!paramRepository.existsById("baselineDate")) {
@@ -419,6 +789,22 @@ public class DataInitializer implements ApplicationRunner {
 
             try (Connection connection = dataSource.getConnection()) {
                 for (Resource viewScript : viewScripts) {
+                    String filename = viewScript.getFilename();
+                    String viewName = filename != null ? filename.replaceAll("\\.sql$", "") : null;
+                    try (java.sql.Statement dropStmt = connection.createStatement()) {
+                        if (viewName != null && !viewName.isBlank()) {
+                            try {
+                                dropStmt.execute("DROP VIEW IF EXISTS " + viewName + " CASCADE");
+                            } catch (Exception ex) {
+                                // ignore, we'll also try dropping table
+                            }
+                            try {
+                                dropStmt.execute("DROP TABLE IF EXISTS " + viewName + " CASCADE");
+                            } catch (Exception ex) {
+                                // ignore drop table failures
+                            }
+                        }
+                    }
                     ScriptUtils.executeSqlScript(connection, viewScript);
                     System.out.println("[DataInitializer] Executed view script " + viewScript.getFilename());
                 }
