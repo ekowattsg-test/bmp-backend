@@ -1,6 +1,7 @@
 package com.hcteol.jwt.backend.services;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,16 @@ public class WorkOrderService {
     @Autowired
     private WorkOrderRepository workOrderRepository;
 
+    @Autowired
+    private com.hcteol.jwt.backend.services.DocumentSeqService documentSeqService;
+
     public WorkOrder addWorkOrder(WorkOrder workOrder) {
+        // If entity id absent, obtain a WO sequence and set workOrderId to "WO-<seq>"
+        if (workOrder.getWorkOrderId() == null || workOrder.getWorkOrderId().trim().length() == 0) {
+            String token = UUID.randomUUID().toString();
+            Long seq = documentSeqService.getNextSeq("WO", token);
+            workOrder.setWorkOrderId("WO-" + seq);
+        }
         return workOrderRepository.save(workOrder);
     }
 
@@ -22,11 +32,11 @@ public class WorkOrderService {
         return workOrderRepository.findAll();
     }
 
-    public java.util.Optional<WorkOrder> getWorkOrderById(Long id) {
+    public java.util.Optional<WorkOrder> getWorkOrderById(String id) {
         return workOrderRepository.findById(id);
     }
 
-    public WorkOrder updateWorkOrder(Long id, WorkOrder details) {
+    public WorkOrder updateWorkOrder(String id, WorkOrder details) {
         var existing = workOrderRepository.findById(id).orElse(null);
         if (existing != null) {
             existing.setWorkOrderType(details.getWorkOrderType());
@@ -40,7 +50,7 @@ public class WorkOrderService {
         return null;
     }
 
-    public void deleteWorkOrder(Long id) {
+    public void deleteWorkOrder(String id) {
         workOrderRepository.deleteById(id);
     }
 }

@@ -1,19 +1,16 @@
 package com.hcteol.jwt.backend.entities;
 
-import java.time.LocalDateTime;
-
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Data;
+import java.time.LocalDateTime;
 
 @Data
 @Entity
 public class WorkOrder {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long workOrderId;
+    private String workOrderId;
     private String workOrderType;
     private String workDescription;
     private String issuedBy;

@@ -11,7 +11,8 @@ public class WorkOrderType {
     @Id
     private String workOrderType;
     private String workOrderDescription;
-    private String contentType; // stock or worker
+    private String contentType;
     private Integer numberOfSteps;
+    private Integer needDetails;
     private Integer active;
 }

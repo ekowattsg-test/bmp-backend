@@ -9,10 +9,11 @@ import lombok.Data;
 @Data
 @Entity
 public class WorkSteps {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long workStepsId;
-    private Long workOrderId;
+    private String workOrderId;
     private Integer stepNumber;
     private String fromLocation;
     private String toLocation;

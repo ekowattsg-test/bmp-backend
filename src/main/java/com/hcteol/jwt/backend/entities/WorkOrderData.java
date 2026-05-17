@@ -9,10 +9,11 @@ import lombok.Data;
 @Data
 @Entity
 public class WorkOrderData {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long workOrderDataId;
-    private Long workOrderId;
+    private String workOrderId;
     private Long productId;
     private Long quantity;
     private String staffId;

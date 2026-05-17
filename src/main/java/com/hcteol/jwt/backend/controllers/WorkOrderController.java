@@ -21,7 +21,7 @@ public class WorkOrderController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<WorkOrder> getWorkOrderById(@PathVariable Long id) {
+    public ResponseEntity<WorkOrder> getWorkOrderById(@PathVariable String id) {
         return workOrderService.getWorkOrderById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -33,7 +33,7 @@ public class WorkOrderController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<WorkOrder> updateWorkOrder(@PathVariable Long id, @RequestBody WorkOrder workOrder) {
+    public ResponseEntity<WorkOrder> updateWorkOrder(@PathVariable String id, @RequestBody WorkOrder workOrder) {
         WorkOrder updated = workOrderService.updateWorkOrder(id, workOrder);
         if (updated == null) {
             return ResponseEntity.notFound().build();
@@ -42,7 +42,7 @@ public class WorkOrderController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteWorkOrder(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteWorkOrder(@PathVariable String id) {
         workOrderService.deleteWorkOrder(id);
         return ResponseEntity.noContent().build();
     }

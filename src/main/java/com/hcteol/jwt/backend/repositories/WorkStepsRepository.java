@@ -6,4 +6,6 @@ import com.hcteol.jwt.backend.entities.WorkSteps;
 
 public interface WorkStepsRepository extends JpaRepository<WorkSteps, Long> {
 
+    java.util.List<WorkSteps> findByWorkOrderId(String workOrderId);
+
 }

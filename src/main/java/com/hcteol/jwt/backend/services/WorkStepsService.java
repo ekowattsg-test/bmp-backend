@@ -22,6 +22,10 @@ public class WorkStepsService {
         return workStepsRepository.findAll();
     }
 
+    public java.util.List<WorkSteps> getWorkStepsByOrderId(String workOrderId) {
+        return workStepsRepository.findByWorkOrderId(workOrderId);
+    }
+
     public java.util.Optional<WorkSteps> getWorkStepById(Long id) {
         return workStepsRepository.findById(id);
     }

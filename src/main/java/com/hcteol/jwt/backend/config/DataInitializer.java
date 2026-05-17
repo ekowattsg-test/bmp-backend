@@ -37,6 +37,7 @@ import com.hcteol.jwt.backend.entities.StockMovementCode;
 import com.hcteol.jwt.backend.entities.User;
 import com.hcteol.jwt.backend.entities.UserRole;
 import com.hcteol.jwt.backend.entities.WorkOrderEntity;
+import com.hcteol.jwt.backend.entities.DocumentSeq;
 import com.hcteol.jwt.backend.entities.WorkOrderType;
 import com.hcteol.jwt.backend.entities.WorkStepsType;
 import com.hcteol.jwt.backend.repositories.CompanyRepository;
@@ -47,6 +48,7 @@ import com.hcteol.jwt.backend.repositories.StockMovementCodeRepository;
 import com.hcteol.jwt.backend.repositories.UserRepository;
 import com.hcteol.jwt.backend.repositories.UserRoleRepository;
 import com.hcteol.jwt.backend.repositories.WorkOrderEntityRepository;
+import com.hcteol.jwt.backend.repositories.DocumentSeqRepository;
 import com.hcteol.jwt.backend.repositories.WorkOrderTypeRepository;
 import com.hcteol.jwt.backend.repositories.WorkStepsTypeRepository;
 
@@ -88,6 +90,9 @@ public class DataInitializer implements ApplicationRunner {
     private WorkOrderEntityRepository workOrderEntityRepository;
 
     @Autowired
+    private DocumentSeqRepository documentSeqRepository;
+
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
@@ -119,14 +124,14 @@ public class DataInitializer implements ApplicationRunner {
                 if (is != null) {
                     Map<?, ?> m = mapper.readValue(is, Map.class);
                     if (m.get("company_id") != null) {
-                        companyId = String.valueOf(m.get("company_id")); 
-                    }else if (m.get("companyId") != null) {
+                        companyId = String.valueOf(m.get("company_id"));
+                    } else if (m.get("companyId") != null) {
                         companyId = String.valueOf(m.get("companyId"));
                     }
 
                     if (m.get("company_name") != null) {
-                        companyName = String.valueOf(m.get("company_name")); 
-                    }else if (m.get("companyName") != null) {
+                        companyName = String.valueOf(m.get("company_name"));
+                    } else if (m.get("companyName") != null) {
                         companyName = String.valueOf(m.get("companyName"));
                     }
 
@@ -198,22 +203,22 @@ public class DataInitializer implements ApplicationRunner {
                     Map<?, ?> m = mapper.readValue(is, Map.class);
                     // tolerate a few key name variants (typos, snake_case, camelCase)
                     if (m.get("first_name") != null) {
-                        firstName = String.valueOf(m.get("first_name")); 
-                    }else if (m.get("irst_name") != null) {
-                        firstName = String.valueOf(m.get("irst_name")); 
-                    }else if (m.get("firstName") != null) {
+                        firstName = String.valueOf(m.get("first_name"));
+                    } else if (m.get("irst_name") != null) {
+                        firstName = String.valueOf(m.get("irst_name"));
+                    } else if (m.get("firstName") != null) {
                         firstName = String.valueOf(m.get("firstName"));
                     }
 
                     if (m.get("last_name") != null) {
-                        lastName = String.valueOf(m.get("last_name")); 
-                    }else if (m.get("lastName") != null) {
+                        lastName = String.valueOf(m.get("last_name"));
+                    } else if (m.get("lastName") != null) {
                         lastName = String.valueOf(m.get("lastName"));
                     }
 
                     if (m.get("login") != null) {
-                        builderLogin = String.valueOf(m.get("login")); 
-                    }else if (m.get("email") != null) {
+                        builderLogin = String.valueOf(m.get("login"));
+                    } else if (m.get("email") != null) {
                         builderLogin = String.valueOf(m.get("email"));
                     }
 
@@ -236,8 +241,8 @@ public class DataInitializer implements ApplicationRunner {
                     }
 
                     if (m.get("company_id") != null) {
-                        companyId = String.valueOf(m.get("company_id")); 
-                    }else if (m.get("companyId") != null) {
+                        companyId = String.valueOf(m.get("company_id"));
+                    } else if (m.get("companyId") != null) {
                         companyId = String.valueOf(m.get("companyId"));
                     }
                 } else {
@@ -297,8 +302,8 @@ public class DataInitializer implements ApplicationRunner {
                             while (i < len) {
                                 char c = content.charAt(i);
                                 if (c == '{') {
-                                    depth++; 
-                                }else if (c == '}') {
+                                    depth++;
+                                } else if (c == '}') {
                                     depth--;
                                 }
                                 i++;
@@ -346,8 +351,9 @@ public class DataInitializer implements ApplicationRunner {
             try {
                 if (rd.get("level") != null) {
                     level = Integer.parseInt(String.valueOf(rd.get("level")));
-            
-                }} catch (Exception ex) {
+
+                }
+            } catch (Exception ex) {
             }
             String menu = rd.get("menu") != null ? String.valueOf(rd.get("menu")) : null;
 
@@ -473,16 +479,18 @@ public class DataInitializer implements ApplicationRunner {
                             stockModifier = Integer.parseInt(String.valueOf(m.get("stock_modifier")));
                         } else if (m.get("stockModifier") != null) {
                             stockModifier = Integer.parseInt(String.valueOf(m.get("stockModifier")));
-                    
-                        }} catch (Exception ex) {
+
+                        }
+                    } catch (Exception ex) {
                     }
                     try {
                         if (m.get("hold_modifier") != null) {
                             holdModifier = Integer.parseInt(String.valueOf(m.get("hold_modifier")));
                         } else if (m.get("holdModifier") != null) {
                             holdModifier = Integer.parseInt(String.valueOf(m.get("holdModifier")));
-                    
-                        }} catch (Exception ex) {
+
+                        }
+                    } catch (Exception ex) {
                     }
 
                     java.util.Optional<StockMovementCode> existingOpt = stockMovementCodeRepository.findById(movementType);
@@ -557,15 +565,26 @@ public class DataInitializer implements ApplicationRunner {
                             steps = Integer.parseInt(String.valueOf(m.get("numberOfSteps")));
                         } else if (m.get("number_of_steps") != null) {
                             steps = Integer.parseInt(String.valueOf(m.get("number_of_steps")));
-                    
-                        }} catch (Exception ex) {
+
+                        }
+                    } catch (Exception ex) {
+                    }
+                    Integer needDetails = 0;
+                    try {
+                        if (m.get("needDetails") != null) {
+                            needDetails = Integer.parseInt(String.valueOf(m.get("needDetails")));
+                        } else if (m.get("need_details") != null) {
+                            needDetails = Integer.parseInt(String.valueOf(m.get("need_details")));
+                        }
+                    } catch (Exception ex) {
                     }
                     Integer active = 1;
                     try {
                         if (m.get("active") != null) {
                             active = Integer.parseInt(String.valueOf(m.get("active")));
-                    
-                        }} catch (Exception ex) {
+
+                        }
+                    } catch (Exception ex) {
                     }
 
                     if (existingTypeOpt.isPresent()) {
@@ -582,6 +601,7 @@ public class DataInitializer implements ApplicationRunner {
                             w.setContentType(String.valueOf(ct));
                         }
                         w.setNumberOfSteps(steps);
+                        w.setNeedDetails(needDetails);
                         w.setActive(active);
                         workOrderTypeRepository.save(w);
                         System.out.println("[DataInitializer] Updated work order type " + type);
@@ -600,6 +620,7 @@ public class DataInitializer implements ApplicationRunner {
                             w.setContentType(String.valueOf(ct));
                         }
                         w.setNumberOfSteps(steps);
+                        w.setNeedDetails(needDetails);
                         w.setActive(active);
                         workOrderTypeRepository.save(w);
                         System.out.println("[DataInitializer] Created work order type " + type);
@@ -650,8 +671,9 @@ public class DataInitializer implements ApplicationRunner {
                             stepNo = Integer.parseInt(String.valueOf(m.get("stepNumber")));
                         } else if (m.get("step_number") != null) {
                             stepNo = Integer.parseInt(String.valueOf(m.get("step_number")));
-                    
-                        }} catch (Exception ex) {
+
+                        }
+                    } catch (Exception ex) {
                     }
                     if (stepNo == null) {
                         continue;
@@ -768,6 +790,58 @@ public class DataInitializer implements ApplicationRunner {
             }
         } catch (Exception ex) {
             System.out.println("[DataInitializer] Failed to read initData/workorderentity.json: " + ex.getMessage());
+        }
+
+        // Load document sequences from initData/documentseq.json: ensure each exists
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            InputStream is = null;
+            ClassPathResource cpr = new ClassPathResource("initData/documentseq.json");
+            if (cpr.exists()) {
+                is = cpr.getInputStream();
+            } else {
+                File f = new File("initData/documentseq.json");
+                if (f.exists()) {
+                    is = new java.io.FileInputStream(f);
+                }
+            }
+
+            if (is != null) {
+                List<?> raw = mapper.readValue(is, List.class);
+                for (Object o : raw) {
+                    if (!(o instanceof java.util.Map)) {
+                        continue;
+                    }
+                    java.util.Map m = (java.util.Map) o;
+                    Object idObj = m.get("documentSeq");
+                    if (idObj == null) {
+                        idObj = m.get("docType");
+                    }
+                    if (idObj == null) {
+                        idObj = m.get("doc_type");
+                    }
+                    if (idObj == null) {
+                        continue;
+                    }
+                    String docType = String.valueOf(idObj).trim();
+                    if (docType.length() == 0) {
+                        continue;
+                    }
+
+                    if (!documentSeqRepository.existsById(docType)) {
+                        DocumentSeq ds = new DocumentSeq();
+                        ds.setDocType(docType);
+                        ds.setSeq(0L);
+                        ds.setToken("");
+                        documentSeqRepository.save(ds);
+                        System.out.println("[DataInitializer] Created document seq " + docType);
+                    }
+                }
+            } else {
+                System.out.println("[DataInitializer] initData/documentseq.json not found; skipping document seq import");
+            }
+        } catch (Exception ex) {
+            System.out.println("[DataInitializer] Failed to read initData/documentseq.json: " + ex.getMessage());
         }
         // Ensure baselineDate param exists; default to first day of current year at midnight
         if (!paramRepository.existsById("baselineDate")) {

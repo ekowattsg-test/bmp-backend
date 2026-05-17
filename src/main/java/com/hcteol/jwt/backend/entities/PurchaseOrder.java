@@ -16,13 +16,17 @@ import lombok.NoArgsConstructor;
 @Data
 @Entity
 public class PurchaseOrder {
+
     @Id
     private String orderId;
     private Long vendorId;
     private Date orderDate;
     private Double purchaseAmount;
-       @Column(columnDefinition = "varchar(20) default 'NEW'")
+    @Column(columnDefinition = "varchar(20) default 'NEW'")
     private String orderStatus;
-
-
+    private Date issuedDate;
+    private Date confirmedDate;
+    private Date readyDate;
+    private Date receivedDate;
+    private Date cancelledDate;
 }

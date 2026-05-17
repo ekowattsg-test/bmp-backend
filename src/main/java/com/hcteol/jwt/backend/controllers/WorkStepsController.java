@@ -20,6 +20,11 @@ public class WorkStepsController {
         return workStepsService.getAllWorkSteps();
     }
 
+    @GetMapping("/order/{workOrderId}")
+    public List<WorkSteps> getWorkStepsByOrderId(@PathVariable String workOrderId) {
+        return workStepsService.getWorkStepsByOrderId(workOrderId);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<WorkSteps> getWorkStepById(@PathVariable Long id) {
         return workStepsService.getWorkStepById(id)
