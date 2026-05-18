@@ -38,5 +38,13 @@
     "numberOfSteps": 1,
     "needDetails": 1,
     "active": 1
+  },
+  {
+    "workOrderType": "Allocating",
+    "workOrderDescription": "Allocating assets to a staff",
+    "contentType": "asset",
+    "numberOfSteps": 1,
+    "needDetails": 1,
+    "active": 1
   }
 ]

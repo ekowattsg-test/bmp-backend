@@ -54,5 +54,12 @@
     "stepDescription": "Unload and receive stock at a location",
     "fromEntity": "vehicle",
     "toEntity": "location"
+  },
+  {
+    "workOrderType": "Allocating",
+    "stepNumber": 1,
+    "stepDescription": "assigning asset to a staff",
+    "fromEntity": "location",
+    "toEntity": "worker"
   }
 ]
