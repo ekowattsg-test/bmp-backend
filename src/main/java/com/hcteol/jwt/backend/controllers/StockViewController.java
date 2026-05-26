@@ -58,4 +58,10 @@ public class StockViewController {
         log.debug("getByStockCode returning {} record(s): {}", results.size(), results);
         return ResponseEntity.ok(results);
     }
+
+    // GET all movements for a given work order id
+    @GetMapping("/workorder/{workOrderId}")
+    public ResponseEntity<List<StockView>> getByWorkOrderId(@PathVariable String workOrderId) {
+        return ResponseEntity.ok(stockViewRepository.findByWorkOrderId(workOrderId));
+    }
 }

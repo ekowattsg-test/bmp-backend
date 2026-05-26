@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 @Data
 @Entity
 public class Staff {
+
     @Id
     private String staffId;
     @Column(unique = true)
@@ -27,6 +28,11 @@ public class Staff {
     private Date serviceStartDate;
     private Date serviceEndDate;
     private String department;
+    @Builder.Default
+    @Column(nullable = false)
+    @ColumnDefault("'S'")
+    private String staffType = "S"; // "S" = Internal Staff, "E" = external contractors' staff
+    private String location;
     private String staffNumber;
     private String companyId;
     @ColumnDefault("1")

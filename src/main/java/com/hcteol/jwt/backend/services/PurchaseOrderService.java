@@ -26,6 +26,172 @@ public class PurchaseOrderService {
     private PurchaseOrderItemRepository purchaseOrderItemRepository;
 
     @Autowired
+    private com.hcteol.jwt.backend.repositories.StockViewRepository stockViewRepository;
+
+    /**
+     * Get product purchase statistics (average cost, latest, high, low, total
+     * qty, vendor summaries)
+     */
+    public com.hcteol.jwt.backend.dtos.ProductPurchaseStatsDto getProductPurchaseStats(Long productId) {
+        var items = purchaseOrderItemRepository.findByInternalOrderId(productId);
+
+        // If no items found by internalOrderId, fallback to using StockView references
+        if (items == null || items.isEmpty()) {
+            java.util.List<com.hcteol.jwt.backend.entities.StockView> svs = stockViewRepository.findByProductId(productId);
+            if (svs == null || svs.isEmpty()) {
+                return com.hcteol.jwt.backend.dtos.ProductPurchaseStatsDto.builder()
+                        .productId(productId)
+                        .averageCost(0.0)
+                        .latestCost(0.0)
+                        .highestCost(0.0)
+                        .lowestCost(0.0)
+                        .totalQuantity(0L)
+                        .vendorSummaries(java.util.Collections.emptyList())
+                        .build();
+            }
+
+            // use productCode from stock view for matching PO items
+            String productCode = null;
+            for (var sv : svs) {
+                if (sv.getProductCode() != null && !sv.getProductCode().isBlank()) {
+                    productCode = sv.getProductCode();
+                    break;
+                }
+            }
+
+            java.util.Set<String> candidateOrderIds = new java.util.HashSet<>();
+            for (var sv : svs) {
+                String ref = sv.getReference();
+                if (ref != null && !ref.isBlank()) {
+                    // accept direct matches only
+                    if (purchaseOrderRepository.existsById(ref)) {
+                        candidateOrderIds.add(ref);
+                    }
+                }
+            }
+
+            java.util.List<com.hcteol.jwt.backend.entities.PurchaseOrderItem> collected = new java.util.ArrayList<>();
+            for (String oid : candidateOrderIds) {
+                java.util.List<com.hcteol.jwt.backend.entities.PurchaseOrderItem> poItems = purchaseOrderItemRepository.findByOrderId(oid);
+                for (var it : poItems) {
+                    if (productCode == null || productCode.isBlank()) {
+                        // if no productCode available, include all
+                        collected.add(it);
+                    } else {
+                        if (productCode.equalsIgnoreCase(it.getProductCode())) {
+                            collected.add(it);
+                        }
+                    }
+                }
+            }
+
+            items = collected;
+        }
+
+        double sumWeightedCost = 0.0;
+        long totalQty = 0L;
+        double highest = Double.MIN_VALUE;
+        double lowest = Double.MAX_VALUE;
+
+        // collect items grouped by orderId for latest-cost and per-vendor grouping
+        java.util.Map<String, java.util.List<com.hcteol.jwt.backend.entities.PurchaseOrderItem>> itemsByOrder = new java.util.HashMap<>();
+        java.util.Map<Long, java.util.List<com.hcteol.jwt.backend.entities.PurchaseOrderItem>> byVendor = new java.util.HashMap<>();
+
+        for (var it : items) {
+            Integer qty = it.getQuantity() != null ? it.getQuantity() : 0;
+            Double unit = it.getUnitPrice() != null ? it.getUnitPrice() : 0.0;
+            sumWeightedCost += unit * qty;
+            totalQty += qty;
+            if (unit > highest) {
+                highest = unit;
+            }
+            if (unit < lowest) {
+                lowest = unit;
+            }
+
+            String orderId = it.getOrderId();
+            itemsByOrder.computeIfAbsent(orderId != null ? orderId : "", k -> new java.util.ArrayList<>()).add(it);
+
+            var poOpt = purchaseOrderRepository.findById(orderId);
+            if (poOpt.isPresent()) {
+                Long vendorId = poOpt.get().getVendorId();
+                byVendor.computeIfAbsent(vendorId != null ? vendorId : 0L, k -> new java.util.ArrayList<>()).add(it);
+            } else {
+                byVendor.computeIfAbsent(0L, k -> new java.util.ArrayList<>()).add(it);
+            }
+        }
+
+        // determine latestCost by finding the orderId with the latest orderDate
+        Double latestCost = null;
+        java.time.Instant latestInstant = java.time.Instant.EPOCH;
+        for (var entry : itemsByOrder.entrySet()) {
+            String oid = entry.getKey();
+            if (oid == null || oid.isBlank()) {
+                continue;
+            }
+            var poOpt = purchaseOrderRepository.findById(oid);
+            if (poOpt.isPresent()) {
+                var po = poOpt.get();
+                java.sql.Date poDate = po.getOrderDate();
+                if (poDate != null) {
+                    java.time.Instant inst = poDate.toLocalDate().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant();
+                    if (inst.isAfter(latestInstant)) {
+                        latestInstant = inst;
+                        // pick unit price from first matching item in that order
+                        var list = entry.getValue();
+                        if (list != null && !list.isEmpty()) {
+                            Double unit = list.get(0).getUnitPrice() != null ? list.get(0).getUnitPrice() : 0.0;
+                            latestCost = unit;
+                        }
+                    }
+                }
+            }
+        }
+
+        double avg = totalQty > 0 ? (sumWeightedCost / totalQty) : 0.0;
+
+        java.util.List<com.hcteol.jwt.backend.dtos.VendorPurchaseSummaryDto> vendorSummaries = new java.util.ArrayList<>();
+        for (var e : byVendor.entrySet()) {
+            Long vendorId = e.getKey();
+            var list = e.getValue();
+            long vQty = 0L;
+            double vSum = 0.0;
+            double vHigh = Double.MIN_VALUE;
+            double vLow = Double.MAX_VALUE;
+            for (var it : list) {
+                int q = it.getQuantity() != null ? it.getQuantity() : 0;
+                double u = it.getUnitPrice() != null ? it.getUnitPrice() : 0.0;
+                vQty += q;
+                vSum += u * q;
+                if (u > vHigh) {
+                    vHigh = u;
+                }
+                if (u < vLow) {
+                    vLow = u;
+                }
+            }
+            double vAvg = vQty > 0 ? (vSum / vQty) : 0.0;
+            vendorSummaries.add(com.hcteol.jwt.backend.dtos.VendorPurchaseSummaryDto.builder()
+                    .vendorId(vendorId)
+                    .averageCost(vAvg)
+                    .highestCost(vHigh == Double.MIN_VALUE ? 0.0 : vHigh)
+                    .lowestCost(vLow == Double.MAX_VALUE ? 0.0 : vLow)
+                    .totalQuantity(vQty)
+                    .build());
+        }
+
+        return com.hcteol.jwt.backend.dtos.ProductPurchaseStatsDto.builder()
+                .productId(productId)
+                .averageCost(avg)
+                .latestCost(latestCost != null ? latestCost : 0.0)
+                .highestCost(highest == Double.MIN_VALUE ? 0.0 : highest)
+                .lowestCost(lowest == Double.MAX_VALUE ? 0.0 : lowest)
+                .totalQuantity(totalQty)
+                .vendorSummaries(vendorSummaries)
+                .build();
+    }
+
+    @Autowired
     private com.hcteol.jwt.backend.services.DocumentSeqService documentSeqService;
 
     /**
@@ -43,6 +209,7 @@ public class PurchaseOrderService {
         PurchaseOrder purchaseOrder = PurchaseOrder.builder()
                 .orderId(purchaseOrderDto.getOrderId())
                 .vendorId(purchaseOrderDto.getVendorId())
+                .projectCode(purchaseOrderDto.getProjectCode())
                 .orderDate(purchaseOrderDto.getOrderDate())
                 .issuedDate(purchaseOrderDto.getIssuedDate())
                 .confirmedDate(purchaseOrderDto.getConfirmedDate())
@@ -141,6 +308,7 @@ public class PurchaseOrderService {
 
         // Update order fields
         existingOrder.setVendorId(purchaseOrderDto.getVendorId());
+        existingOrder.setProjectCode(purchaseOrderDto.getProjectCode());
         existingOrder.setOrderDate(purchaseOrderDto.getOrderDate());
         existingOrder.setIssuedDate(purchaseOrderDto.getIssuedDate());
         existingOrder.setConfirmedDate(purchaseOrderDto.getConfirmedDate());
@@ -232,6 +400,7 @@ public class PurchaseOrderService {
         return PurchaseOrderDto.builder()
                 .orderId(order.getOrderId())
                 .vendorId(order.getVendorId())
+                .projectCode(order.getProjectCode())
                 .orderDate(order.getOrderDate())
                 .issuedDate(order.getIssuedDate())
                 .confirmedDate(order.getConfirmedDate())

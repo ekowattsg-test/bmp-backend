@@ -75,6 +75,9 @@ public class StockView {
 
     private String reference;
 
+    @Column(name = "work_order_id")
+    private String workOrderId;
+
     @Column(name = "action_by")
     private String actionBy;
 

@@ -21,6 +21,7 @@ public class StaffService {
     public List<Staff> getAllStaff() {
         return staffRepository.findAll();
     }
+
     public java.util.Optional<Staff> getStaffById(String staffId) {
         return staffRepository.findById(staffId);
     }
@@ -40,6 +41,8 @@ public class StaffService {
             existingStaff.setServiceEndDate(staffDetails.getServiceEndDate());
             existingStaff.setDepartment(staffDetails.getDepartment());
             existingStaff.setStaffNumber(staffDetails.getStaffNumber());
+            existingStaff.setStaffType(staffDetails.getStaffType());
+            existingStaff.setLocation(staffDetails.getLocation());
             existingStaff.setCompanyId(staffDetails.getCompanyId());
             existingStaff.setActive(staffDetails.getActive());
             return staffRepository.save(existingStaff);

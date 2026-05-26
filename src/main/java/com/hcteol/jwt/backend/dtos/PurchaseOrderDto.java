@@ -16,6 +16,7 @@ public class PurchaseOrderDto {
 
     private String orderId;
     private Long vendorId;
+    private String projectCode;
     private Date orderDate;
     private Double purchaseAmount;
     private String orderStatus;

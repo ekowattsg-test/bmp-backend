@@ -32,6 +32,8 @@ public class WorkOrderTypeService {
             existing.setWorkOrderDescription(details.getWorkOrderDescription());
             existing.setContentType(details.getContentType());
             existing.setNumberOfSteps(details.getNumberOfSteps());
+            existing.setNeedDetails(details.getNeedDetails());
+            existing.setRoleName(details.getRoleName());
             existing.setActive(details.getActive());
             return workOrderTypeRepository.save(existing);
         }

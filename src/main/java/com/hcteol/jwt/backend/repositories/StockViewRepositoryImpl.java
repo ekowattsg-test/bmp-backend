@@ -20,6 +20,7 @@ public class StockViewRepositoryImpl implements StockViewRepositoryCustom {
     private static final String FIND_BY_STOCK_ID_SQL_PATH = "sql/stock-view-find-by-stock-id.sql";
     private static final String FIND_BY_PRODUCT_ID_SQL_PATH = "sql/stock-view-find-by-product-id.sql";
     private static final String FIND_BY_STOCK_CODE_SQL_PATH = "sql/stock-view-find-by-stock-code.sql";
+    private static final String FIND_BY_WORKORDER_ID_SQL_PATH = "sql/stock-view-find-by-workorder-id.sql";
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -27,12 +28,14 @@ public class StockViewRepositoryImpl implements StockViewRepositoryCustom {
     private String findByStockIdSql;
     private String findByProductIdSql;
     private String findByStockCodeSql;
+    private String findByWorkOrderIdSql;
 
     @PostConstruct
     public void init() {
         this.findByStockIdSql = loadSql(FIND_BY_STOCK_ID_SQL_PATH);
         this.findByProductIdSql = loadSql(FIND_BY_PRODUCT_ID_SQL_PATH);
         this.findByStockCodeSql = loadSql(FIND_BY_STOCK_CODE_SQL_PATH);
+        this.findByWorkOrderIdSql = loadSql(FIND_BY_WORKORDER_ID_SQL_PATH);
     }
 
     @Override
@@ -56,6 +59,14 @@ public class StockViewRepositoryImpl implements StockViewRepositoryCustom {
     public List<StockView> findByStockCode(String stockCode) {
         return entityManager.createNativeQuery(findByStockCodeSql, StockView.class)
                 .setParameter("stockCode", stockCode)
+                .getResultList();
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<StockView> findByWorkOrderId(String workOrderId) {
+        return entityManager.createNativeQuery(findByWorkOrderIdSql, StockView.class)
+                .setParameter("workOrderId", workOrderId)
                 .getResultList();
     }
 

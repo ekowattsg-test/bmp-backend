@@ -11,6 +11,7 @@ import jakarta.validation.constraints.Size;
 @Data
 @Entity
 public class StockMovement {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long movementId;
@@ -21,6 +22,7 @@ public class StockMovement {
     private Integer quantity;
     private String location = "central";
     private String reference;
+    private String workOrderId;
     private String recordDate;
     private String actionBy;
 }

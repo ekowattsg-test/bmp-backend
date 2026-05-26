@@ -11,6 +11,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/stockmovements")
 public class StockMovementController {
+
     @Autowired
     private StockMovementService stockMovementService;
 
@@ -28,6 +29,8 @@ public class StockMovementController {
 
     @PostMapping
     public StockMovement createStockMovement(@RequestBody StockMovement stockMovement) {
+        // public API should not set workOrderId; ensure it's null unless created by internal workflows
+        stockMovement.setWorkOrderId(null);
         return stockMovementService.createStockMovement(stockMovement);
     }
 

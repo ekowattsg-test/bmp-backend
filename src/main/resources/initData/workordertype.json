@@ -1,48 +1,54 @@
 [
   {
     "workOrderType": "Delivery",
-    "workOrderDescription": "Delivering stocks from one location to another",
+    "workOrderDescription": "Deliver in-house stocks 内部库存配送",
     "contentType": "stock",
-    "numberOfSteps": 2,
-    "needDetails": 1,
+    "roleName": "Deliver",
+    "numberOfSteps": 3,
+    "needDetails": 0,
     "active": 1
   },
   {
     "workOrderType": "Transport",
-    "workOrderDescription": "Transporting workers from one location to another",
+    "workOrderDescription": "Transporting workers 运送工人",
     "contentType": "worker",
+    "roleName": "Driver",
     "numberOfSteps": 2,
     "needDetails": 1,
     "active": 1
   },
   {
     "workOrderType": "Collection",
-    "workOrderDescription": "Collecting stocks from external party to a location",
+    "workOrderDescription": "Collect stocks from external party 外部库存收取",
     "contentType": "stock",
+    "roleName": "Deliver",
     "numberOfSteps": 2,
     "needDetails": 0,
     "active": 1
   },
   {
     "workOrderType": "Receive",
-    "workOrderDescription": "Receiveing stocks described by a PO to a location",
+    "workOrderDescription": "Receive stocks by PO 采购单收货",
     "contentType": "stock",
+    "roleName": "Stock",
     "numberOfSteps": 1,
-    "needDetails": 1,
+    "needDetails": 0,
     "active": 1
   },
   {
     "workOrderType": "Drawing",
-    "workOrderDescription": "Drawing stocks from a location",
+    "workOrderDescription": "Drawing stocks 库存领用",
     "contentType": "stock",
+    "roleName": "",
     "numberOfSteps": 1,
     "needDetails": 1,
     "active": 1
   },
   {
     "workOrderType": "Allocating",
-    "workOrderDescription": "Allocating assets to a staff",
+    "workOrderDescription": "Allocate assets to worker 资产发放",
     "contentType": "asset",
+    "roleName": "",
     "numberOfSteps": 1,
     "needDetails": 1,
     "active": 1

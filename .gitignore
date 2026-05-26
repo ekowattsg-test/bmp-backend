@@ -37,3 +37,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# Ignore project reference files (user may keep notes locally)
+src/reference/

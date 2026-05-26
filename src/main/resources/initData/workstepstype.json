@@ -4,62 +4,129 @@
     "stepNumber": 1,
     "stepDescription": "Receive stock by Purchase Order",
     "fromEntity": "PO",
-    "toEntity": "location"
+    "toEntity": "location",
+    "startAction": "",
+    "scanData": 1,
+    "checkQuantity": 0,
+    "newStock": 1,
+    "takePhoto": 1,
+    "endAction": "stock-in"
   },
   {
     "workOrderType": "Drawing",
     "stepNumber": 1,
     "stepDescription": "Drawing stock for work",
     "fromEntity": "location",
-    "toEntity": "worker"
+    "toEntity": "worker",
+    "startAction": "",
+    "scanData": 1,
+    "checkQuantity": 1,
+    "newStock": 0,
+    "takePhoto": 1,
+    "endAction": "stock-out"
   },
   {
     "workOrderType": "Delivery",
     "stepNumber": 1,
-    "stepDescription": "Collect and load stock on vehicle",
-    "fromEntity": "location",
-    "toEntity": "vehicle"
+    "stepDescription": "Collect stock at a location",
+    "fromEntity": "DO",
+    "toEntity": "location",
+    "startAction": "",
+    "scanData": 0,
+    "checkQuantity": 0,
+    "newStock": 0,
+    "takePhoto": 0,
+    "endAction": ""
   },
   {
     "workOrderType": "Delivery",
     "stepNumber": 2,
+    "stepDescription": "Collect and load stock on vehicle",
+    "fromEntity": "location",
+    "toEntity": "vehicle",
+    "startAction": "",
+    "scanData": 1,
+    "checkQuantity": 1,
+    "newStock": 0,
+    "takePhoto": 1,
+    "endAction": "stock-tx"
+  },
+  {
+    "workOrderType": "Delivery",
+    "stepNumber": 3,
     "stepDescription": "Unload and receive stock at a location",
     "fromEntity": "vehicle",
-    "toEntity": "location"
+    "toEntity": "location",
+    "startAction": "",
+    "scanData": 1,
+    "checkQuantity": 0,
+    "newStock": 0,
+    "takePhoto": 1,
+    "endAction": "stock-loc"
   },
   {
     "workOrderType": "Transport",
     "stepNumber": 1,
     "stepDescription": "Worker board vehicle at a location",
     "fromEntity": "location",
-    "toEntity": "vehicle"
+    "toEntity": "vehicle",
+    "startAction": "",
+    "scanData": 1,
+    "checkQuantity": 0,
+    "newStock": 0,
+    "takePhoto": 1,
+    "endAction": ""
   },
   {
     "workOrderType": "Transport",
     "stepNumber": 2,
     "stepDescription": "Worker disembark vehicle at a location",
     "fromEntity": "vehicle",
-    "toEntity": "location"
+    "toEntity": "location",
+    "startAction": "",
+    "scanData": 0,
+    "checkQuantity": 0,
+    "newStock": 0,
+    "takePhoto": 1,
+    "endAction": "staff-loc"
   },
   {
     "workOrderType": "Collection",
     "stepNumber": 1,
     "stepDescription": "Collect and load stock on vehicle",
     "fromEntity": "PO",
-    "toEntity": "vehicle"
+    "toEntity": "vehicle",
+    "startAction": "",
+    "scanData": 1,
+    "checkQuantity": 0,
+    "newStock": 1,
+    "takePhoto": 1,
+    "endAction": "stock-in"
   },
   {
     "workOrderType": "Collection",
     "stepNumber": 2,
     "stepDescription": "Unload and receive stock at a location",
     "fromEntity": "vehicle",
-    "toEntity": "location"
+    "toEntity": "location",
+    "startAction": "",
+    "scanData": 1,
+    "checkQuantity": 0,
+    "newStock": 0,
+    "takePhoto": 1,
+    "endAction": "stock-loc"
   },
   {
     "workOrderType": "Allocating",
     "stepNumber": 1,
     "stepDescription": "assigning asset to a staff",
     "fromEntity": "location",
-    "toEntity": "worker"
+    "toEntity": "worker",
+    "startAction": "",
+    "scanData": 1,
+    "checkQuantity": 1,
+    "newStock": 0,
+    "takePhoto": 1,
+    "endAction": "stock-tx"
   }
 ]

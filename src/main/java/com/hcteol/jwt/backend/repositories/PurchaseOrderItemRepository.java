@@ -9,8 +9,10 @@ import com.hcteol.jwt.backend.entities.PurchaseOrderItem;
 
 @Repository
 public interface PurchaseOrderItemRepository extends JpaRepository<PurchaseOrderItem, String> {
-    
+
     List<PurchaseOrderItem> findByOrderId(String orderId);
-    
+
     void deleteByOrderId(String orderId);
+
+    java.util.List<PurchaseOrderItem> findByInternalOrderId(Long internalOrderId);
 }

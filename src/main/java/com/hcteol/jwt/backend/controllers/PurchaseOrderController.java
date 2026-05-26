@@ -26,6 +26,12 @@ public class PurchaseOrderController {
     @Autowired
     private PurchaseOrderService purchaseOrderService;
 
+    @GetMapping("/product/{productId}/stats")
+    public ResponseEntity<com.hcteol.jwt.backend.dtos.ProductPurchaseStatsDto> getProductStats(@PathVariable Long productId) {
+        var stats = purchaseOrderService.getProductPurchaseStats(productId);
+        return ResponseEntity.ok(stats);
+    }
+
     /**
      * Create a new purchase order
      */
@@ -84,7 +90,7 @@ public class PurchaseOrderController {
      */
     @PutMapping("/{orderId}")
     public ResponseEntity<PurchaseOrderDto> updatePurchaseOrder(
-            @PathVariable String orderId, 
+            @PathVariable String orderId,
             @RequestBody PurchaseOrderDto purchaseOrderDto) {
         try {
             PurchaseOrderDto updatedOrder = purchaseOrderService.updatePurchaseOrder(orderId, purchaseOrderDto);
@@ -99,7 +105,7 @@ public class PurchaseOrderController {
      */
     @PatchMapping("/{orderId}/status")
     public ResponseEntity<PurchaseOrderDto> updateOrderStatus(
-            @PathVariable String orderId, 
+            @PathVariable String orderId,
             @RequestParam String status) {
         try {
             PurchaseOrderDto updatedOrder = purchaseOrderService.updateOrderStatus(orderId, status);

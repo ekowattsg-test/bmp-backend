@@ -1,74 +1,74 @@
 [
   {
-    "movement_type": "D",
-    "hold_modifier": 0,
-    "movement_description": "Stock Disposal",
-    "stock_modifier": -1
+    "movement": "D",
+    "holdModifier": 0,
+    "movementDescription": "Stock Disposal",
+    "stockModifier": -1
   },
   {
-    "movement_type": "H",
-    "hold_modifier": -1,
-    "movement_description": "Stock On Hold",
-    "stock_modifier": 0
+    "movement": "H",
+    "holdModifier": -1,
+    "movementDescription": "Stock On Hold",
+    "stockModifier": 0
   },
   {
-    "movement_type": "I",
-    "hold_modifier": 0,
-    "movement_description": "Stock In",
-    "stock_modifier": 1
+    "movement": "I",
+    "holdModifier": 0,
+    "movementDescription": "Stock In",
+    "stockModifier": 1
   },
   {
-    "movement_type": "N",
-    "hold_modifier": 0,
-    "movement_description": "Initial Stock",
-    "stock_modifier": 1
+    "movement": "N",
+    "holdModifier": 0,
+    "movementDescription": "Initial Stock",
+    "stockModifier": 1
   },
   {
-    "movement_type": "O",
-    "hold_modifier": 0,
-    "movement_description": "Stock Out",
-    "stock_modifier": -1
+    "movement": "O",
+    "holdModifier": 0,
+    "movementDescription": "Stock Out",
+    "stockModifier": -1
   },
   {
-    "movement_type": "Q",
-    "hold_modifier": 1,
-    "movement_description": "Stock Requested",
-    "stock_modifier": 0
+    "movement": "Q",
+    "holdModifier": 1,
+    "movementDescription": "Stock Requested",
+    "stockModifier": 0
   },
   {
-    "movement_type": "R",
-    "hold_modifier": 1,
-    "movement_description": "Stock Released",
-    "stock_modifier": 0
+    "movement": "R",
+    "holdModifier": 1,
+    "movementDescription": "Stock Released",
+    "stockModifier": 0
   },
   {
-    "movement_type": "V",
-    "hold_modifier": 0,
-    "movement_description": "Stock Received",
-    "stock_modifier": 1
+    "movement": "V",
+    "holdModifier": 0,
+    "movementDescription": "Stock Received",
+    "stockModifier": 1
   },
   {
-    "movement_type": "M",
-    "hold_modifier": 0,
-    "movement_description": "In Adjustment",
-    "stock_modifier": 1
+    "movement": "M",
+    "holdModifier": 0,
+    "movementDescription": "In Adjustment",
+    "stockModifier": 1
   },
   {
-    "movement_type": "L",
-    "hold_modifier": 0,
-    "movement_description": "Out Adjustment",
-    "stock_modifier": -1
+    "movement": "L",
+    "holdModifier": 0,
+    "movementDescription": "Out Adjustment",
+    "stockModifier": -1
   },
   {
-    "movement_type": "G",
-    "hold_modifier": 0,
-    "movement_description": "Transferred Out",
-    "stock_modifier": -1
+    "movement": "G",
+    "holdModifier": 0,
+    "movementDescription": "Transferred Out",
+    "stockModifier": -1
   },
   {
-    "movement_type": "C",
-    "hold_modifier": 0,
-    "movement_description": "Transferred In",
-    "stock_modifier": 1
+    "movement": "C",
+    "holdModifier": 0,
+    "movementDescription": "Transferred In",
+    "stockModifier": 1
   }
 ]

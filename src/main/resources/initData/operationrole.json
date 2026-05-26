@@ -1,0 +1,14 @@
+[
+  {
+    "roleName": "Driver",
+    "roleDescription": "Can drive the company's vehicle"
+  },
+  {
+    "roleName": "Stock",
+    "roleDescription": "Can handle stock operations"
+  },
+  {
+    "roleName": "Deliver",
+    "roleDescription": "Can drive the company's vehicle for delivery"
+  }
+]

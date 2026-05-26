@@ -20,9 +20,11 @@ public class PurchaseOrder {
     @Id
     private String orderId;
     private Long vendorId;
+    private String projectCode;
     private Date orderDate;
     private Double purchaseAmount;
-    @Column(columnDefinition = "varchar(20) default 'NEW'")
+    @Column(name = "order_status", length = 20)
+    @org.hibernate.annotations.ColumnDefault("'NEW'")
     private String orderStatus;
     private Date issuedDate;
     private Date confirmedDate;

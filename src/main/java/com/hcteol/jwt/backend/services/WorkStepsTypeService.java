@@ -37,6 +37,12 @@ public class WorkStepsTypeService {
         existing.setStepDescription(workStepsType.getStepDescription());
         existing.setFromEntity(workStepsType.getFromEntity());
         existing.setToEntity(workStepsType.getToEntity());
+        existing.setStartAction(workStepsType.getStartAction());
+        existing.setScanData(workStepsType.getScanData());
+        existing.setCheckQuantity(workStepsType.getCheckQuantity());
+        existing.setNewStock(workStepsType.getNewStock());
+        existing.setTakePhoto(workStepsType.getTakePhoto());
+        existing.setEndAction(workStepsType.getEndAction());
         return repository.save(existing);
     }
 

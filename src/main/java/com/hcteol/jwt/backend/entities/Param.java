@@ -16,10 +16,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Param {
+
     @Id
     private String param_key;
     private String value_string;
-    private Long value_long;
-    private Date value_date;
-    private BigDecimal value_decimal;
 }

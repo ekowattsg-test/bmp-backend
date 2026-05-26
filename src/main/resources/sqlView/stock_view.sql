@@ -20,6 +20,7 @@ SELECT
     stock_movement.record_date AS record_date,
     stock_movement.location AS location,
     stock_movement.reference AS reference,
+    stock_movement.work_order_id AS work_order_id,
     stock_movement.action_by AS action_by,
     COALESCE(stock_movement_code.hold_modifier, 0) AS hold_modifier,
     stock_movement_code.movement_description AS movement_description,

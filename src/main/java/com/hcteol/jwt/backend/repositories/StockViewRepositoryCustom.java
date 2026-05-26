@@ -11,4 +11,6 @@ public interface StockViewRepositoryCustom {
     List<StockView> findByProductId(Long productId);
 
     List<StockView> findByStockCode(String stockCode);
+
+    List<StockView> findByWorkOrderId(String workOrderId);
 }

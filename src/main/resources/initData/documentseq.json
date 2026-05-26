@@ -1,10 +1,14 @@
 [
   {
-    "documentSeq": "PO",
+    "docType": "PO",
     "seq": 0
   },
   {
-    "documentSeq": "WO",
+    "docType": "WO",
+    "seq": 0
+  },
+  {
+    "docType": "DO",
     "seq": 0
   }
 ]

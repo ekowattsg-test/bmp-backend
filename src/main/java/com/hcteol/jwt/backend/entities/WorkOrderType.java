@@ -12,6 +12,7 @@ public class WorkOrderType {
     private String workOrderType;
     private String workOrderDescription;
     private String contentType;
+    private String roleName;
     private Integer numberOfSteps;
     private Integer needDetails;
     private Integer active;

@@ -12,6 +12,10 @@
     "description": "PO to vendor to provide the company products or services."
   },
   {
+    "workOrderEntity": "DO",
+    "description": "DO to custromer site to provide the company products or services."
+  },
+  {
     "workOrderEntity": "vehicle",
     "description": "Vehicles used for transportation of stocks or workers."
   }
