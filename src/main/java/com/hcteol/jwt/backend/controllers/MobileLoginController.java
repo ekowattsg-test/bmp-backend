@@ -1,23 +1,31 @@
 package com.hcteol.jwt.backend.controllers;
 
-import com.hcteol.jwt.backend.entities.MobileLogin;
-import com.hcteol.jwt.backend.services.MobileLoginService;
-import com.hcteol.jwt.backend.services.UserService;
-import com.hcteol.jwt.backend.dtos.OtpDto;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import org.springframework.beans.factory.annotation.Value;
-import com.hcteol.jwt.backend.entities.Staff;
-import com.hcteol.jwt.backend.services.UserLoginService;
-import com.hcteol.jwt.backend.entities.UserLogin;
-import java.time.ZonedDateTime;
-import java.time.ZoneId;
 import com.hcteol.jwt.backend.dtos.CredentialsDto;
-import org.springframework.http.MediaType;
+import com.hcteol.jwt.backend.dtos.MobileLoginRequestDto;
+import com.hcteol.jwt.backend.dtos.OtpDto;
+import com.hcteol.jwt.backend.entities.MobileLogin;
+import com.hcteol.jwt.backend.entities.Staff;
+import com.hcteol.jwt.backend.entities.UserLogin;
+import com.hcteol.jwt.backend.services.MobileLoginService;
+import com.hcteol.jwt.backend.services.UserLoginService;
+import com.hcteol.jwt.backend.services.UserService;
 
 @RestController
 @RequestMapping("/api/mobile-logins")
@@ -47,6 +55,16 @@ public class MobileLoginController {
     @PostMapping
     public ResponseEntity<MobileLogin> create(@RequestBody MobileLogin mobileLogin) {
         MobileLogin saved = mobileLoginService.addMobileLogin(mobileLogin);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    @PostMapping("/request")
+    public ResponseEntity<?> createRequest(@RequestBody MobileLoginRequestDto requestDto) {
+        if (requestDto == null || requestDto.getMobileNumber() == null || requestDto.getMobileNumber().isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("mobileNumber is required");
+        }
+
+        MobileLogin saved = mobileLoginService.createNewRequest(requestDto.getMobileNumber());
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
@@ -96,7 +114,7 @@ public class MobileLoginController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing loginKey");
         }
         // 1. retrieve mobilelogin and ensure status == NEW
-        MobileLogin mobileLogin = null;
+        MobileLogin mobileLogin;
         try {
             mobileLogin = mobileLoginService.getMobileLoginByKey(loginKey);
         } catch (Exception ex) {
@@ -147,12 +165,12 @@ public class MobileLoginController {
 
         // record login with staff name
         UserLogin userLogin = UserLogin.builder()
-            .userId(userDto.getId())
-            .firstName(userDto.getFirstName())
-            .lastName(userDto.getLastName())
-            .loginType("PDA")
-            .timeLogin(java.time.LocalDateTime.now())
-            .build();
+                .userId(userDto.getId())
+                .firstName(userDto.getFirstName())
+                .lastName(userDto.getLastName())
+                .loginType("PDA")
+                .timeLogin(java.time.LocalDateTime.now())
+                .build();
         userLoginService.addUserLogin(userLogin);
 
         // create token with overridden lastName

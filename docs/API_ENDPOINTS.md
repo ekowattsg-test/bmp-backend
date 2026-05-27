@@ -52,6 +52,10 @@ DeliveryOrderItemDto fields (summary): `itemId`, `orderId`, `itemType`, `product
 - /api/roles, /api/operationroles, /api/operationstaffs — role / operation endpoints
 - Auth & login endpoints: `/login`, `/register`, `/api/mobile-logins`, `/api/userlogin` etc.
 
+### Mobile Login endpoint notes
+
+- `POST /api/mobile-logins/request` - creates a mobile login request from `mobileNumber` only. Server generates `loginKey` (alphanumeric UUID), `requestTime` (current timestamp), `otp` (6-digit numeric), and sets `status` to `NEW`.
+
 ## How to regenerate a full raw list locally
 
 Run this in PowerShell from the project root to print all mapping annotations:
