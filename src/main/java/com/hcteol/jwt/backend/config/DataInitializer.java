@@ -30,29 +30,29 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hcteol.jwt.backend.entities.Company;
+import com.hcteol.jwt.backend.entities.DocumentSeq;
 import com.hcteol.jwt.backend.entities.Language;
+import com.hcteol.jwt.backend.entities.OperationRole;
 import com.hcteol.jwt.backend.entities.Param;
 import com.hcteol.jwt.backend.entities.Role;
 import com.hcteol.jwt.backend.entities.StockMovementCode;
 import com.hcteol.jwt.backend.entities.User;
 import com.hcteol.jwt.backend.entities.UserRole;
 import com.hcteol.jwt.backend.entities.WorkOrderEntity;
-import com.hcteol.jwt.backend.entities.OperationRole;
-import com.hcteol.jwt.backend.entities.DocumentSeq;
 import com.hcteol.jwt.backend.entities.WorkOrderType;
 import com.hcteol.jwt.backend.entities.WorkStepsType;
 import com.hcteol.jwt.backend.repositories.CompanyRepository;
+import com.hcteol.jwt.backend.repositories.DocumentSeqRepository;
 import com.hcteol.jwt.backend.repositories.LanguageRepository;
+import com.hcteol.jwt.backend.repositories.OperationRoleRepository;
 import com.hcteol.jwt.backend.repositories.ParamRepository;
 import com.hcteol.jwt.backend.repositories.RoleRepository;
 import com.hcteol.jwt.backend.repositories.StockMovementCodeRepository;
 import com.hcteol.jwt.backend.repositories.UserRepository;
 import com.hcteol.jwt.backend.repositories.UserRoleRepository;
 import com.hcteol.jwt.backend.repositories.WorkOrderEntityRepository;
-import com.hcteol.jwt.backend.repositories.DocumentSeqRepository;
 import com.hcteol.jwt.backend.repositories.WorkOrderTypeRepository;
 import com.hcteol.jwt.backend.repositories.WorkStepsTypeRepository;
-import com.hcteol.jwt.backend.repositories.OperationRoleRepository;
 
 @Component
 @ConditionalOnProperty(prefix = "app.data.init", name = "enabled", havingValue = "true", matchIfMissing = true)
@@ -504,7 +504,9 @@ public class DataInitializer implements ApplicationRunner {
             System.out.println("[DataInitializer] Failed to read initData/movement.json: " + ex.getMessage());
         }
 
-        // Load params from initData/param.json: insert if not exists
+        // Load params from initData/param.json:
+        // - create missing params using json values
+        // - for existing params, keep current value_string and overwrite changeable from json
         try {
             ObjectMapper mapper = new ObjectMapper();
             InputStream is = null;
@@ -536,24 +538,42 @@ public class DataInitializer implements ApplicationRunner {
                         continue;
                     }
 
-                    if (paramRepository.existsById(key)) {
-                        // already present, skip
+                    // Param now stores a single string value; choose available value fields with priority
+                    String valueString = null;
+                    Object vs = m.get("value_string");
+                    if (vs != null) {
+                        valueString = String.valueOf(vs);
+                    } else if (m.get("value_long") != null) {
+                        valueString = String.valueOf(m.get("value_long"));
+                    } else if (m.get("value_decimal") != null) {
+                        valueString = String.valueOf(m.get("value_decimal"));
+                    } else if (m.get("value_date") != null) {
+                        valueString = String.valueOf(m.get("value_date"));
+                    }
+                    Integer changeable = 0;
+                    try {
+                        Object changeableObj = m.get("changeable");
+                        if (changeableObj instanceof Number number) {
+                            changeable = number.intValue();
+                        } else if (changeableObj != null) {
+                            changeable = Integer.parseInt(changeableObj.toString());
+                        }
+                    } catch (NumberFormatException ex) {
+                    }
+
+                    Optional<Param> existingParam = paramRepository.findById(key);
+                    if (existingParam.isPresent()) {
+                        Param p = existingParam.get();
+                        p.setChangeable(changeable);
+                        paramRepository.save(p);
+                        System.out.println("[DataInitializer] Updated param " + key + " changeable=" + changeable);
                         continue;
                     }
 
                     Param p = new Param();
                     p.setParam_key(key);
-                    // Param now stores a single string value; choose available value fields with priority
-                    Object vs = m.get("value_string");
-                    if (vs != null) {
-                        p.setValue_string(String.valueOf(vs));
-                    } else if (m.get("value_long") != null) {
-                        p.setValue_string(String.valueOf(m.get("value_long")));
-                    } else if (m.get("value_decimal") != null) {
-                        p.setValue_string(String.valueOf(m.get("value_decimal")));
-                    } else if (m.get("value_date") != null) {
-                        p.setValue_string(String.valueOf(m.get("value_date")));
-                    }
+                    p.setValue_string(valueString);
+                    p.setChangeable(changeable);
                     paramRepository.save(p);
                     System.out.println("[DataInitializer] Created param " + key);
                 }
@@ -762,6 +782,13 @@ public class DataInitializer implements ApplicationRunner {
                         if (te != null) {
                             ws.setToEntity(String.valueOf(te));
                         }
+                        Object nc = m.get("noConfirm");
+                        if (nc != null) {
+                            try {
+                                ws.setNoConfirm(Integer.parseInt(String.valueOf(nc)));
+                            } catch (Exception ex) {
+                            }
+                        }
                         workStepsTypeRepository.save(ws);
                         System.out.println("[DataInitializer] Updated work step for type " + type + " step " + stepNo);
                     } else {
@@ -815,6 +842,13 @@ public class DataInitializer implements ApplicationRunner {
                         Object te = m.get("toEntity");
                         if (te != null) {
                             ws.setToEntity(String.valueOf(te));
+                        }
+                        Object nc = m.get("noConfirm");
+                        if (nc != null) {
+                            try {
+                                ws.setNoConfirm(Integer.parseInt(String.valueOf(nc)));
+                            } catch (Exception ex) {
+                            }
                         }
                         workStepsTypeRepository.save(ws);
                         System.out.println("[DataInitializer] Created work step for type " + type + " step " + stepNo);
@@ -994,6 +1028,7 @@ public class DataInitializer implements ApplicationRunner {
             Param baselineDate = new Param();
             baselineDate.setParam_key("baselineDate");
             baselineDate.setValue_string(baselineDateValue);
+            baselineDate.setChangeable(0);
             paramRepository.save(baselineDate);
             System.out.println("[DataInitializer] Created param 'baselineDate' with value " + baselineDateValue);
         }

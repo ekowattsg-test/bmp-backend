@@ -18,5 +18,9 @@
   {
     "workOrderEntity": "vehicle",
     "description": "Vehicles used for transportation of stocks or workers."
+  },
+  {
+    "workOrderEntity": "noAct",
+    "description": "No action needed."
   }
 ]

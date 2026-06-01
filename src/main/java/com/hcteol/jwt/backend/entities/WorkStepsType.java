@@ -24,4 +24,5 @@ public class WorkStepsType {
     private Integer newStock; // 0 or 1
     private Integer takePhoto; // 0 or 1
     private String endAction;
+    private Integer noConfirm; // 0 or 1
 }

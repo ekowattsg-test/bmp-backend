@@ -2,7 +2,7 @@
   {
     "workOrderType": "Receive",
     "stepNumber": 1,
-    "stepDescription": "Receive stock by Purchase Order",
+    "stepDescription": "Receive purchased stock 接收库存",
     "fromEntity": "PO",
     "toEntity": "location",
     "startAction": "",
@@ -10,12 +10,13 @@
     "checkQuantity": 0,
     "newStock": 1,
     "takePhoto": 1,
-    "endAction": "stock-in"
+    "endAction": "stock-in",
+    "noConfirm": 0
   },
   {
     "workOrderType": "Drawing",
     "stepNumber": 1,
-    "stepDescription": "Drawing stock for work",
+    "stepDescription": "Draw out stock 提取库存",
     "fromEntity": "location",
     "toEntity": "worker",
     "startAction": "",
@@ -23,25 +24,27 @@
     "checkQuantity": 1,
     "newStock": 0,
     "takePhoto": 1,
-    "endAction": "stock-out"
+    "endAction": "stock-out",
+    "noConfirm": 0
   },
   {
     "workOrderType": "Delivery",
     "stepNumber": 1,
-    "stepDescription": "Collect stock at a location",
+    "stepDescription": "Prepare DO 确认送货单",
     "fromEntity": "DO",
-    "toEntity": "location",
+    "toEntity": "noAct",
     "startAction": "",
     "scanData": 0,
     "checkQuantity": 0,
     "newStock": 0,
     "takePhoto": 0,
-    "endAction": ""
+    "endAction": "",
+    "noConfirm": 1
   },
   {
     "workOrderType": "Delivery",
     "stepNumber": 2,
-    "stepDescription": "Collect and load stock on vehicle",
+    "stepDescription": "Collect stock, load on vehicle 提货装车",
     "fromEntity": "location",
     "toEntity": "vehicle",
     "startAction": "",
@@ -49,12 +52,13 @@
     "checkQuantity": 1,
     "newStock": 0,
     "takePhoto": 1,
-    "endAction": "stock-tx"
+    "endAction": "stock-tx",
+    "noConfirm": 1
   },
   {
     "workOrderType": "Delivery",
     "stepNumber": 3,
-    "stepDescription": "Unload and receive stock at a location",
+    "stepDescription": "Arrived at location, Unload stock 到库卸货",
     "fromEntity": "vehicle",
     "toEntity": "location",
     "startAction": "",
@@ -62,12 +66,13 @@
     "checkQuantity": 0,
     "newStock": 0,
     "takePhoto": 1,
-    "endAction": "stock-loc"
+    "endAction": "stock-loc",
+    "noConfirm": 0
   },
   {
     "workOrderType": "Transport",
     "stepNumber": 1,
-    "stepDescription": "Worker board vehicle at a location",
+    "stepDescription": "Worker boarding 上车",
     "fromEntity": "location",
     "toEntity": "vehicle",
     "startAction": "",
@@ -75,12 +80,13 @@
     "checkQuantity": 0,
     "newStock": 0,
     "takePhoto": 1,
-    "endAction": ""
+    "endAction": "",
+    "noConfirm": 1
   },
   {
     "workOrderType": "Transport",
     "stepNumber": 2,
-    "stepDescription": "Worker disembark vehicle at a location",
+    "stepDescription": "Arrived, worker disembarking",
     "fromEntity": "vehicle",
     "toEntity": "location",
     "startAction": "",
@@ -88,12 +94,13 @@
     "checkQuantity": 0,
     "newStock": 0,
     "takePhoto": 1,
-    "endAction": "staff-loc"
+    "endAction": "staff-loc",
+    "noConfirm": 0
   },
   {
     "workOrderType": "Collection",
     "stepNumber": 1,
-    "stepDescription": "Collect and load stock on vehicle",
+    "stepDescription": "Collect stock, load on vehicle 提货装车",
     "fromEntity": "PO",
     "toEntity": "vehicle",
     "startAction": "",
@@ -101,12 +108,13 @@
     "checkQuantity": 0,
     "newStock": 1,
     "takePhoto": 1,
-    "endAction": "stock-in"
+    "endAction": "stock-in",
+    "noConfirm": 1
   },
   {
     "workOrderType": "Collection",
     "stepNumber": 2,
-    "stepDescription": "Unload and receive stock at a location",
+    "stepDescription": "Arrived at location, unload stock",
     "fromEntity": "vehicle",
     "toEntity": "location",
     "startAction": "",
@@ -114,12 +122,13 @@
     "checkQuantity": 0,
     "newStock": 0,
     "takePhoto": 1,
-    "endAction": "stock-loc"
+    "endAction": "stock-loc",
+    "noConfirm": 0
   },
   {
     "workOrderType": "Allocating",
     "stepNumber": 1,
-    "stepDescription": "assigning asset to a staff",
+    "stepDescription": "Issue asset to staff 发放工具",
     "fromEntity": "location",
     "toEntity": "worker",
     "startAction": "",
@@ -127,6 +136,7 @@
     "checkQuantity": 1,
     "newStock": 0,
     "takePhoto": 1,
-    "endAction": "stock-tx"
+    "endAction": "stock-tx",
+    "noConfirm": 0
   }
 ]

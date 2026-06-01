@@ -1,14 +1,17 @@
 [
   {
     "param_key": "stockTakeOn",
-    "value_string": 1
+    "value_string": 1,
+    "changeable": 1
   },
   {
     "param_key": "inventoryMargin",
-    "value_string": 1.2
+    "value_string": 1.2,
+    "changeable": 1
   },
   {
     "param_key": "manualStockEntry",
-    "value_string": 0
+    "value_string": 0,
+    "changeable": 1
   }
 ]

@@ -1,22 +1,19 @@
 package com.hcteol.jwt.backend.services;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.hcteol.jwt.backend.entities.WorkOrder;
 import com.hcteol.jwt.backend.entities.WorkSteps;
+import com.hcteol.jwt.backend.entities.WorkStepsType;
+import com.hcteol.jwt.backend.repositories.WorkOrderRepository;
 import com.hcteol.jwt.backend.repositories.WorkStepsRepository;
 import com.hcteol.jwt.backend.repositories.WorkStepsTypeRepository;
-import com.hcteol.jwt.backend.repositories.WorkOrderRepository;
-import com.hcteol.jwt.backend.entities.WorkStepsType;
-import com.hcteol.jwt.backend.entities.WorkOrder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Transactional;
-import java.time.LocalDateTime;
-import com.hcteol.jwt.backend.entities.Stock;
-import com.hcteol.jwt.backend.entities.StockMovement;
 
 @Service
 public class WorkStepsService {
@@ -87,6 +84,14 @@ public class WorkStepsService {
         workStepsRepository.deleteById(id);
     }
 
+    private boolean isNoActEntity(String entity) {
+        return entity != null && "noAct".equalsIgnoreCase(entity.trim());
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
+    }
+
     /**
      * Perform the current INPROGRESS step for the given work order. - finds the
      * step with status "INPROGRESS" - looks up the step definition via
@@ -124,6 +129,8 @@ public class WorkStepsService {
             throw new IllegalStateException("Step definition not found for type " + wo.getWorkOrderType() + " step " + inProgress.getStepNumber());
         }
         WorkStepsType def = defOpt.get();
+        boolean ignoreFromLocation = isNoActEntity(def.getFromEntity());
+        boolean ignoreToLocation = isNoActEntity(def.getToEntity());
 
         logger.info("Resolved step definition: endAction='{}' fromEntity='{}' toEntity='{}' for workOrder {}", def.getEndAction(), def.getFromEntity(), def.getToEntity(), workOrderId);
         String endAction = def.getEndAction();
@@ -147,24 +154,27 @@ public class WorkStepsService {
             if ("staff-loc".equalsIgnoreCase(endAction.trim())) {
                 // set staff.location for all staff referenced by WorkOrderData for this WO
                 String targetLocation = inProgress.getToLocation();
-                if (targetLocation == null || targetLocation.isBlank()) {
+                if (ignoreToLocation) {
+                    logger.info("Skipping staff-loc location update for workOrder {} because toEntity is noAct", workOrderId);
+                } else if (targetLocation == null || targetLocation.isBlank()) {
                     throw new IllegalStateException("Target location not set on step record for staff-loc action");
-                }
-                java.util.List<com.hcteol.jwt.backend.entities.WorkOrderData> wodList = workOrderDataRepository.findByWorkOrderId(workOrderId);
-                for (com.hcteol.jwt.backend.entities.WorkOrderData wod : wodList) {
-                    String staffId = wod.getStaffId();
-                    if (staffId == null || staffId.isBlank()) {
-                        logger.warn("WorkOrderData {} has no staffId, skipping", wod.getWorkOrderDataId());
-                        continue;
-                    }
-                    var staffOpt = staffRepository.findById(staffId);
-                    if (staffOpt.isPresent()) {
-                        var staff = staffOpt.get();
-                        staff.setLocation(targetLocation);
-                        staffRepository.save(staff);
-                        logger.info("Updated location for staff {} to {}", staffId, targetLocation);
-                    } else {
-                        logger.warn("Staff {} referenced by WorkOrderData {} not found", staffId, wod.getWorkOrderDataId());
+                } else {
+                    java.util.List<com.hcteol.jwt.backend.entities.WorkOrderData> wodList = workOrderDataRepository.findByWorkOrderId(workOrderId);
+                    for (com.hcteol.jwt.backend.entities.WorkOrderData wod : wodList) {
+                        String staffId = wod.getStaffId();
+                        if (staffId == null || staffId.isBlank()) {
+                            logger.warn("WorkOrderData {} has no staffId, skipping", wod.getWorkOrderDataId());
+                            continue;
+                        }
+                        var staffOpt = staffRepository.findById(staffId);
+                        if (staffOpt.isPresent()) {
+                            var staff = staffOpt.get();
+                            staff.setLocation(targetLocation);
+                            staffRepository.save(staff);
+                            logger.info("Updated location for staff {} to {}", staffId, targetLocation);
+                        } else {
+                            logger.warn("Staff {} referenced by WorkOrderData {} not found", staffId, wod.getWorkOrderDataId());
+                        }
                     }
                 }
             } else {
@@ -176,7 +186,7 @@ public class WorkStepsService {
         switch (trimmedAction.toLowerCase()) {
             case "stock-in": {
                 String targetLocation = inProgress.getToLocation();
-                if (targetLocation == null || targetLocation.isBlank()) {
+                if (!ignoreToLocation && (targetLocation == null || targetLocation.isBlank())) {
                     throw new IllegalStateException("Target location not set on step record for stock-in action");
                 }
 
@@ -242,7 +252,9 @@ public class WorkStepsService {
                         mv.setStockId(stock.getStockId());
                         mv.setMovementType("I");
                         mv.setQuantity(qty);
-                        mv.setLocation(targetLocation);
+                        if (!ignoreToLocation && hasText(targetLocation)) {
+                            mv.setLocation(targetLocation);
+                        }
                         mv.setReference((poCandidate != null && !poCandidate.isBlank()) ? poCandidate : def.getFromEntity());
                         mv.setWorkOrderId(workOrderId);
                         mv.setRecordDate(LocalDateTime.now().toString());
@@ -292,7 +304,7 @@ public class WorkStepsService {
 
             case "stock-out": {
                 String fromLocation = inProgress.getFromLocation();
-                if (fromLocation == null || fromLocation.isBlank()) {
+                if (!ignoreFromLocation && (fromLocation == null || fromLocation.isBlank())) {
                     throw new IllegalStateException("Source location (fromLocation) not set on step record for stock-out action");
                 }
 
@@ -350,7 +362,9 @@ public class WorkStepsService {
                         mv.setStockId(stock.getStockId());
                         mv.setMovementType("O");
                         mv.setQuantity(qty);
-                        mv.setLocation(fromLocation);
+                        if (!ignoreFromLocation && hasText(fromLocation)) {
+                            mv.setLocation(fromLocation);
+                        }
                         mv.setReference(refCandidate);
                         mv.setWorkOrderId(workOrderId);
                         mv.setRecordDate(LocalDateTime.now().toString());
@@ -405,11 +419,11 @@ public class WorkStepsService {
                             }
                         }
                     }
-                    if (fromLocationTx == null || fromLocationTx.isBlank()) {
+                    if (!ignoreFromLocation && (fromLocationTx == null || fromLocationTx.isBlank())) {
                         logger.error("Aborting stock-tx: missing fromLocation for workOrder {}", workOrderId);
                         throw new IllegalStateException("Source location (fromLocation) not set on step record for stock-tx action");
                     }
-                    if (toLocationTx == null || toLocationTx.isBlank()) {
+                    if (!ignoreToLocation && (toLocationTx == null || toLocationTx.isBlank())) {
                         logger.error("Aborting stock-tx: missing toLocation for workOrder {}", workOrderId);
                         throw new IllegalStateException("Target location (toLocation) not set on step record for stock-tx action");
                     }
@@ -437,6 +451,9 @@ public class WorkStepsService {
                     logger.info("Transaction reference set to '{}'", txRef);
 
                     java.util.List<com.hcteol.jwt.backend.entities.WorkOrderData> wodListTx = workOrderDataRepository.findByWorkOrderId(workOrderId);
+                    if (wodListTx == null) {
+                        wodListTx = java.util.Collections.emptyList();
+                    }
                     logger.debug("Loading WorkOrderData for workOrder {} (count={})", workOrderId, wodListTx != null ? wodListTx.size() : 0);
 
                     int processedCount = 0;
@@ -463,42 +480,92 @@ public class WorkStepsService {
                             }
                             logger.info("Stock found: stockId={} for productId={} stockCode={}", stock.getStockId(), productId, stockCode);
 
-                            logger.info("Creating transfer-out movement (G) for stockId={} qty={} location='{}' reference='{}' actionBy='{}'", stock.getStockId(), qty, fromLocationTx, txRef, actionedByTx);
-                            com.hcteol.jwt.backend.entities.StockMovement mvOut = new com.hcteol.jwt.backend.entities.StockMovement();
-                            mvOut.setStockId(stock.getStockId());
-                            mvOut.setMovementType("G");
-                            mvOut.setQuantity(qty);
-                            mvOut.setLocation(effectiveFromLocation);
-                            mvOut.setReference(txRef);
-                            mvOut.setWorkOrderId(workOrderId);
-                            mvOut.setRecordDate(LocalDateTime.now().toString());
-                            mvOut.setActionBy(actionedByTx);
-                            logger.debug("Saving StockMovement OUT for stockId={} (will set workOrderId={})", stock.getStockId(), workOrderId);
-                            stockMovementRepository.save(mvOut);
-                            movementsCreatedCount++;
-                            logger.info("Saved OUT movement id={} for stockId={} qty={}", mvOut.getMovementId(), stock.getStockId(), qty);
+                            Long outMovementId = null;
+                            Long inMovementId = null;
+                            if (!ignoreFromLocation) {
+                                logger.info("Creating transfer-out movement (G) for stockId={} qty={} location='{}' reference='{}' actionBy='{}'", stock.getStockId(), qty, fromLocationTx, txRef, actionedByTx);
+                                com.hcteol.jwt.backend.entities.StockMovement mvOut = new com.hcteol.jwt.backend.entities.StockMovement();
+                                mvOut.setStockId(stock.getStockId());
+                                mvOut.setMovementType("G");
+                                mvOut.setQuantity(qty);
+                                mvOut.setLocation(effectiveFromLocation);
+                                mvOut.setReference(txRef);
+                                mvOut.setWorkOrderId(workOrderId);
+                                mvOut.setRecordDate(LocalDateTime.now().toString());
+                                mvOut.setActionBy(actionedByTx);
+                                logger.debug("Saving StockMovement OUT for stockId={} (will set workOrderId={})", stock.getStockId(), workOrderId);
+                                stockMovementRepository.save(mvOut);
+                                movementsCreatedCount++;
+                                outMovementId = mvOut.getMovementId();
+                                logger.info("Saved OUT movement id={} for stockId={} qty={}", mvOut.getMovementId(), stock.getStockId(), qty);
+                            } else {
+                                logger.info("Skipping transfer-out movement for workOrder {} because fromEntity is noAct", workOrderId);
+                            }
 
-                            logger.info("Creating transfer-in movement (C) for stockId={} qty={} location='{}' reference='{}' actionBy='{}'", stock.getStockId(), qty, toLocationTx, txRef, actionedByTx);
-                            com.hcteol.jwt.backend.entities.StockMovement mvIn = new com.hcteol.jwt.backend.entities.StockMovement();
-                            mvIn.setStockId(stock.getStockId());
-                            mvIn.setMovementType("C");
-                            mvIn.setQuantity(qty);
-                            mvIn.setLocation(effectiveToLocation);
-                            mvIn.setReference(txRef);
-                            mvIn.setWorkOrderId(workOrderId);
-                            mvIn.setRecordDate(LocalDateTime.now().toString());
-                            mvIn.setActionBy(actionedByTx);
-                            logger.debug("Saving StockMovement IN for stockId={} (will set workOrderId={})", stock.getStockId(), workOrderId);
-                            stockMovementRepository.save(mvIn);
-                            movementsCreatedCount++;
-                            logger.info("Saved IN movement id={} for stockId={} qty={}", mvIn.getMovementId(), stock.getStockId(), qty);
+                            if (!ignoreToLocation) {
+                                logger.info("Creating transfer-in movement (C) for stockId={} qty={} location='{}' reference='{}' actionBy='{}'", stock.getStockId(), qty, toLocationTx, txRef, actionedByTx);
+                                com.hcteol.jwt.backend.entities.StockMovement mvIn = new com.hcteol.jwt.backend.entities.StockMovement();
+                                mvIn.setStockId(stock.getStockId());
+                                mvIn.setMovementType("C");
+                                mvIn.setQuantity(qty);
+                                mvIn.setLocation(effectiveToLocation);
+                                mvIn.setReference(txRef);
+                                mvIn.setWorkOrderId(workOrderId);
+                                mvIn.setRecordDate(LocalDateTime.now().toString());
+                                mvIn.setActionBy(actionedByTx);
+                                logger.debug("Saving StockMovement IN for stockId={} (will set workOrderId={})", stock.getStockId(), workOrderId);
+                                stockMovementRepository.save(mvIn);
+                                movementsCreatedCount++;
+                                inMovementId = mvIn.getMovementId();
+                                logger.info("Saved IN movement id={} for stockId={} qty={}", mvIn.getMovementId(), stock.getStockId(), qty);
+                            } else {
+                                logger.info("Skipping transfer-in movement for workOrder {} because toEntity is noAct", workOrderId);
+                            }
 
-                            logger.debug("Processed subdata {}: created OUT={} IN={} for stockId={}", subIndex, mvOut.getMovementId(), mvIn.getMovementId(), stock.getStockId());
+                            logger.debug("Processed subdata {}: created OUT={} IN={} for stockId={}", subIndex, outMovementId, inMovementId, stock.getStockId());
                             processedCount++;
                         }
                     }
 
                     logger.info("Completed stock-tx for workOrder {}: total subitems processed={}, total movements created={}", workOrderId, processedCount, movementsCreatedCount);
+
+                    // After stock transfer is complete, mark Delivery Order as DELIVERED when
+                    // any step definition in this work order uses fromEntity=DO.
+                    String deliveryOrderId = null;
+                    for (WorkSteps step : steps) {
+                        if (step.getStepNumber() == null) {
+                            continue;
+                        }
+                        java.util.Optional<WorkStepsType> stepDefOpt = workStepsTypeRepository
+                                .findByWorkOrderTypeAndStepNumber(wo.getWorkOrderType(), step.getStepNumber());
+                        if (stepDefOpt.isEmpty()) {
+                            continue;
+                        }
+                        WorkStepsType stepDef = stepDefOpt.get();
+                        if (stepDef.getFromEntity() != null
+                                && "DO".equalsIgnoreCase(stepDef.getFromEntity().trim())
+                                && hasText(step.getFromLocation())) {
+                            deliveryOrderId = step.getFromLocation().trim();
+                            break;
+                        }
+                    }
+
+                    if (hasText(deliveryOrderId)) {
+                        if (deliveryOrderRepository.existsById(deliveryOrderId)) {
+                            var doOpt = deliveryOrderRepository.findById(deliveryOrderId);
+                            if (doOpt.isPresent()) {
+                                var d = doOpt.get();
+                                d.setOrderStatus("DELIVERED");
+                                d.setDeliveredDate(new java.sql.Date(System.currentTimeMillis()));
+                                deliveryOrderRepository.save(d);
+                                logger.info("Marked DeliveryOrder {} as DELIVERED after stock-tx", deliveryOrderId);
+                            }
+                        } else {
+                            logger.warn("Candidate delivery order id '{}' not found, skipping DO status update after stock-tx", deliveryOrderId);
+                        }
+                    } else {
+                        logger.info("No step definition with fromEntity=DO found for workOrder {}; skipping DO status update after stock-tx", workOrderId);
+                    }
                 } catch (Exception e) {
                     logger.error("Exception during stock-tx for workOrder {}: {}", workOrderId, e.getMessage(), e);
                     throw e;
@@ -508,12 +575,16 @@ public class WorkStepsService {
 
             case "stock-loc": {
                 String newLocation = inProgress.getToLocation();
+                if (ignoreToLocation) {
+                    logger.info("Skipping stock-loc update for workOrder {} because toEntity is noAct", workOrderId);
+                    break;
+                }
                 if (newLocation == null || newLocation.isBlank()) {
                     throw new IllegalStateException("Target location (toLocation) not set on step record for stock-loc action");
                 }
 
                 String expectedOldLocation = inProgress.getFromLocation();
-                if (expectedOldLocation == null || expectedOldLocation.isBlank()) {
+                if (!ignoreFromLocation && (expectedOldLocation == null || expectedOldLocation.isBlank())) {
                     throw new IllegalStateException("Source location (fromLocation) not set on step record; cannot filter stock movements for stock-loc action");
                 }
 
@@ -522,7 +593,7 @@ public class WorkStepsService {
                     logger.info("No stock movements found for work order {}", workOrderId);
                 } else {
                     for (com.hcteol.jwt.backend.entities.StockMovement mv : movements) {
-                        if (expectedOldLocation.equals(mv.getLocation())) {
+                        if (ignoreFromLocation || expectedOldLocation.equals(mv.getLocation())) {
                             mv.setLocation(newLocation);
                             stockMovementRepository.save(mv);
                             logger.info("Updated StockMovement {} location -> {}", mv.getMovementId(), newLocation);

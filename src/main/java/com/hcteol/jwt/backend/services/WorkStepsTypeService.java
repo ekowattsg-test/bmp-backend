@@ -1,12 +1,14 @@
 package com.hcteol.jwt.backend.services;
 
-import com.hcteol.jwt.backend.entities.WorkStepsType;
-import com.hcteol.jwt.backend.repositories.WorkStepsTypeRepository;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import com.hcteol.jwt.backend.entities.WorkStepsType;
+import com.hcteol.jwt.backend.repositories.WorkStepsTypeRepository;
 
 @Service
 public class WorkStepsTypeService {
@@ -19,7 +21,7 @@ public class WorkStepsTypeService {
     }
 
     public WorkStepsType create(WorkStepsType workStepsType) {
-        return repository.save(workStepsType);
+        return repository.save(Objects.requireNonNull(workStepsType, "workStepsType must not be null"));
     }
 
     public List<WorkStepsType> findAll() {
@@ -27,11 +29,12 @@ public class WorkStepsTypeService {
     }
 
     public Optional<WorkStepsType> findById(Long id) {
-        return repository.findById(id);
+        return repository.findById(Objects.requireNonNull(id, "id must not be null"));
     }
 
     public WorkStepsType update(Long id, WorkStepsType workStepsType) {
-        WorkStepsType existing = repository.findById(id).orElseThrow(() -> new RuntimeException("WorkStepsType not found"));
+        WorkStepsType existing = repository.findById(Objects.requireNonNull(id, "id must not be null"))
+                .orElseThrow(() -> new RuntimeException("WorkStepsType not found"));
         existing.setWorkOrderType(workStepsType.getWorkOrderType());
         existing.setStepNumber(workStepsType.getStepNumber());
         existing.setStepDescription(workStepsType.getStepDescription());
@@ -43,10 +46,11 @@ public class WorkStepsTypeService {
         existing.setNewStock(workStepsType.getNewStock());
         existing.setTakePhoto(workStepsType.getTakePhoto());
         existing.setEndAction(workStepsType.getEndAction());
+        existing.setNoConfirm(workStepsType.getNoConfirm());
         return repository.save(existing);
     }
 
     public void delete(Long id) {
-        repository.deleteById(id);
+        repository.deleteById(Objects.requireNonNull(id, "id must not be null"));
     }
 }

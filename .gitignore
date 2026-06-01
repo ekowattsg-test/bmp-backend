@@ -1,6 +1,7 @@
 .gradle
 .env
 app.logs
+app.log*
 build/
 target/
 /target/**
