@@ -38,6 +38,29 @@ DeliveryOrderItemDto fields (summary): `itemId`, `orderId`, `itemType`, `product
 - DELETE /api/deliveryOrderItems/{itemId} — delete item
 - DELETE /api/deliveryOrderItems/order/{orderId} — delete items by order id
 
+## Project Leader endpoints
+
+- GET /api/projectleaders — list all project leaders
+- GET /api/projectleaders/{id} — get project leader by id
+- GET /api/projectleaders/project/{projectCode} — list project leaders by project code
+- GET /api/projectleaders/staff/{projectLeaderStaffId} — list project leaders by staff id
+- GET /api/projectleaders/active/{active} — list project leaders by active status (1 active, 0 inactive)
+- POST /api/projectleaders — create project leader
+- PUT /api/projectleaders/{id} — update project leader
+- DELETE /api/projectleaders/{id} — delete project leader
+
+## Project Stream endpoints
+
+- GET /api/projectstreams — list all project streams
+- GET /api/projectstreams?projectCode={projectCode} — list project streams by project code
+- GET /api/projectstreams?streamType={streamType} — list project streams by stream type
+- GET /api/projectstreams?projectCode={projectCode}&streamType={streamType} — list project streams by project code and stream type
+- GET /api/projectstreams/{id} — get project stream by id
+- GET /api/projectstreams/project/{projectCode} — list project streams by project code (path variant)
+- POST /api/projectstreams — create project stream
+- PUT /api/projectstreams/{id} — update project stream
+- DELETE /api/projectstreams/{id} — delete project stream
+
 ## Notable other endpoints (summary)
 
 - /api/customers — customer CRUD/read endpoints
@@ -47,7 +70,7 @@ DeliveryOrderItemDto fields (summary): `itemId`, `orderId`, `itemType`, `product
 - /api/purchaseOrderItems — purchase order item CRUD
 - /api/purchaseorderview — read-only view endpoints for PO aggregated data
 - /api/stocks, /api/stockmovements, /api/stockviews — stock & movement endpoints
-- /api/projects, /api/projectstreams, /api/projecttasks, /api/projectstocks, /api/projectbundles, /api/projectmanpowers — project-related endpoints
+- /api/projects, /api/projectstreams, /api/projecttasks, /api/projectstocks, /api/projectbundles, /api/projectmanpowers, /api/projectleaders — project-related endpoints
 - /api/staffs, /api/staffskills, /api/staffskillprofiles — staff management endpoints
 - /api/roles, /api/operationroles, /api/operationstaffs — role / operation endpoints
 - Auth & login endpoints: `/login`, `/register`, `/api/mobile-logins`, `/api/userlogin` etc.

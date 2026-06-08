@@ -11,12 +11,15 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/projectstreams")
 public class ProjectStreamController {
+
     @Autowired
     private ProjectStreamService projectStreamService;
 
     @GetMapping
-    public List<ProjectStream> getAllProjectStreams() {
-        return projectStreamService.getAllProjectStreams();
+    public List<ProjectStream> getAllProjectStreams(
+            @RequestParam(required = false) String projectCode,
+            @RequestParam(required = false) String streamType) {
+        return projectStreamService.getAllProjectStreams(projectCode, streamType);
     }
 
     @GetMapping("/{id}")

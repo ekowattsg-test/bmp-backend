@@ -10,10 +10,20 @@ import java.util.Optional;
 
 @Service
 public class ProjectStreamService {
+
     @Autowired
     private ProjectStreamRepository projectStreamRepository;
 
-    public List<ProjectStream> getAllProjectStreams() {
+    public List<ProjectStream> getAllProjectStreams(String projectCode, String streamType) {
+        if (projectCode != null && !projectCode.isBlank() && streamType != null && !streamType.isBlank()) {
+            return projectStreamRepository.findByProjectCodeAndStreamType(projectCode, streamType);
+        }
+        if (projectCode != null && !projectCode.isBlank()) {
+            return projectStreamRepository.findByProjectCode(projectCode);
+        }
+        if (streamType != null && !streamType.isBlank()) {
+            return projectStreamRepository.findByStreamType(streamType);
+        }
         return projectStreamRepository.findAll();
     }
 
@@ -32,11 +42,12 @@ public class ProjectStreamService {
     public ProjectStream updateProjectStream(Long id, ProjectStream projectStreamDetails) {
         return projectStreamRepository.findById(id).map(projectStream -> {
             projectStream.setProjectCode(projectStreamDetails.getProjectCode());
+            projectStream.setStreamType(projectStreamDetails.getStreamType());
             projectStream.setStreamNumber(projectStreamDetails.getStreamNumber());
             projectStream.setStreamName(projectStreamDetails.getStreamName());
             projectStream.setStreamDescription(projectStreamDetails.getStreamDescription());
-            projectStream.setMobileNumber(projectStreamDetails.getMobileNumber());
-            projectStream.setActive(projectStreamDetails.getActive());
+            projectStream.setStreamStartDate(projectStreamDetails.getStreamStartDate());
+            projectStream.setStreamEndDate(projectStreamDetails.getStreamEndDate());
             return projectStreamRepository.save(projectStream);
         }).orElseThrow(() -> new RuntimeException("ProjectStream not found with id " + id));
     }

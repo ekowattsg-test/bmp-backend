@@ -11,12 +11,15 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/projects")
 public class ProjectController {
+
     @Autowired
     private ProjectService projectService;
 
     @GetMapping
-    public List<Project> getAllProjects() {
-        return projectService.getAllProjects();
+    public List<Project> getAllProjects(
+            @RequestParam(required = false) Long customerId,
+            @RequestParam(required = false) String status) {
+        return projectService.getAllProjects(customerId, status);
     }
 
     @GetMapping("/{projectCode}")

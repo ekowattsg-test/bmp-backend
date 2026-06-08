@@ -8,5 +8,10 @@ import java.util.List;
 
 @Repository
 public interface ProjectStreamRepository extends JpaRepository<ProjectStream, Long> {
+
     List<ProjectStream> findByProjectCode(String projectCode);
+
+    List<ProjectStream> findByStreamType(String streamType);
+
+    List<ProjectStream> findByProjectCodeAndStreamType(String projectCode, String streamType);
 }

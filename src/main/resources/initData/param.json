@@ -13,5 +13,10 @@
     "param_key": "manualStockEntry",
     "value_string": 0,
     "changeable": 1
+  },
+  {
+    "param_key": "mainWarehouse",
+    "value_string": "central",
+    "changeable": 1
   }
 ]

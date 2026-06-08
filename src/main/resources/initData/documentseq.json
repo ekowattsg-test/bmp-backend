@@ -10,5 +10,9 @@
   {
     "docType": "DO",
     "seq": 0
+  },
+  {
+    "docType": "ST",
+    "seq": 0
   }
 ]

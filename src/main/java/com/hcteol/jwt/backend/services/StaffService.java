@@ -1,9 +1,11 @@
 package com.hcteol.jwt.backend.services;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.hcteol.jwt.backend.entities.Staff;
 import com.hcteol.jwt.backend.repositories.StaffRepository;
@@ -14,7 +16,16 @@ public class StaffService {
     @Autowired
     private StaffRepository staffRepository;
 
+    @Autowired
+    private DocumentSeqService documentSeqService;
+
+    @Transactional
     public Staff addStaff(Staff staff) {
+        if (staff.getStaffId() == null || staff.getStaffId().trim().isEmpty()) {
+            String token = UUID.randomUUID().toString();
+            Long seq = documentSeqService.getNextSeq("ST", token);
+            staff.setStaffId("ST-" + seq);
+        }
         return staffRepository.save(staff);
     }
 
