@@ -61,6 +61,25 @@ DeliveryOrderItemDto fields (summary): `itemId`, `orderId`, `itemType`, `product
 - PUT /api/projectstreams/{id} — update project stream
 - DELETE /api/projectstreams/{id} — delete project stream
 
+## ProjectTask entity payload (request/response)
+
+- `projectTaskId` (Long)
+- `projectStreamId` (Long)
+- `taskType` (String) — `D` dependent task, `A` anchor task, `B` baseline task
+- `taskName` (String)
+- `staffId` (String) — person in-charge of task
+- `taskStartDate` (String)
+- `taskEndDate` (String)
+
+## ProjectTask endpoints
+
+- GET /api/projecttasks — list all project tasks
+- GET /api/projecttasks/{id} — get project task by id
+- GET /api/projecttasks/stream/{projectStreamId} — list project tasks by stream id
+- POST /api/projecttasks — create project task (body: ProjectTask)
+- PUT /api/projecttasks/{id} — update project task (body: ProjectTask)
+- DELETE /api/projecttasks/{id} — delete project task
+
 ## Notable other endpoints (summary)
 
 - /api/customers — customer CRUD/read endpoints
@@ -91,4 +110,4 @@ This prints all controller mapping annotations and their file locations so you c
 
 ---
 
-Generated from the codebase on May 23, 2026.
+Generated from the codebase on June 11, 2026.

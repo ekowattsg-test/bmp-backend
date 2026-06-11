@@ -1,29 +1,28 @@
 package com.hcteol.jwt.backend.services;
 
+import java.nio.CharBuffer;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Date;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import com.hcteol.jwt.backend.dtos.ChangePasswordDto;
 import com.hcteol.jwt.backend.dtos.CredentialsDto;
 import com.hcteol.jwt.backend.dtos.SignUpDto;
 import com.hcteol.jwt.backend.dtos.UserDto;
-// import com.hcteol.jwt.backend.entities.User;
-import com.hcteol.jwt.backend.mappers.UserMapper;
-import com.hcteol.jwt.backend.repositories.UserRepository;
 import com.hcteol.jwt.backend.entities.UserLogin;
-import com.hcteol.jwt.backend.services.UserLoginService;
-import com.hcteol.jwt.backend.repositories.MobileLoginRepository;
-import com.hcteol.jwt.backend.entities.MobileLogin;
-import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import java.time.ZonedDateTime;
-import java.time.ZoneId;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 import com.hcteol.jwt.backend.exceptions.AppException;
+import com.hcteol.jwt.backend.mappers.UserMapper;
+import com.hcteol.jwt.backend.repositories.MobileLoginRepository;
+import com.hcteol.jwt.backend.repositories.UserRepository;
 
-import java.nio.CharBuffer;
-import java.util.Date;
+import lombok.RequiredArgsConstructor;
 // import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -133,8 +132,8 @@ public class UserService {
 
         var user = userMapper.signUpToUser(userDto);
         user.setPassword(passwordEncoder.encode(CharBuffer.wrap(userDto.getPassword())));
-    user.setCompanyId(userDto.getCompanyId());
-    user.setLevel(userDto.getLevel());
+        user.setCompanyId(userDto.getCompanyId());
+        user.setLevel(userDto.getLevel());
         // ensure new users are active by default
         if (user.getActive() == null) {
             user.setActive(1);
@@ -163,6 +162,12 @@ public class UserService {
         return userMapper.toUserDto(user);
     }
 
+    public UserDto getUserByMobileNumber(String mobileNumber) {
+        var user = userRepository.findByMobileNumber(mobileNumber)
+                .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
+        return userMapper.toUserDto(user);
+    }
+
     public UserDto updateUser(Long id, UserDto userDto) {
         var user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
@@ -184,12 +189,12 @@ public class UserService {
     public void changePassword(Long id, ChangePasswordDto changePasswordDto, PasswordEncoder passwordEncoder) {
         var user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
-        
+
         // Validate the old password
         if (!passwordEncoder.matches(CharBuffer.wrap(changePasswordDto.getOldPassword()), user.getPassword())) {
             throw new AppException("Current password is incorrect", HttpStatus.BAD_REQUEST);
         }
-        
+
         // Set the new password and update lastPasswordChanged
         user.setPassword(passwordEncoder.encode(CharBuffer.wrap(changePasswordDto.getNewPassword())));
         user.setLastPasswordChanged(new Date());

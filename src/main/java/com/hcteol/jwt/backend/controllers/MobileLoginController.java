@@ -4,6 +4,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -24,6 +26,7 @@ import com.hcteol.jwt.backend.entities.MobileLogin;
 import com.hcteol.jwt.backend.entities.Staff;
 import com.hcteol.jwt.backend.entities.UserLogin;
 import com.hcteol.jwt.backend.services.MobileLoginService;
+import com.hcteol.jwt.backend.services.StaffService;
 import com.hcteol.jwt.backend.services.UserLoginService;
 import com.hcteol.jwt.backend.services.UserService;
 
@@ -31,11 +34,15 @@ import com.hcteol.jwt.backend.services.UserService;
 @RequestMapping("/api/mobile-logins")
 public class MobileLoginController {
 
+    private static final Logger log = LoggerFactory.getLogger(MobileLoginController.class);
+
     @Autowired
     private MobileLoginService mobileLoginService;
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private StaffService staffService;
     @Autowired
     private com.hcteol.jwt.backend.config.UserAuthenticationProvider userAuthenticationProvider;
     @Autowired
@@ -64,7 +71,26 @@ public class MobileLoginController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("mobileNumber is required");
         }
 
-        MobileLogin saved = mobileLoginService.createNewRequest(requestDto.getMobileNumber());
+        String requestedMobileNumber = requestDto.getMobileNumber().trim();
+        log.debug("Creating mobile login request for requested mobile number='{}'", requestedMobileNumber);
+
+        var staffOpt = staffService.getStaffByMobileNumber(requestedMobileNumber);
+        if (staffOpt.isEmpty()) {
+            log.debug("No staff record found for requested mobile number='{}'", requestedMobileNumber);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Staff not found for mobile number");
+        }
+
+        Staff staff = staffOpt.get();
+        log.debug("Found staff for mobile number='{}': staffId='{}', staffName='{}', active={}",
+                requestedMobileNumber, staff.getStaffId(), staff.getStaffName(), staff.getActive());
+        if (staff.getActive() == null || staff.getActive() != 1) {
+            log.debug("Staff is inactive for requested mobile number='{}'", requestedMobileNumber);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Staff is inactive");
+        }
+
+        MobileLogin saved = mobileLoginService.createNewRequest(requestedMobileNumber);
+        log.debug("Created mobile login request for requested mobile number='{}' with loginKey='{}'",
+                requestedMobileNumber, saved.getLoginKey());
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
@@ -138,9 +164,17 @@ public class MobileLoginController {
 
         // 2. retrieve staff by mobile number
         String mobileNumber = mobileLogin.getMobileNumber();
+        log.debug("Resolving staff during login key flow for mobile number='{}'", mobileNumber);
         Staff staff = staffRepository.findByMobileNumber(mobileNumber).orElse(null);
         if (staff == null) {
+            log.debug("No staff record found during login key flow for mobile number='{}'", mobileNumber);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Staff not found for mobile number");
+        }
+        log.debug("Resolved staff during login key flow for mobile number='{}': staffId='{}', staffName='{}', active={}",
+                mobileNumber, staff.getStaffId(), staff.getStaffName(), staff.getActive());
+        if (staff.getActive() == null || staff.getActive() != 1) {
+            log.debug("Staff is inactive during login key flow for mobile number='{}'", mobileNumber);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Staff is inactive");
         }
 
         // 2b. verify credentials from env and authenticate

@@ -4,8 +4,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hcteol.jwt.backend.entities.Project;
 import com.hcteol.jwt.backend.entities.ProjectStream;
+import com.hcteol.jwt.backend.entities.ProjectTask;
 import com.hcteol.jwt.backend.repositories.ProjectRepository;
 import com.hcteol.jwt.backend.repositories.ProjectStreamRepository;
+import com.hcteol.jwt.backend.repositories.ProjectTaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -30,6 +33,9 @@ public class ProjectService {
 
     @Autowired
     private ProjectStreamRepository projectStreamRepository;
+
+    @Autowired
+    private ProjectTaskRepository projectTaskRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -79,7 +85,37 @@ public class ProjectService {
             streamsToCreate.add(stream);
         }
 
-        projectStreamRepository.saveAll(streamsToCreate);
+        List<ProjectStream> savedStreams = projectStreamRepository.saveAll(streamsToCreate);
+        for (ProjectStream savedStream : savedStreams) {
+            // Only auto-create baseline tasks for auto-generated baseline project streams.
+            if ("P".equalsIgnoreCase(savedStream.getStreamType())) {
+                createBaselineProjectTasks(project, savedStream);
+            }
+        }
+    }
+
+    private void createBaselineProjectTasks(Project project, ProjectStream stream) {
+        List<ProjectTask> templateTasks = loadProjectTaskTemplate();
+        if (templateTasks.isEmpty()) {
+            return;
+        }
+
+        String taskStartDate = project.getStartDate();
+        String taskEndDate = plusDays(project.getStartDate(), 7);
+
+        List<ProjectTask> tasksToCreate = new ArrayList<>();
+        for (ProjectTask template : templateTasks) {
+            ProjectTask task = new ProjectTask();
+            task.setProjectStreamId(stream.getProjectStreamId());
+            task.setTaskType(template.getTaskType());
+            task.setTaskName(template.getTaskName());
+            task.setStaffId(template.getStaffId());
+            task.setTaskStartDate(taskStartDate);
+            task.setTaskEndDate(taskEndDate);
+            tasksToCreate.add(task);
+        }
+
+        projectTaskRepository.saveAll(tasksToCreate);
     }
 
     private List<ProjectStream> loadProjectStreamTemplate() {
@@ -108,6 +144,32 @@ public class ProjectService {
         }
     }
 
+    private List<ProjectTask> loadProjectTaskTemplate() {
+        try {
+            ClassPathResource resource = new ClassPathResource("template/projecttaskbase.json");
+            if (!resource.exists()) {
+                return List.of();
+            }
+
+            try (InputStream is = resource.getInputStream()) {
+                String json = new String(is.readAllBytes(), StandardCharsets.UTF_8).trim();
+                if (json.isBlank()) {
+                    return List.of();
+                }
+
+                if (json.startsWith("[")) {
+                    return objectMapper.readValue(json, new TypeReference<List<ProjectTask>>() {
+                    });
+                }
+
+                ProjectTask singleTemplate = objectMapper.readValue(json, ProjectTask.class);
+                return List.of(singleTemplate);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load template/projecttaskbase.json", e);
+        }
+    }
+
     private Date parseProjectDate(String value) {
         if (value == null || value.isBlank()) {
             return null;
@@ -129,6 +191,16 @@ public class ProjectService {
                 }
             }
         }
+    }
+
+    private String plusDays(String startDate, int daysToAdd) {
+        Date parsedDate = parseProjectDate(startDate);
+        if (parsedDate == null) {
+            return startDate;
+        }
+
+        LocalDate start = parsedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        return start.plusDays(daysToAdd).toString();
     }
 
     public Project updateProject(String projectCode, Project projectDetails) {

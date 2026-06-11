@@ -1,17 +1,23 @@
 package com.hcteol.jwt.backend.controllers;
 
-import com.hcteol.jwt.backend.dtos.ChangePasswordDto;
-import com.hcteol.jwt.backend.dtos.UserDto;
-import com.hcteol.jwt.backend.entities.User;
-import com.hcteol.jwt.backend.services.UserService;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.nio.CharBuffer;
-import java.util.List;
+import com.hcteol.jwt.backend.dtos.ChangePasswordDto;
+import com.hcteol.jwt.backend.dtos.UserDto;
+import com.hcteol.jwt.backend.services.UserService;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/users")
@@ -30,6 +36,12 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
         UserDto user = userService.getUserById(id);
+        return ResponseEntity.ok(user);
+    }
+
+    @GetMapping("/mobile/{mobileNumber}")
+    public ResponseEntity<UserDto> getUserByMobileNumber(@PathVariable String mobileNumber) {
+        UserDto user = userService.getUserByMobileNumber(mobileNumber);
         return ResponseEntity.ok(user);
     }
 

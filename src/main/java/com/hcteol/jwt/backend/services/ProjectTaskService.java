@@ -1,15 +1,17 @@
 package com.hcteol.jwt.backend.services;
 
-import com.hcteol.jwt.backend.entities.ProjectTask;
-import com.hcteol.jwt.backend.repositories.ProjectTaskRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.hcteol.jwt.backend.entities.ProjectTask;
+import com.hcteol.jwt.backend.repositories.ProjectTaskRepository;
+
 @Service
 public class ProjectTaskService {
+
     @Autowired
     private ProjectTaskRepository projectTaskRepository;
 
@@ -34,7 +36,7 @@ public class ProjectTaskService {
             projectTask.setProjectStreamId(projectTaskDetails.getProjectStreamId());
             projectTask.setTaskType(projectTaskDetails.getTaskType());
             projectTask.setTaskName(projectTaskDetails.getTaskName());
-            projectTask.setMobileNumber(projectTaskDetails.getMobileNumber());
+            projectTask.setStaffId(projectTaskDetails.getStaffId());
             projectTask.setTaskStartDate(projectTaskDetails.getTaskStartDate());
             projectTask.setTaskEndDate(projectTaskDetails.getTaskEndDate());
             return projectTaskRepository.save(projectTask);
