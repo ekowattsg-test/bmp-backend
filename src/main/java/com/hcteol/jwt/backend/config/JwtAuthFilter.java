@@ -1,20 +1,27 @@
 package com.hcteol.jwt.backend.config;
 
-import jakarta.servlet.Filter;
+import java.io.IOException;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hcteol.jwt.backend.dtos.ErrorDto;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
 
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private final UserAuthenticationProvider userAuthenticationProvider;
 
     @Override
@@ -32,6 +39,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 try {
                     SecurityContextHolder.getContext().setAuthentication(
                             userAuthenticationProvider.validateToken(authElements[1]));
+                } catch (TokenExpiredException e) {
+                    SecurityContextHolder.clearContext();
+                    writeUnauthorized(httpServletResponse, "Token expired");
+                    return;
+                } catch (JWTVerificationException e) {
+                    SecurityContextHolder.clearContext();
+                    writeUnauthorized(httpServletResponse, "Invalid token");
+                    return;
                 } catch (RuntimeException e) {
                     SecurityContextHolder.clearContext();
                     throw e;
@@ -40,5 +55,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(httpServletRequest, httpServletResponse);
+    }
+
+    private void writeUnauthorized(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+        OBJECT_MAPPER.writeValue(response.getOutputStream(), new ErrorDto(message));
     }
 }
