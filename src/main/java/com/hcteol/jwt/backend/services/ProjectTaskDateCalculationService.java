@@ -50,17 +50,9 @@ public class ProjectTaskDateCalculationService {
         }
 
         String normalized = alignWith.trim().toLowerCase();
-        if ("no".equals(normalized) || "latest".equals(normalized) || "anywhere".equals(normalized)) {
+        if ("no".equals(normalized)) {
             return inputTask;
         }
-
-        Long parentTaskId = inputTask.getParentTaskId();
-        if (parentTaskId == null) {
-            throw new IllegalArgumentException("parentTaskId is required for alignWith " + alignWith);
-        }
-
-        ProjectTask parentTask = projectTaskRepository.findById(parentTaskId)
-                .orElseThrow(() -> new IllegalArgumentException("Parent task not found with id " + parentTaskId));
 
         Long durationObj = inputTask.getTaskDuration();
         long duration = durationObj != null ? durationObj : 1L;
@@ -71,19 +63,34 @@ public class ProjectTaskDateCalculationService {
         int workDaysPerWeek = resolveWorkDaysPerWeek();
 
         switch (normalized) {
+            case "latest" -> {
+                LocalDate start = parseToLocalDate(inputTask.getTaskStartDate(), "taskStartDate");
+                String date = start.toString();
+                inputTask.setTaskStartDate(date);
+                inputTask.setTaskEndDate(date);
+            }
+            case "anywhere" -> {
+                LocalDate start = parseToLocalDate(inputTask.getTaskStartDate(), "taskStartDate");
+                inputTask.setTaskStartDate(start.toString());
+                LocalDate end = addWorkingDays(start, duration - 1, workDaysPerWeek);
+                inputTask.setTaskEndDate(end.toString());
+            }
             case "start-start" -> {
+                ProjectTask parentTask = resolveParentTask(inputTask.getParentTaskId(), alignWith);
                 LocalDate start = parseToLocalDate(parentTask.getTaskStartDate(), "parentTask.taskStartDate");
                 inputTask.setTaskStartDate(start.toString());
                 LocalDate end = addWorkingDays(start, duration - 1, workDaysPerWeek);
                 inputTask.setTaskEndDate(end.toString());
             }
             case "end-end" -> {
+                ProjectTask parentTask = resolveParentTask(inputTask.getParentTaskId(), alignWith);
                 LocalDate end = parseToLocalDate(parentTask.getTaskEndDate(), "parentTask.taskEndDate");
                 inputTask.setTaskEndDate(end.toString());
                 LocalDate start = addWorkingDays(end, -(duration + 1), workDaysPerWeek);
                 inputTask.setTaskStartDate(start.toString());
             }
             case "end-start" -> {
+                ProjectTask parentTask = resolveParentTask(inputTask.getParentTaskId(), alignWith);
                 LocalDate parentEnd = parseToLocalDate(parentTask.getTaskEndDate(), "parentTask.taskEndDate");
                 LocalDate start = addWorkingDays(parentEnd, 1, workDaysPerWeek);
                 inputTask.setTaskStartDate(start.toString());
@@ -115,6 +122,15 @@ public class ProjectTaskDateCalculationService {
         }
 
         throw new IllegalArgumentException("ProjectTaskType not found for code " + taskTypeCode);
+    }
+
+    private ProjectTask resolveParentTask(Long parentTaskId, String alignWith) {
+        if (parentTaskId == null) {
+            throw new IllegalArgumentException("parentTaskId is required for alignWith " + alignWith);
+        }
+
+        return projectTaskRepository.findById(parentTaskId)
+                .orElseThrow(() -> new IllegalArgumentException("Parent task not found with id " + parentTaskId));
     }
 
     private int resolveWorkDaysPerWeek() {

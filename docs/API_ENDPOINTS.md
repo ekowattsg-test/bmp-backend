@@ -91,8 +91,8 @@ DeliveryOrderItemDto fields (summary): `itemId`, `orderId`, `itemType`, `product
 ProjectTask calculate rules (by ProjectTaskType.alignWith):
 
 - `no` — no action
-- `latest` — no change
-- `anywhere` — no change
+- `latest` — set end date to the same value as start date
+- `anywhere` — respect submitted start date, set end date by adding `taskDuration - 1` working days
 - `start-start` — use parent task start date as current task start date, set end date by adding `taskDuration - 1` working days
 - `end-end` — use parent task end date as current task end date, set start date by subtracting `taskDuration + 1` working days
 - `end-start` — set current task start date to parent task end date + 1 working day, then set end date by adding `taskDuration - 1` working days

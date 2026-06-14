@@ -29,6 +29,12 @@ public class ProjectStreamService {
     @Autowired
     private ProjectTaskRepository projectTaskRepository;
 
+    @Autowired
+    private ProjectTaskDateCalculationService projectTaskDateCalculationService;
+
+    @Autowired
+    private ProjectTaskRecalculationService projectTaskRecalculationService;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public List<ProjectStream> getAllProjectStreams(String projectCode, String streamType) {
@@ -98,16 +104,24 @@ public class ProjectStreamService {
             task.setStaffId(template.getStaffId());
             task.setParentTaskId(template.getParentTaskId());
             task.setMilestoneTaskId(template.getMilestoneTaskId());
+            task.setTaskDuration(template.getTaskDuration());
             task.setTaskStartDate(project.getStartDate());
             task.setTaskEndDate(template.getTaskEndDate());
             task.setTaskStatus(template.getTaskStatus() != null ? template.getTaskStatus() : "Not Started");
             task.setActualStartDate(template.getActualStartDate());
             task.setActualEndDate(template.getActualEndDate());
             task.setRemarks(template.getRemarks());
-            tasksToCreate.add(task);
+
+            ProjectTask calculatedTask = projectTaskDateCalculationService.calculateTaskDates(task);
+            tasksToCreate.add(calculatedTask);
         }
 
-        projectTaskRepository.saveAll(tasksToCreate);
+        List<ProjectTask> savedTasks = projectTaskRepository.saveAll(tasksToCreate);
+        for (ProjectTask savedTask : savedTasks) {
+            if (savedTask.getProjectTaskId() != null) {
+                projectTaskRecalculationService.recalculateAfterTaskChange(savedTask.getProjectTaskId());
+            }
+        }
     }
 
     private List<ProjectTask> loadProjectStreamTaskTemplate() {

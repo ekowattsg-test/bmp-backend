@@ -1,6 +1,7 @@
 [
   {
-    "taskType": "M",
-    "taskName": "Start of Stream"
+    "taskType": "A",
+    "taskName": "Start of Stream",
+    "taskDuration": 1
   }
 ]
