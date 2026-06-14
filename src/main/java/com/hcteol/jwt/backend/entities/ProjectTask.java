@@ -17,6 +17,13 @@ public class ProjectTask {
     private String taskType;    // "D" - dependent task, "A" - Anchor task, "B" - baseline task (Anchor and cannot be deleted)
     private String taskName;
     private String staffId; // person in-charge of task
+    private Long parentTaskId; // for dependent tasks, reference to the parent task
+    private Long milestoneTaskId;
+    private Long taskDuration; // in days, used to calculate start and end date
     private String taskStartDate;
     private String taskEndDate;
+    private String taskStatus; // "Not Started", "In Progress", "Completed"
+    private String actualStartDate;
+    private String actualEndDate;
+    private String remarks;
 }

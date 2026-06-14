@@ -1,16 +1,25 @@
 package com.hcteol.jwt.backend.controllers;
 
-import com.hcteol.jwt.backend.entities.ProjectTask;
-import com.hcteol.jwt.backend.services.ProjectTaskService;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.hcteol.jwt.backend.entities.ProjectTask;
+import com.hcteol.jwt.backend.services.ProjectTaskService;
 
 @RestController
 @RequestMapping("/api/projecttasks")
 public class ProjectTaskController {
+
     @Autowired
     private ProjectTaskService projectTaskService;
 
@@ -34,6 +43,15 @@ public class ProjectTaskController {
     @PostMapping
     public ProjectTask createProjectTask(@RequestBody ProjectTask projectTask) {
         return projectTaskService.createProjectTask(projectTask);
+    }
+
+    @PostMapping("/calculate")
+    public ResponseEntity<ProjectTask> calculateProjectTask(@RequestBody ProjectTask projectTask) {
+        try {
+            return ResponseEntity.ok(projectTaskService.calculateProjectTask(projectTask));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @PutMapping("/{id}")

@@ -18,5 +18,10 @@
     "param_key": "mainWarehouse",
     "value_string": "central",
     "changeable": 1
+  },
+  {
+    "param_key": "workDaysPerWeek",
+    "value_string": 7,
+    "changeable": 1
   }
 ]

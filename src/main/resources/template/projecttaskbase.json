@@ -1,6 +1,10 @@
 [
   {
     "taskType": "B",
-    "taskName": "Baselined task"
+    "taskName": "Start of Project"
+  },
+  {
+    "taskType": "M",
+    "taskName": "End of Project"
   }
 ]

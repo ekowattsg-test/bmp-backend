@@ -90,6 +90,7 @@ public class ProjectService {
             // Only auto-create baseline tasks for auto-generated baseline project streams.
             if ("P".equalsIgnoreCase(savedStream.getStreamType())) {
                 createBaselineProjectTasks(project, savedStream);
+                recalculateStreamDatesFromTasks(savedStream);
             }
         }
     }
@@ -100,8 +101,8 @@ public class ProjectService {
             return;
         }
 
-        String taskStartDate = project.getStartDate();
-        String taskEndDate = plusDays(project.getStartDate(), 7);
+        String projectStartDate = project.getStartDate();
+        String projectEndDate = project.getEndDate();
 
         List<ProjectTask> tasksToCreate = new ArrayList<>();
         for (ProjectTask template : templateTasks) {
@@ -110,12 +111,70 @@ public class ProjectService {
             task.setTaskType(template.getTaskType());
             task.setTaskName(template.getTaskName());
             task.setStaffId(template.getStaffId());
-            task.setTaskStartDate(taskStartDate);
-            task.setTaskEndDate(taskEndDate);
+            task.setParentTaskId(template.getParentTaskId());
+            task.setMilestoneTaskId(template.getMilestoneTaskId());
+
+            task.setTaskStartDate(template.getTaskStartDate());
+            task.setTaskEndDate(template.getTaskEndDate());
+
+            String taskType = template.getTaskType();
+            if ("B".equalsIgnoreCase(taskType)) {
+                task.setTaskStartDate(projectStartDate);
+                task.setTaskEndDate(plusDays(projectStartDate, 7));
+            } else if ("M".equalsIgnoreCase(taskType)) {
+                task.setTaskStartDate(projectEndDate);
+                task.setTaskEndDate(projectEndDate);
+            }
+
+            task.setTaskStatus(template.getTaskStatus() != null ? template.getTaskStatus() : "Not Started");
+            task.setActualStartDate(template.getActualStartDate());
+            task.setActualEndDate(template.getActualEndDate());
+            task.setRemarks(template.getRemarks());
             tasksToCreate.add(task);
         }
 
         projectTaskRepository.saveAll(tasksToCreate);
+    }
+
+    private void recalculateStreamDatesFromTasks(ProjectStream stream) {
+        if (stream.getProjectStreamId() == null) {
+            return;
+        }
+
+        List<ProjectTask> tasks = projectTaskRepository.findByProjectStreamId(stream.getProjectStreamId());
+        if (tasks.isEmpty()) {
+            return;
+        }
+
+        Date earliestStart = null;
+        Date latestEnd = null;
+
+        for (ProjectTask task : tasks) {
+            Date taskStart = parseProjectDate(task.getTaskStartDate());
+            Date taskEnd = parseProjectDate(task.getTaskEndDate());
+
+            if (taskStart != null && (earliestStart == null || taskStart.before(earliestStart))) {
+                earliestStart = taskStart;
+            }
+
+            if (taskEnd != null && (latestEnd == null || taskEnd.after(latestEnd))) {
+                latestEnd = taskEnd;
+            }
+        }
+
+        boolean changed = false;
+        if (earliestStart != null) {
+            stream.setStreamStartDate(earliestStart);
+            changed = true;
+        }
+        if (latestEnd != null) {
+            stream.setStreamEndDate(latestEnd);
+            changed = true;
+        }
+
+        if (changed) {
+            projectStreamRepository.save(stream);
+        }
     }
 
     private List<ProjectStream> loadProjectStreamTemplate() {
@@ -199,7 +258,12 @@ public class ProjectService {
             return startDate;
         }
 
-        LocalDate start = parsedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate start;
+        if (parsedDate instanceof java.sql.Date sqlDate) {
+            start = sqlDate.toLocalDate();
+        } else {
+            start = parsedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        }
         return start.plusDays(daysToAdd).toString();
     }
 

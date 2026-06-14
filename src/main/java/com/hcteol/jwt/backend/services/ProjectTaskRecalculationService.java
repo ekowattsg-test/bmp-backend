@@ -1,0 +1,168 @@
+package com.hcteol.jwt.backend.services;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayDeque;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.Set;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.hcteol.jwt.backend.entities.ProjectTask;
+import com.hcteol.jwt.backend.repositories.ProjectTaskRepository;
+
+@Service
+public class ProjectTaskRecalculationService {
+
+    @Autowired
+    private ProjectTaskRepository projectTaskRepository;
+
+    @Autowired
+    private ProjectTaskDateCalculationService projectTaskDateCalculationService;
+
+    @Autowired
+    private ProjectTaskDependencyService projectTaskDependencyService;
+
+    @Transactional
+    public void recalculateAfterTaskChange(Long changedTaskId) {
+        if (changedTaskId == null) {
+            return;
+        }
+
+        ProjectTask changedTask = projectTaskRepository.findById(changedTaskId)
+                .orElseThrow(() -> new IllegalArgumentException("ProjectTask not found with id " + changedTaskId));
+
+        validateDependencyChainsUpFront(changedTaskId);
+
+        Set<Long> branchVisited = new HashSet<>();
+        Set<Long> processedMilestones = new HashSet<>();
+
+        if (!projectTaskRepository.findByMilestoneTaskId(changedTaskId).isEmpty()) {
+            processedMilestones.add(changedTaskId);
+            recalculateMilestoneDate(changedTaskId);
+            recalculateDependentBranch(changedTaskId, branchVisited, processedMilestones);
+        }
+
+        processLinkedMilestone(changedTask, branchVisited, processedMilestones);
+        recalculateDependentBranch(changedTaskId, branchVisited, processedMilestones);
+    }
+
+    private void validateDependencyChainsUpFront(Long rootTaskId) {
+        Queue<Long> queue = new ArrayDeque<>();
+        Set<Long> seen = new HashSet<>();
+        queue.add(rootTaskId);
+
+        while (!queue.isEmpty()) {
+            Long taskId = queue.poll();
+            if (taskId == null || !seen.add(taskId)) {
+                continue;
+            }
+
+            Optional<ProjectTask> taskOptional = projectTaskRepository.findById(taskId);
+            if (taskOptional.isEmpty()) {
+                continue;
+            }
+
+            ProjectTask task = taskOptional.get();
+            projectTaskDependencyService.validateNoDependencyCycle(task);
+
+            List<ProjectTask> children = projectTaskRepository.findByParentTaskId(taskId);
+            for (ProjectTask child : children) {
+                if (child.getProjectTaskId() != null) {
+                    queue.add(child.getProjectTaskId());
+                }
+            }
+
+            Long linkedMilestoneId = task.getMilestoneTaskId();
+            if (linkedMilestoneId != null) {
+                queue.add(linkedMilestoneId);
+            }
+        }
+    }
+
+    private void recalculateDependentBranch(Long parentTaskId, Set<Long> branchVisited, Set<Long> processedMilestones) {
+        if (parentTaskId == null || !branchVisited.add(parentTaskId)) {
+            return;
+        }
+
+        List<ProjectTask> children = projectTaskRepository.findByParentTaskId(parentTaskId);
+        for (ProjectTask child : children) {
+            if (child.getProjectTaskId() == null) {
+                continue;
+            }
+
+            ProjectTask recalculatedChild = projectTaskDateCalculationService.calculateTaskDates(child);
+            projectTaskRepository.save(recalculatedChild);
+
+            processLinkedMilestone(recalculatedChild, branchVisited, processedMilestones);
+            recalculateDependentBranch(recalculatedChild.getProjectTaskId(), branchVisited, processedMilestones);
+        }
+    }
+
+    private void processLinkedMilestone(ProjectTask task, Set<Long> branchVisited, Set<Long> processedMilestones) {
+        Long milestoneTaskId = task.getMilestoneTaskId();
+        if (milestoneTaskId == null || !processedMilestones.add(milestoneTaskId)) {
+            return;
+        }
+
+        recalculateMilestoneDate(milestoneTaskId);
+        recalculateDependentBranch(milestoneTaskId, branchVisited, processedMilestones);
+    }
+
+    private void recalculateMilestoneDate(Long milestoneTaskId) {
+        Optional<ProjectTask> milestoneOptional = projectTaskRepository.findById(milestoneTaskId);
+        if (milestoneOptional.isEmpty()) {
+            return;
+        }
+
+        List<ProjectTask> milestoneParents = projectTaskRepository.findByMilestoneTaskId(milestoneTaskId);
+        LocalDate furthestEndDate = null;
+        for (ProjectTask parent : milestoneParents) {
+            LocalDate parentEndDate = parseToLocalDate(parent.getTaskEndDate());
+            if (parentEndDate == null) {
+                continue;
+            }
+            if (furthestEndDate == null || parentEndDate.isAfter(furthestEndDate)) {
+                furthestEndDate = parentEndDate;
+            }
+        }
+
+        if (furthestEndDate == null) {
+            return;
+        }
+
+        ProjectTask milestone = milestoneOptional.get();
+        String milestoneDate = furthestEndDate.toString();
+        milestone.setTaskStartDate(milestoneDate);
+        milestone.setTaskEndDate(milestoneDate);
+        projectTaskRepository.save(milestone);
+    }
+
+    private LocalDate parseToLocalDate(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        String trimmed = value.trim();
+        try {
+            return Instant.parse(trimmed).atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+        } catch (DateTimeParseException ignored) {
+            try {
+                return LocalDate.parse(trimmed);
+            } catch (DateTimeParseException ignoredDateOnly) {
+                try {
+                    return LocalDateTime.parse(trimmed).toLocalDate();
+                } catch (DateTimeParseException ignoredDateTime) {
+                    return null;
+                }
+            }
+        }
+    }
+}

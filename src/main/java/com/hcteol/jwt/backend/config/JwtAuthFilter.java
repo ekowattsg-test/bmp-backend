@@ -41,7 +41,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                             userAuthenticationProvider.validateToken(authElements[1]));
                 } catch (TokenExpiredException e) {
                     SecurityContextHolder.clearContext();
-                    writeUnauthorized(httpServletResponse, "Token expired");
+                    writeUnauthorized(httpServletResponse, "Session Expired");
                     return;
                 } catch (JWTVerificationException e) {
                     SecurityContextHolder.clearContext();

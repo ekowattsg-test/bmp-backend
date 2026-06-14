@@ -10,9 +10,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.sql.DataSource;
 
@@ -34,6 +36,7 @@ import com.hcteol.jwt.backend.entities.DocumentSeq;
 import com.hcteol.jwt.backend.entities.Language;
 import com.hcteol.jwt.backend.entities.OperationRole;
 import com.hcteol.jwt.backend.entities.Param;
+import com.hcteol.jwt.backend.entities.ProjectTaskType;
 import com.hcteol.jwt.backend.entities.Role;
 import com.hcteol.jwt.backend.entities.StockMovementCode;
 import com.hcteol.jwt.backend.entities.User;
@@ -46,6 +49,7 @@ import com.hcteol.jwt.backend.repositories.DocumentSeqRepository;
 import com.hcteol.jwt.backend.repositories.LanguageRepository;
 import com.hcteol.jwt.backend.repositories.OperationRoleRepository;
 import com.hcteol.jwt.backend.repositories.ParamRepository;
+import com.hcteol.jwt.backend.repositories.ProjectTaskTypeRepository;
 import com.hcteol.jwt.backend.repositories.RoleRepository;
 import com.hcteol.jwt.backend.repositories.StockMovementCodeRepository;
 import com.hcteol.jwt.backend.repositories.UserRepository;
@@ -96,6 +100,9 @@ public class DataInitializer implements ApplicationRunner {
 
     @Autowired
     private OperationRoleRepository operationRoleRepository;
+
+    @Autowired
+    private ProjectTaskTypeRepository projectTaskTypeRepository;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -1021,6 +1028,132 @@ public class DataInitializer implements ApplicationRunner {
         } catch (Exception ex) {
             System.out.println("[DataInitializer] Failed to read initData/operationrole.json: " + ex.getMessage());
         }
+
+        // Synchronize project task types from initData/projecttasktype.json:
+        // - upsert by projectTaskCode
+        // - delete DB records not present in JSON
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            InputStream is = null;
+            ClassPathResource cpr = new ClassPathResource("initData/projecttasktype.json");
+            if (cpr.exists()) {
+                is = cpr.getInputStream();
+            } else {
+                File f = new File("initData/projecttasktype.json");
+                if (f.exists()) {
+                    is = new java.io.FileInputStream(f);
+                }
+            }
+
+            if (is != null) {
+                List<?> raw = mapper.readValue(is, List.class);
+                Set<String> codesInJson = new HashSet<>();
+
+                for (Object o : raw) {
+                    if (!(o instanceof java.util.Map)) {
+                        continue;
+                    }
+
+                    java.util.Map m = (java.util.Map) o;
+                    Object codeObj = m.get("projectTaskCode");
+                    if (codeObj == null) {
+                        throw new RuntimeException("[DataInitializer] projecttasktype.json entry missing required 'projectTaskCode' key; aborting initialization");
+                    }
+
+                    String code = String.valueOf(codeObj).trim();
+                    if (code.length() == 0) {
+                        throw new RuntimeException("[DataInitializer] projecttasktype.json entry has empty 'projectTaskCode' value; aborting initialization");
+                    }
+
+                    codesInJson.add(code);
+
+                    String description = m.get("projectTaskDescription") != null ? String.valueOf(m.get("projectTaskDescription")) : null;
+                    Integer userTask = null;
+                    try {
+                        if (m.get("userTask") != null) {
+                            userTask = Integer.parseInt(String.valueOf(m.get("userTask")));
+                        }
+                    } catch (Exception ex) {
+                    }
+
+                    Integer editStartDate = null;
+                    try {
+                        if (m.get("editStartDate") != null) {
+                            editStartDate = Integer.parseInt(String.valueOf(m.get("editStartDate")));
+                        }
+                    } catch (Exception ex) {
+                    }
+
+                    Integer createByStream = null;
+                    try {
+                        Object createByStreamObj = m.get("createByStream") != null ? m.get("createByStream") : m.get("createStream");
+                        if (createByStreamObj != null) {
+                            createByStream = Integer.parseInt(String.valueOf(createByStreamObj));
+                        }
+                    } catch (Exception ex) {
+                    }
+
+                    Integer canDelete = null;
+                    try {
+                        if (m.get("canDelete") != null) {
+                            canDelete = Integer.parseInt(String.valueOf(m.get("canDelete")));
+                        }
+                    } catch (Exception ex) {
+                    }
+
+                    Long minimumDays = null;
+                    try {
+                        if (m.get("minimumDays") != null) {
+                            minimumDays = Long.parseLong(String.valueOf(m.get("minimumDays")));
+                        }
+                    } catch (Exception ex) {
+                    }
+
+                    Long maximumDays = null;
+                    try {
+                        if (m.get("maximumDays") != null) {
+                            maximumDays = Long.parseLong(String.valueOf(m.get("maximumDays")));
+                        }
+                    } catch (Exception ex) {
+                    }
+
+                    String alignWith = m.get("alignWith") != null ? String.valueOf(m.get("alignWith")) : null;
+
+                    Optional<ProjectTaskType> existingType = projectTaskTypeRepository.findById(code);
+                    ProjectTaskType taskType = existingType.orElseGet(ProjectTaskType::new);
+                    taskType.setProjectTaskCode(code);
+                    taskType.setProjectTaskDescription(description);
+                    taskType.setUserTask(userTask);
+                    taskType.setEditStartDate(editStartDate);
+                    taskType.setCreateByStream(createByStream);
+                    taskType.setCanDelete(canDelete);
+                    taskType.setMinimumDays(minimumDays);
+                    taskType.setMaximumDays(maximumDays);
+                    taskType.setAlignWith(alignWith);
+                    projectTaskTypeRepository.save(taskType);
+
+                    if (existingType.isPresent()) {
+                        System.out.println("[DataInitializer] Updated project task type " + code);
+                    } else {
+                        System.out.println("[DataInitializer] Created project task type " + code);
+                    }
+                }
+
+                List<ProjectTaskType> existingAllTypes = projectTaskTypeRepository.findAll();
+                for (ProjectTaskType existingType : existingAllTypes) {
+                    String existingCode = existingType.getProjectTaskCode();
+                    if (existingCode != null && !codesInJson.contains(existingCode)) {
+                        projectTaskTypeRepository.deleteById(existingCode);
+                        System.out.println("[DataInitializer] Deleted project task type not in json: " + existingCode);
+                    }
+                }
+            } else {
+                System.out.println("[DataInitializer] initData/projecttasktype.json not found; skipping project task type sync");
+            }
+        } catch (Exception ex) {
+            System.out.println("[DataInitializer] Failed to synchronize initData/projecttasktype.json: " + ex.getMessage());
+        }
+
         // Ensure baselineDate param exists; default to first day of current year at midnight
         if (!paramRepository.existsById("baselineDate")) {
             LocalDate firstDayOfYear = LocalDate.of(LocalDate.now().getYear(), 1, 1);

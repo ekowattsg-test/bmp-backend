@@ -68,8 +68,15 @@ DeliveryOrderItemDto fields (summary): `itemId`, `orderId`, `itemType`, `product
 - `taskType` (String) — `D` dependent task, `A` anchor task, `B` baseline task
 - `taskName` (String)
 - `staffId` (String) — person in-charge of task
+- `parentTaskId` (Long) — parent task reference for dependent tasks
+- `milestoneTaskId` (Long) — reference milestone task id
+- `taskDuration` (Long) — duration in days
 - `taskStartDate` (String)
 - `taskEndDate` (String)
+- `taskStatus` (String) — e.g. `Not Started`, `In Progress`, `Completed`
+- `actualStartDate` (String)
+- `actualEndDate` (String)
+- `remarks` (String)
 
 ## ProjectTask endpoints
 
@@ -77,8 +84,41 @@ DeliveryOrderItemDto fields (summary): `itemId`, `orderId`, `itemType`, `product
 - GET /api/projecttasks/{id} — get project task by id
 - GET /api/projecttasks/stream/{projectStreamId} — list project tasks by stream id
 - POST /api/projecttasks — create project task (body: ProjectTask)
+- POST /api/projecttasks/calculate — calculate task dates from submitted task + task type alignWith rules (body: ProjectTask, response: calculated ProjectTask, not persisted)
 - PUT /api/projecttasks/{id} — update project task (body: ProjectTask)
 - DELETE /api/projecttasks/{id} — delete project task
+
+ProjectTask calculate rules (by ProjectTaskType.alignWith):
+
+- `no` — no action
+- `latest` — no change
+- `anywhere` — no change
+- `start-start` — use parent task start date as current task start date, set end date by adding `taskDuration - 1` working days
+- `end-end` — use parent task end date as current task end date, set start date by subtracting `taskDuration + 1` working days
+- `end-start` — set current task start date to parent task end date + 1 working day, then set end date by adding `taskDuration - 1` working days
+
+Working-day math uses parameter key `workDaysPerWeek`.
+Before calculation, dependency chain is validated to prevent infinite parent-task loops.
+
+## ProjectTaskType entity payload (request/response)
+
+- `projectTaskCode` (String)
+- `projectTaskDescription` (String)
+- `userTask` (Integer) — `1` show in user task type dropdown, `0` hide
+- `editStartDate` (Integer) — `1` allow editing start date, `0` disallow
+- `createByStream` (Integer) — `1` create by stream only, `0` create by task only
+- `canDelete` (Integer) — `1` deletable, `0` protected
+- `minimumDays` (Long)
+- `maximumDays` (Long)
+- `alignWith` (String) — e.g. `latest`, `anywhere`, `start-start`, `end-end`, `end-start`
+
+## ProjectTaskType endpoints
+
+- GET /api/projecttasktypes — list all project task types
+- GET /api/projecttasktypes/{projectTaskCode} — get project task type by code
+- POST /api/projecttasktypes — create project task type (body: ProjectTaskType)
+- PUT /api/projecttasktypes/{projectTaskCode} — update project task type (body: ProjectTaskType)
+- DELETE /api/projecttasktypes/{projectTaskCode} — delete project task type
 
 ## Notable other endpoints (summary)
 
@@ -110,4 +150,4 @@ This prints all controller mapping annotations and their file locations so you c
 
 ---
 
-Generated from the codebase on June 11, 2026.
+Generated from the codebase on June 13, 2026.

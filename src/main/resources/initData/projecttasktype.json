@@ -1,0 +1,68 @@
+[
+  {
+    "projectTaskCode": "B",
+    "projectTaskDescription": "Baselined task",
+    "userTask": 0,
+    "editStartDate": 0,
+    "createByStream": 1,
+    "canDelete": 0,
+    "minimumDays": 1,
+    "maximumDays": 99999,
+    "alignWith": "no"
+  },
+  {
+    "projectTaskCode": "M",
+    "projectTaskDescription": "Milestone task",
+    "userTask": 1,
+    "editStartDate": 1,
+    "createByStream": 1,
+    "canDelete": 1,
+    "minimumDays": 0,
+    "maximumDays": 0,
+    "alignWith": "latest"
+  },
+  {
+    "projectTaskCode": "A",
+    "projectTaskDescription": "Anchor task",
+    "userTask": 1,
+    "editStartDate": 1,
+    "createByStream": 1,
+    "canDelete": 1,
+    "minimumDays": 1,
+    "maximumDays": 99999,
+    "alignWith": "anywhere"
+  },
+  {
+    "projectTaskCode": "S",
+    "projectTaskDescription": "Synchronised start task",
+    "userTask": 1,
+    "editStartDate": 0,
+    "createByStream": 0,
+    "canDelete": 1,
+    "minimumDays": 1,
+    "maximumDays": 99999,
+    "alignWith": "start-start"
+  },
+  {
+    "projectTaskCode": "E",
+    "projectTaskDescription": "Synchronised end task",
+    "userTask": 1,
+    "editStartDate": 0,
+    "createByStream": 0,
+    "canDelete": 1,
+    "minimumDays": 1,
+    "maximumDays": 99999,
+    "alignWith": "end-end"
+  },
+  {
+    "projectTaskCode": "D",
+    "projectTaskDescription": "Dependent task",
+    "userTask": 1,
+    "editStartDate": 0,
+    "createByStream": 0,
+    "canDelete": 1,
+    "minimumDays": 1,
+    "maximumDays": 99999,
+    "alignWith": "end-start"
+  }
+]

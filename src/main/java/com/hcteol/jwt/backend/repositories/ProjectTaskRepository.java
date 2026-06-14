@@ -1,12 +1,18 @@
 package com.hcteol.jwt.backend.repositories;
 
-import com.hcteol.jwt.backend.entities.ProjectTask;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import com.hcteol.jwt.backend.entities.ProjectTask;
 
 @Repository
 public interface ProjectTaskRepository extends JpaRepository<ProjectTask, Long> {
+
     List<ProjectTask> findByProjectStreamId(Long projectStreamId);
+
+    List<ProjectTask> findByParentTaskId(Long parentTaskId);
+
+    List<ProjectTask> findByMilestoneTaskId(Long milestoneTaskId);
 }
