@@ -8,7 +8,9 @@
     "canDelete": 0,
     "minimumDays": 1,
     "maximumDays": 99999,
-    "alignWith": "no"
+    "alignWith": "no",
+    "inventoryType": "any",
+    "manpowerRequired": 1
   },
   {
     "projectTaskCode": "M",
@@ -19,7 +21,9 @@
     "canDelete": 1,
     "minimumDays": 0,
     "maximumDays": 0,
-    "alignWith": "latest"
+    "alignWith": "latest",
+    "inventoryType": "none",
+    "manpowerRequired": 0
   },
   {
     "projectTaskCode": "A",
@@ -30,7 +34,9 @@
     "canDelete": 1,
     "minimumDays": 1,
     "maximumDays": 99999,
-    "alignWith": "anywhere"
+    "alignWith": "anywhere",
+    "inventoryType": "any",
+    "manpowerRequired": 1
   },
   {
     "projectTaskCode": "S",
@@ -41,7 +47,9 @@
     "canDelete": 1,
     "minimumDays": 1,
     "maximumDays": 99999,
-    "alignWith": "start-start"
+    "alignWith": "start-start",
+    "inventoryType": "any",
+    "manpowerRequired": 1
   },
   {
     "projectTaskCode": "E",
@@ -52,7 +60,9 @@
     "canDelete": 1,
     "minimumDays": 1,
     "maximumDays": 99999,
-    "alignWith": "end-end"
+    "alignWith": "end-end",
+    "inventoryType": "any",
+    "manpowerRequired": 1
   },
   {
     "projectTaskCode": "D",
@@ -63,6 +73,8 @@
     "canDelete": 1,
     "minimumDays": 1,
     "maximumDays": 99999,
-    "alignWith": "end-start"
+    "alignWith": "end-start",
+    "inventoryType": "any",
+    "manpowerRequired": 1
   }
 ]

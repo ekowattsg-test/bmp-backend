@@ -111,6 +111,8 @@ Before calculation, dependency chain is validated to prevent infinite parent-tas
 - `minimumDays` (Long)
 - `maximumDays` (Long)
 - `alignWith` (String) — e.g. `latest`, `anywhere`, `start-start`, `end-end`, `end-start`
+- `inventoryType` (String) — e.g. `any`, `stock`, `asset`, `none`
+- `manpowerRequired` (Integer) — `1` manpower required, `0` not required
 
 ## ProjectTaskType endpoints
 

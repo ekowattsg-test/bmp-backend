@@ -1118,6 +1118,15 @@ public class DataInitializer implements ApplicationRunner {
                     }
 
                     String alignWith = m.get("alignWith") != null ? String.valueOf(m.get("alignWith")) : null;
+                    String inventoryType = m.get("inventoryType") != null ? String.valueOf(m.get("inventoryType")) : null;
+
+                    Integer manpowerRequired = null;
+                    try {
+                        if (m.get("manpowerRequired") != null) {
+                            manpowerRequired = Integer.parseInt(String.valueOf(m.get("manpowerRequired")));
+                        }
+                    } catch (Exception ex) {
+                    }
 
                     Optional<ProjectTaskType> existingType = projectTaskTypeRepository.findById(code);
                     ProjectTaskType taskType = existingType.orElseGet(ProjectTaskType::new);
@@ -1130,6 +1139,8 @@ public class DataInitializer implements ApplicationRunner {
                     taskType.setMinimumDays(minimumDays);
                     taskType.setMaximumDays(maximumDays);
                     taskType.setAlignWith(alignWith);
+                    taskType.setInventoryType(inventoryType);
+                    taskType.setManpowerRequired(manpowerRequired);
                     projectTaskTypeRepository.save(taskType);
 
                     if (existingType.isPresent()) {

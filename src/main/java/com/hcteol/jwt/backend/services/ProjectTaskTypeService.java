@@ -44,6 +44,8 @@ public class ProjectTaskTypeService {
             projectTaskType.setMinimumDays(projectTaskTypeDetails.getMinimumDays());
             projectTaskType.setMaximumDays(projectTaskTypeDetails.getMaximumDays());
             projectTaskType.setAlignWith(projectTaskTypeDetails.getAlignWith());
+            projectTaskType.setInventoryType(projectTaskTypeDetails.getInventoryType());
+            projectTaskType.setManpowerRequired(projectTaskTypeDetails.getManpowerRequired());
             return projectTaskTypeRepository.save(projectTaskType);
         });
     }

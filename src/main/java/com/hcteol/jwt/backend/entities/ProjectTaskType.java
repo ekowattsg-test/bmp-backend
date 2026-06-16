@@ -18,5 +18,7 @@ public class ProjectTaskType {
     private Long minimumDays;
     private Long maximumDays;
     private String alignWith;
+    private String inventoryType; // "any", "stock", "asset", "none"
+    private Integer manpowerRequired; // 1 - manpower required, 0 - no manpower required
 
 }
