@@ -125,7 +125,7 @@ public class ProjectTaskRecalculationService {
         List<ProjectTask> milestoneParents = projectTaskRepository.findByMilestoneTaskId(milestoneTaskId);
         LocalDate furthestEndDate = null;
         for (ProjectTask parent : milestoneParents) {
-            LocalDate parentEndDate = parseToLocalDate(parent.getTaskEndDate());
+            LocalDate parentEndDate = parseToLocalDate(resolveEffectiveEndDate(parent));
             if (parentEndDate == null) {
                 continue;
             }
@@ -139,9 +139,19 @@ public class ProjectTaskRecalculationService {
         }
 
         ProjectTask milestone = milestoneOptional.get();
+        boolean canRecalculateStart = canRecalculateStart(milestone);
+        boolean canRecalculateEnd = canRecalculateEnd(milestone);
+        if (!canRecalculateStart && !canRecalculateEnd) {
+            return;
+        }
+
         String milestoneDate = furthestEndDate.toString();
-        milestone.setTaskStartDate(milestoneDate);
-        milestone.setTaskEndDate(milestoneDate);
+        if (canRecalculateStart) {
+            milestone.setTaskStartDate(milestoneDate);
+        }
+        if (canRecalculateEnd) {
+            milestone.setTaskEndDate(milestoneDate);
+        }
         projectTaskRepository.save(milestone);
     }
 
@@ -164,5 +174,31 @@ public class ProjectTaskRecalculationService {
                 }
             }
         }
+    }
+
+    private String resolveEffectiveEndDate(ProjectTask task) {
+        if (task == null) {
+            return null;
+        }
+
+        String status = task.getTaskStatus() == null ? "" : task.getTaskStatus().trim().toLowerCase();
+        if ("completed".equals(status)) {
+            return task.getActualEndDate();
+        }
+        return task.getTaskEndDate();
+    }
+
+    private boolean canRecalculateStart(ProjectTask task) {
+        if (task == null || task.getTaskStatus() == null) {
+            return false;
+        }
+        return "not started".equals(task.getTaskStatus().trim().toLowerCase());
+    }
+
+    private boolean canRecalculateEnd(ProjectTask task) {
+        if (task == null || task.getTaskStatus() == null) {
+            return true;
+        }
+        return !"completed".equals(task.getTaskStatus().trim().toLowerCase());
     }
 }

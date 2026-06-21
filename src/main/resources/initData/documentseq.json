@@ -14,5 +14,9 @@
   {
     "docType": "ST",
     "seq": 0
+  },
+  {
+    "docType": "BD",
+    "seq": 0
   }
 ]

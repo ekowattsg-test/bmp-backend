@@ -12,7 +12,7 @@
     "role": "Admin"
   },
   {
-    "description": "Customer Details",
+    "description": "Business Information",
     "level": 1,
     "menu": "InformationPages",
     "role": "InformationPages"
@@ -24,9 +24,9 @@
     "role": "BusinessSetup"
   },
   {
-    "description": "Administrator for Business Parameter Set Up",
+    "description": "Business Parameter Administrator",
     "level": 1,
-    "menu": "BusinessAdmin",
+    "menu": "",
     "role": "BusinessAdmin"
   },
   {

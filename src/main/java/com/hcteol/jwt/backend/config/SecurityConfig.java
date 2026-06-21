@@ -1,9 +1,9 @@
-
 package com.hcteol.jwt.backend.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -31,8 +31,8 @@ public class SecurityConfig {
                 .sessionManagement(customizer -> customizer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .cors().and() // add this to your security filter chain
                 .authorizeHttpRequests((requests) -> requests
-                    .requestMatchers("/login", "/register", "/api/mobile-logins/verify", "/api/mobile-logins/login").permitAll()
-                    .anyRequest().authenticated()
+                .requestMatchers("/login", "/register", "/api/mobile-logins/verify", "/api/mobile-logins/login").permitAll()
+                .anyRequest().authenticated()
                 );
         return http.build();
     }
@@ -52,10 +52,11 @@ public class SecurityConfig {
         }
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
+        config.addExposedHeader(HttpHeaders.AUTHORIZATION);
 
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", config);
-    source.registerCorsConfiguration("/api/**", config);
-    return source;
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        source.registerCorsConfiguration("/api/**", config);
+        return source;
     }
 }

@@ -122,6 +122,15 @@ Before calculation, dependency chain is validated to prevent infinite parent-tas
 - PUT /api/projecttasktypes/{projectTaskCode} — update project task type (body: ProjectTaskType)
 - DELETE /api/projecttasktypes/{projectTaskCode} — delete project task type
 
+## ProjectAsset endpoints
+
+- GET /api/projectassets — list all project assets
+- GET /api/projectassets/{id} — get project asset by id
+- GET /api/projectassets/task/{projectTaskId} — list project assets by project task id
+- POST /api/projectassets — create project asset
+- PUT /api/projectassets/{id} — update project asset
+- DELETE /api/projectassets/{id} — delete project asset
+
 ## Notable other endpoints (summary)
 
 - /api/customers — customer CRUD/read endpoints

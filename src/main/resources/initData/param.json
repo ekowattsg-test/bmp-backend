@@ -21,7 +21,17 @@
   },
   {
     "param_key": "workDaysPerWeek",
-    "value_string": 7,
+    "value_string": 5,
+    "changeable": 1
+  },
+  {
+    "param_key": "firstWorkDay",
+    "value_string": 1,
+    "changeable": 1
+  },
+  {
+    "param_key": "lastWorkDay",
+    "value_string": 5,
     "changeable": 1
   }
 ]

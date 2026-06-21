@@ -37,6 +37,9 @@ public class ProjectService {
     @Autowired
     private ProjectTaskRepository projectTaskRepository;
 
+    @Autowired
+    private ProjectStreamDateRecalculationService projectStreamDateRecalculationService;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public List<Project> getAllProjects(Long customerId, String status) {
@@ -90,7 +93,7 @@ public class ProjectService {
             // Only auto-create baseline tasks for auto-generated baseline project streams.
             if ("P".equalsIgnoreCase(savedStream.getStreamType())) {
                 createBaselineProjectTasks(project, savedStream);
-                recalculateStreamDatesFromTasks(savedStream);
+                projectStreamDateRecalculationService.recalculateStreamDatesFromTasks(savedStream.getProjectStreamId());
             }
         }
     }
@@ -134,47 +137,6 @@ public class ProjectService {
         }
 
         projectTaskRepository.saveAll(tasksToCreate);
-    }
-
-    private void recalculateStreamDatesFromTasks(ProjectStream stream) {
-        if (stream.getProjectStreamId() == null) {
-            return;
-        }
-
-        List<ProjectTask> tasks = projectTaskRepository.findByProjectStreamId(stream.getProjectStreamId());
-        if (tasks.isEmpty()) {
-            return;
-        }
-
-        Date earliestStart = null;
-        Date latestEnd = null;
-
-        for (ProjectTask task : tasks) {
-            Date taskStart = parseProjectDate(task.getTaskStartDate());
-            Date taskEnd = parseProjectDate(task.getTaskEndDate());
-
-            if (taskStart != null && (earliestStart == null || taskStart.before(earliestStart))) {
-                earliestStart = taskStart;
-            }
-
-            if (taskEnd != null && (latestEnd == null || taskEnd.after(latestEnd))) {
-                latestEnd = taskEnd;
-            }
-        }
-
-        boolean changed = false;
-        if (earliestStart != null) {
-            stream.setStreamStartDate(earliestStart);
-            changed = true;
-        }
-        if (latestEnd != null) {
-            stream.setStreamEndDate(latestEnd);
-            changed = true;
-        }
-
-        if (changed) {
-            projectStreamRepository.save(stream);
-        }
     }
 
     private List<ProjectStream> loadProjectStreamTemplate() {

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hcteol.jwt.backend.entities.BundleMember;
 import com.hcteol.jwt.backend.entities.ProductBundle;
 import com.hcteol.jwt.backend.services.ProductBundleService;
 
@@ -60,5 +61,23 @@ public class ProductBundleController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         productBundleService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/members")
+    public ResponseEntity<ProductBundle> addMember(@PathVariable Long id, @RequestBody BundleMember member) {
+        try {
+            return ResponseEntity.ok(productBundleService.addMember(id, member));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{id}/members/{productId}")
+    public ResponseEntity<ProductBundle> removeMember(@PathVariable Long id, @PathVariable Long productId) {
+        try {
+            return ResponseEntity.ok(productBundleService.removeMember(id, productId));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

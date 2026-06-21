@@ -61,41 +61,55 @@ public class ProjectTaskDateCalculationService {
         }
 
         int workDaysPerWeek = resolveWorkDaysPerWeek();
+        boolean canRecalculateStart = canRecalculateStart(inputTask);
+        boolean canRecalculateEnd = canRecalculateEnd(inputTask);
+
+        if (!canRecalculateStart && !canRecalculateEnd) {
+            return inputTask;
+        }
 
         switch (normalized) {
             case "latest" -> {
-                LocalDate start = parseToLocalDate(inputTask.getTaskStartDate(), "taskStartDate");
-                String date = start.toString();
-                inputTask.setTaskStartDate(date);
-                inputTask.setTaskEndDate(date);
+                LocalDate start = parseToLocalDate(resolveEffectiveStartDate(inputTask, "task"),
+                        resolveEffectiveStartFieldName(inputTask, "task"));
+                applyCalculatedDates(inputTask, start, start, canRecalculateStart, canRecalculateEnd);
             }
             case "anywhere" -> {
-                LocalDate start = parseToLocalDate(inputTask.getTaskStartDate(), "taskStartDate");
-                inputTask.setTaskStartDate(start.toString());
+                LocalDate start = parseToLocalDate(resolveEffectiveStartDate(inputTask, "task"),
+                        resolveEffectiveStartFieldName(inputTask, "task"));
                 LocalDate end = addWorkingDays(start, duration - 1, workDaysPerWeek);
-                inputTask.setTaskEndDate(end.toString());
+                applyCalculatedDates(inputTask, start, end, canRecalculateStart, canRecalculateEnd);
             }
             case "start-start" -> {
                 ProjectTask parentTask = resolveParentTask(inputTask.getParentTaskId(), alignWith);
-                LocalDate start = parseToLocalDate(parentTask.getTaskStartDate(), "parentTask.taskStartDate");
-                inputTask.setTaskStartDate(start.toString());
+                LocalDate start = canRecalculateStart
+                        ? parseToLocalDate(resolveEffectiveStartDate(parentTask, "parentTask"),
+                                resolveEffectiveStartFieldName(parentTask, "parentTask"))
+                        : parseToLocalDate(resolveEffectiveStartDate(inputTask, "task"),
+                                resolveEffectiveStartFieldName(inputTask, "task"));
                 LocalDate end = addWorkingDays(start, duration - 1, workDaysPerWeek);
-                inputTask.setTaskEndDate(end.toString());
+                applyCalculatedDates(inputTask, start, end, canRecalculateStart, canRecalculateEnd);
             }
             case "end-end" -> {
                 ProjectTask parentTask = resolveParentTask(inputTask.getParentTaskId(), alignWith);
-                LocalDate end = parseToLocalDate(parentTask.getTaskEndDate(), "parentTask.taskEndDate");
-                inputTask.setTaskEndDate(end.toString());
+                LocalDate end = parseToLocalDate(resolveEffectiveEndDate(parentTask, "parentTask"),
+                        resolveEffectiveEndFieldName(parentTask, "parentTask"));
                 LocalDate start = addWorkingDays(end, -(duration + 1), workDaysPerWeek);
-                inputTask.setTaskStartDate(start.toString());
+                applyCalculatedDates(inputTask, start, end, canRecalculateStart, canRecalculateEnd);
             }
             case "end-start" -> {
                 ProjectTask parentTask = resolveParentTask(inputTask.getParentTaskId(), alignWith);
-                LocalDate parentEnd = parseToLocalDate(parentTask.getTaskEndDate(), "parentTask.taskEndDate");
-                LocalDate start = addWorkingDays(parentEnd, 1, workDaysPerWeek);
-                inputTask.setTaskStartDate(start.toString());
+                LocalDate start;
+                if (canRecalculateStart) {
+                    LocalDate parentEnd = parseToLocalDate(resolveEffectiveEndDate(parentTask, "parentTask"),
+                            resolveEffectiveEndFieldName(parentTask, "parentTask"));
+                    start = addWorkingDays(parentEnd, 1, workDaysPerWeek);
+                } else {
+                    start = parseToLocalDate(resolveEffectiveStartDate(inputTask, "task"),
+                            resolveEffectiveStartFieldName(inputTask, "task"));
+                }
                 LocalDate end = addWorkingDays(start, duration - 1, workDaysPerWeek);
-                inputTask.setTaskEndDate(end.toString());
+                applyCalculatedDates(inputTask, start, end, canRecalculateStart, canRecalculateEnd);
             }
             default -> {
                 return inputTask;
@@ -194,5 +208,58 @@ public class ProjectTaskDateCalculationService {
     private boolean isWorkingDay(DayOfWeek dayOfWeek, int workDaysPerWeek) {
         int dayNumber = dayOfWeek.getValue();
         return dayNumber <= workDaysPerWeek;
+    }
+
+    private void applyCalculatedDates(ProjectTask task, LocalDate calculatedStart, LocalDate calculatedEnd,
+            boolean canRecalculateStart, boolean canRecalculateEnd) {
+        if (canRecalculateStart && calculatedStart != null) {
+            task.setTaskStartDate(calculatedStart.toString());
+        }
+        if (canRecalculateEnd && calculatedEnd != null) {
+            task.setTaskEndDate(calculatedEnd.toString());
+        }
+    }
+
+    private boolean canRecalculateStart(ProjectTask task) {
+        return "not started".equals(normalizeStatus(task.getTaskStatus()));
+    }
+
+    private boolean canRecalculateEnd(ProjectTask task) {
+        return !"completed".equals(normalizeStatus(task.getTaskStatus()));
+    }
+
+    private String resolveEffectiveStartDate(ProjectTask task, String contextPrefix) {
+        return "not started".equals(normalizeStatus(task.getTaskStatus()))
+                ? requireDate(task.getTaskStartDate(), contextPrefix + ".taskStartDate")
+                : requireDate(task.getActualStartDate(), contextPrefix + ".actualStartDate");
+    }
+
+    private String resolveEffectiveEndDate(ProjectTask task, String contextPrefix) {
+        return "completed".equals(normalizeStatus(task.getTaskStatus()))
+                ? requireDate(task.getActualEndDate(), contextPrefix + ".actualEndDate")
+                : requireDate(task.getTaskEndDate(), contextPrefix + ".taskEndDate");
+    }
+
+    private String resolveEffectiveStartFieldName(ProjectTask task, String contextPrefix) {
+        return "not started".equals(normalizeStatus(task.getTaskStatus()))
+                ? contextPrefix + ".taskStartDate"
+                : contextPrefix + ".actualStartDate";
+    }
+
+    private String resolveEffectiveEndFieldName(ProjectTask task, String contextPrefix) {
+        return "completed".equals(normalizeStatus(task.getTaskStatus()))
+                ? contextPrefix + ".actualEndDate"
+                : contextPrefix + ".taskEndDate";
+    }
+
+    private String normalizeStatus(String status) {
+        return status == null ? "" : status.trim().toLowerCase();
+    }
+
+    private String requireDate(String value, String fieldName) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " is required");
+        }
+        return value;
     }
 }

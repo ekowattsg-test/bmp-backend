@@ -22,6 +22,9 @@ public class ProjectTaskService {
     @Autowired
     private ProjectTaskRecalculationService projectTaskRecalculationService;
 
+    @Autowired
+    private ProjectStreamDateRecalculationService projectStreamDateRecalculationService;
+
     public List<ProjectTask> getAllProjectTasks() {
         return projectTaskRepository.findAll();
     }
@@ -39,7 +42,9 @@ public class ProjectTaskService {
         ProjectTask savedTask = projectTaskRepository.save(projectTask);
         projectTaskRepository.flush();
         projectTaskRecalculationService.recalculateAfterTaskChange(savedTask.getProjectTaskId());
-        return savedTask;
+        ProjectTask refreshedTask = projectTaskRepository.findById(savedTask.getProjectTaskId()).orElse(savedTask);
+        projectStreamDateRecalculationService.recalculateStreamDatesFromTasks(refreshedTask.getProjectStreamId());
+        return refreshedTask;
     }
 
     public ProjectTask calculateProjectTask(ProjectTask inputTask) {
@@ -49,6 +54,7 @@ public class ProjectTaskService {
     @Transactional
     public ProjectTask updateProjectTask(Long id, ProjectTask projectTaskDetails) {
         return projectTaskRepository.findById(id).map(projectTask -> {
+            Long originalStreamId = projectTask.getProjectStreamId();
             projectTask.setProjectStreamId(projectTaskDetails.getProjectStreamId());
             projectTask.setTaskType(projectTaskDetails.getTaskType());
             projectTask.setTaskName(projectTaskDetails.getTaskName());
@@ -65,12 +71,24 @@ public class ProjectTaskService {
             ProjectTask savedTask = projectTaskRepository.save(projectTask);
             projectTaskRepository.flush();
             projectTaskRecalculationService.recalculateAfterTaskChange(savedTask.getProjectTaskId());
-            return savedTask;
+
+            ProjectTask refreshedTask = projectTaskRepository.findById(savedTask.getProjectTaskId()).orElse(savedTask);
+            Long updatedStreamId = refreshedTask.getProjectStreamId();
+            projectStreamDateRecalculationService.recalculateStreamDatesFromTasks(originalStreamId);
+            if (updatedStreamId != null && !updatedStreamId.equals(originalStreamId)) {
+                projectStreamDateRecalculationService.recalculateStreamDatesFromTasks(updatedStreamId);
+            }
+
+            return refreshedTask;
         }).orElseThrow(() -> new RuntimeException("ProjectTask not found with id " + id));
     }
 
     public void deleteProjectTask(Long id) {
+        Long streamId = projectTaskRepository.findById(id)
+                .map(ProjectTask::getProjectStreamId)
+                .orElse(null);
         projectTaskRepository.deleteById(id);
+        projectStreamDateRecalculationService.recalculateStreamDatesFromTasks(streamId);
     }
 
 }

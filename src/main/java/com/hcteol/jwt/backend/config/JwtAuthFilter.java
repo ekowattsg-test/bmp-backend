@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -11,6 +12,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hcteol.jwt.backend.dtos.ErrorDto;
+import com.hcteol.jwt.backend.dtos.UserDto;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -37,8 +39,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             if (authElements.length == 2
                     && "Bearer".equals(authElements[0])) {
                 try {
-                    SecurityContextHolder.getContext().setAuthentication(
-                            userAuthenticationProvider.validateToken(authElements[1]));
+                    Authentication authentication = userAuthenticationProvider.validateToken(authElements[1]);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    maybeAttachRefreshedToken(httpServletResponse, authentication);
                 } catch (TokenExpiredException e) {
                     SecurityContextHolder.clearContext();
                     writeUnauthorized(httpServletResponse, "Session Expired");
@@ -55,6 +58,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(httpServletRequest, httpServletResponse);
+    }
+
+    private void maybeAttachRefreshedToken(HttpServletResponse response, Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserDto user)) {
+            return;
+        }
+
+        String refreshedToken = userAuthenticationProvider.refreshToken(user);
+        response.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + refreshedToken);
     }
 
     private void writeUnauthorized(HttpServletResponse response, String message) throws IOException {
