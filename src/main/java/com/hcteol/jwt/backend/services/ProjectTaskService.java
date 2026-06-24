@@ -48,7 +48,9 @@ public class ProjectTaskService {
     }
 
     public ProjectTask calculateProjectTask(ProjectTask inputTask) {
-        return projectTaskDateCalculationService.calculateTaskDates(inputTask);
+        ProjectTask calculatedTask = projectTaskDateCalculationService.calculateTaskDates(inputTask);
+        projectStreamDateRecalculationService.recalculateStreamDatesFromTasks(calculatedTask.getProjectStreamId());
+        return calculatedTask;
     }
 
     @Transactional

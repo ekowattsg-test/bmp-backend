@@ -1,15 +1,17 @@
 package com.hcteol.jwt.backend.services;
 
-import com.hcteol.jwt.backend.entities.ProjectManpower;
-import com.hcteol.jwt.backend.repositories.ProjectManpowerRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.hcteol.jwt.backend.entities.ProjectManpower;
+import com.hcteol.jwt.backend.repositories.ProjectManpowerRepository;
+
 @Service
 public class ProjectManpowerService {
+
     @Autowired
     private ProjectManpowerRepository projectManpowerRepository;
 
@@ -32,7 +34,7 @@ public class ProjectManpowerService {
     public ProjectManpower updateProjectManpower(Long id, ProjectManpower projectManpowerDetails) {
         return projectManpowerRepository.findById(id).map(projectManpower -> {
             projectManpower.setProjectTaskId(projectManpowerDetails.getProjectTaskId());
-            projectManpower.setMobileNumber(projectManpowerDetails.getMobileNumber());
+            projectManpower.setStaffId(projectManpowerDetails.getStaffId());
             projectManpower.setRole(projectManpowerDetails.getRole());
             projectManpower.setLoading(projectManpowerDetails.getLoading());
             return projectManpowerRepository.save(projectManpower);

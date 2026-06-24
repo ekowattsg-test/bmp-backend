@@ -30,6 +30,9 @@ public class ProjectTaskRecalculationService {
     @Autowired
     private ProjectTaskDependencyService projectTaskDependencyService;
 
+    @Autowired
+    private ProjectStreamDateRecalculationService projectStreamDateRecalculationService;
+
     @Transactional
     public void recalculateAfterTaskChange(Long changedTaskId) {
         if (changedTaskId == null) {
@@ -43,15 +46,24 @@ public class ProjectTaskRecalculationService {
 
         Set<Long> branchVisited = new HashSet<>();
         Set<Long> processedMilestones = new HashSet<>();
+        Set<Long> affectedStreamIds = new HashSet<>();
+
+        if (changedTask.getProjectStreamId() != null) {
+            affectedStreamIds.add(changedTask.getProjectStreamId());
+        }
 
         if (!projectTaskRepository.findByMilestoneTaskId(changedTaskId).isEmpty()) {
             processedMilestones.add(changedTaskId);
-            recalculateMilestoneDate(changedTaskId);
-            recalculateDependentBranch(changedTaskId, branchVisited, processedMilestones);
+            recalculateMilestoneDate(changedTaskId, affectedStreamIds);
+            recalculateDependentBranch(changedTaskId, branchVisited, processedMilestones, affectedStreamIds);
         }
 
-        processLinkedMilestone(changedTask, branchVisited, processedMilestones);
-        recalculateDependentBranch(changedTaskId, branchVisited, processedMilestones);
+        processLinkedMilestone(changedTask, branchVisited, processedMilestones, affectedStreamIds);
+        recalculateDependentBranch(changedTaskId, branchVisited, processedMilestones, affectedStreamIds);
+
+        for (Long streamId : affectedStreamIds) {
+            projectStreamDateRecalculationService.recalculateStreamDatesFromTasks(streamId);
+        }
     }
 
     private void validateDependencyChainsUpFront(Long rootTaskId) {
@@ -87,7 +99,7 @@ public class ProjectTaskRecalculationService {
         }
     }
 
-    private void recalculateDependentBranch(Long parentTaskId, Set<Long> branchVisited, Set<Long> processedMilestones) {
+    private void recalculateDependentBranch(Long parentTaskId, Set<Long> branchVisited, Set<Long> processedMilestones, Set<Long> affectedStreamIds) {
         if (parentTaskId == null || !branchVisited.add(parentTaskId)) {
             return;
         }
@@ -101,22 +113,26 @@ public class ProjectTaskRecalculationService {
             ProjectTask recalculatedChild = projectTaskDateCalculationService.calculateTaskDates(child);
             projectTaskRepository.save(recalculatedChild);
 
-            processLinkedMilestone(recalculatedChild, branchVisited, processedMilestones);
-            recalculateDependentBranch(recalculatedChild.getProjectTaskId(), branchVisited, processedMilestones);
+            if (recalculatedChild.getProjectStreamId() != null) {
+                affectedStreamIds.add(recalculatedChild.getProjectStreamId());
+            }
+
+            processLinkedMilestone(recalculatedChild, branchVisited, processedMilestones, affectedStreamIds);
+            recalculateDependentBranch(recalculatedChild.getProjectTaskId(), branchVisited, processedMilestones, affectedStreamIds);
         }
     }
 
-    private void processLinkedMilestone(ProjectTask task, Set<Long> branchVisited, Set<Long> processedMilestones) {
+    private void processLinkedMilestone(ProjectTask task, Set<Long> branchVisited, Set<Long> processedMilestones, Set<Long> affectedStreamIds) {
         Long milestoneTaskId = task.getMilestoneTaskId();
         if (milestoneTaskId == null || !processedMilestones.add(milestoneTaskId)) {
             return;
         }
 
-        recalculateMilestoneDate(milestoneTaskId);
-        recalculateDependentBranch(milestoneTaskId, branchVisited, processedMilestones);
+        recalculateMilestoneDate(milestoneTaskId, affectedStreamIds);
+        recalculateDependentBranch(milestoneTaskId, branchVisited, processedMilestones, affectedStreamIds);
     }
 
-    private void recalculateMilestoneDate(Long milestoneTaskId) {
+    private void recalculateMilestoneDate(Long milestoneTaskId, Set<Long> affectedStreamIds) {
         Optional<ProjectTask> milestoneOptional = projectTaskRepository.findById(milestoneTaskId);
         if (milestoneOptional.isEmpty()) {
             return;
@@ -151,6 +167,9 @@ public class ProjectTaskRecalculationService {
         }
         if (canRecalculateEnd) {
             milestone.setTaskEndDate(milestoneDate);
+        }
+        if (milestone.getProjectStreamId() != null) {
+            affectedStreamIds.add(milestone.getProjectStreamId());
         }
         projectTaskRepository.save(milestone);
     }

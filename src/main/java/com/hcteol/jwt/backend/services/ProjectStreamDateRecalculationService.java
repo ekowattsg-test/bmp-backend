@@ -25,6 +25,13 @@ public class ProjectStreamDateRecalculationService {
     @Autowired
     private ProjectTaskRepository projectTaskRepository;
 
+    public void recalculateStreamDatesForProject(String projectCode) {
+        List<ProjectStream> streams = projectStreamRepository.findByProjectCode(projectCode);
+        for (ProjectStream stream : streams) {
+            recalculateStreamDatesFromTasks(stream.getProjectStreamId());
+        }
+    }
+
     public void recalculateStreamDatesFromTasks(Long projectStreamId) {
         if (projectStreamId == null) {
             return;
@@ -41,29 +48,35 @@ public class ProjectStreamDateRecalculationService {
             return;
         }
 
+        String earliestStartStr = null;
         Date earliestStart = null;
+        String latestEndStr = null;
         Date latestEnd = null;
 
         for (ProjectTask task : tasks) {
-            Date taskStart = parseProjectDate(resolveEffectiveTaskStartDate(task));
-            Date taskEnd = parseProjectDate(resolveEffectiveTaskEndDate(task));
+            String taskStartStr = resolveEffectiveTaskStartDate(task);
+            String taskEndStr = resolveEffectiveTaskEndDate(task);
+            Date taskStart = parseProjectDate(taskStartStr);
+            Date taskEnd = parseProjectDate(taskEndStr);
 
             if (taskStart != null && (earliestStart == null || taskStart.before(earliestStart))) {
                 earliestStart = taskStart;
+                earliestStartStr = taskStartStr;
             }
 
             if (taskEnd != null && (latestEnd == null || taskEnd.after(latestEnd))) {
                 latestEnd = taskEnd;
+                latestEndStr = taskEndStr;
             }
         }
 
         boolean changed = false;
-        if (earliestStart != null) {
-            stream.setStreamStartDate(earliestStart);
+        if (earliestStartStr != null) {
+            stream.setStreamStartDate(earliestStartStr);
             changed = true;
         }
-        if (latestEnd != null) {
-            stream.setStreamEndDate(latestEnd);
+        if (latestEndStr != null) {
+            stream.setStreamEndDate(latestEndStr);
             changed = true;
         }
 

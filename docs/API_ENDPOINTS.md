@@ -131,6 +131,37 @@ Before calculation, dependency chain is validated to prevent infinite parent-tas
 - PUT /api/projectassets/{id} — update project asset
 - DELETE /api/projectassets/{id} — delete project asset
 
+## ProjectStreamAsset endpoints
+
+- GET /api/projectstreamassets — list all project stream assets
+- GET /api/projectstreamassets/{id} — get project stream asset by id
+- GET /api/projectstreamassets/stream/{projectStreamId} — list project stream assets by project stream id
+- POST /api/projectstreamassets — create project stream asset
+- PUT /api/projectstreamassets/{id} — update project stream asset
+- DELETE /api/projectstreamassets/{id} — delete project stream asset
+
+## ProjectStreamBundle endpoints
+
+- GET /api/projectstreambundles — list all project stream bundles
+- GET /api/projectstreambundles/{id} — get project stream bundle by id
+- GET /api/projectstreambundles/stream/{projectStreamId} — list project stream bundles by project stream id
+- POST /api/projectstreambundles — create project stream bundle
+- PUT /api/projectstreambundles/{id} — update project stream bundle
+- DELETE /api/projectstreambundles/{id} — delete project stream bundle
+
+## ProjectInventoryView endpoints
+
+- GET /api/projectinventoryviews — list all inventory rows across task and stream inventory
+- GET /api/projectinventoryviews?projectCode={projectCode} — filter by project code
+- GET /api/projectinventoryviews?inventoryType={inventoryType} — filter by inventory type
+- GET /api/projectinventoryviews?productId={productId} — filter by product id
+- GET /api/projectinventoryviews?activityId={activityId} — filter by task/stream activity id
+- GET /api/projectinventoryviews?projectCode={projectCode}&inventoryType={inventoryType}&productId={productId}&activityId={activityId} — combined filter
+- GET /api/projectinventoryviews/{rowId} — get one inventory row by synthetic view id
+- GET /api/projectinventoryviews/project/{projectCode} — list inventory rows for one project
+- GET /api/projectinventoryviews/product/{productId} — list inventory rows for one product
+- GET /api/projectinventoryviews/activity/{activityId} — list inventory rows for one task/stream activity id
+
 ## Notable other endpoints (summary)
 
 - /api/customers — customer CRUD/read endpoints

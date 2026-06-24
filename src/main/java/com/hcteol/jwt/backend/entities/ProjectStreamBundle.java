@@ -8,16 +8,12 @@ import lombok.Data;
 
 @Data
 @Entity
-public class ProjectStream {
+public class ProjectStreamBundle {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long projectStreamBundleId;
     private Long projectStreamId;
-    private String projectCode;
-    private String streamType; // "P" - Project Stream, "S" - Sub Stream
-    private Long streamNumber;
-    private String streamName;
-    private String streamDescription;
-    private String streamStartDate;
-    private String streamEndDate;
+    private Long bundleId;
+    private Double quantity;
 }

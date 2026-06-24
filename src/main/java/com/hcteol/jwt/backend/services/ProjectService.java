@@ -72,9 +72,6 @@ public class ProjectService {
             return;
         }
 
-        Date projectStartDate = parseProjectDate(project.getStartDate());
-        Date projectEndDate = parseProjectDate(project.getEndDate());
-
         List<ProjectStream> streamsToCreate = new ArrayList<>();
         for (ProjectStream template : templateStreams) {
             ProjectStream stream = new ProjectStream();
@@ -83,8 +80,8 @@ public class ProjectService {
             stream.setStreamNumber(template.getStreamNumber());
             stream.setStreamName(template.getStreamName());
             stream.setStreamDescription(template.getStreamDescription());
-            stream.setStreamStartDate(template.getStreamStartDate() != null ? template.getStreamStartDate() : projectStartDate);
-            stream.setStreamEndDate(template.getStreamEndDate() != null ? template.getStreamEndDate() : projectEndDate);
+            stream.setStreamStartDate(template.getStreamStartDate() != null ? template.getStreamStartDate() : project.getStartDate());
+            stream.setStreamEndDate(template.getStreamEndDate() != null ? template.getStreamEndDate() : project.getEndDate());
             streamsToCreate.add(stream);
         }
 
