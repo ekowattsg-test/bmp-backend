@@ -44,16 +44,6 @@ public class ProjectTaskDateCalculationService {
 
         ProjectTaskType taskType = resolveTaskType(inputTask.getTaskType());
 
-        String alignWith = taskType.getAlignWith();
-        if (alignWith == null || alignWith.isBlank()) {
-            return inputTask;
-        }
-
-        String normalized = alignWith.trim().toLowerCase();
-        if ("no".equals(normalized)) {
-            return inputTask;
-        }
-
         Long durationObj = inputTask.getTaskDuration();
         long duration = durationObj != null ? durationObj : 1L;
         if (duration < 0) {
@@ -65,6 +55,23 @@ public class ProjectTaskDateCalculationService {
         boolean canRecalculateEnd = canRecalculateEnd(inputTask);
 
         if (!canRecalculateStart && !canRecalculateEnd) {
+            return inputTask;
+        }
+
+        String alignWith = taskType.getAlignWith();
+        if (alignWith == null || alignWith.isBlank()) {
+            return inputTask;
+        }
+
+        String normalized = alignWith.trim().toLowerCase();
+        if ("no".equals(normalized)) {
+            if (canRecalculateEnd) {
+                LocalDate start = parseToLocalDate(resolveEffectiveStartDate(inputTask, "task"),
+                        resolveEffectiveStartFieldName(inputTask, "task"));
+                LocalDate end = addWorkingDays(start, duration - 1, workDaysPerWeek);
+                // Keep start date unchanged for alignWith="no", only maintain end date consistency.
+                applyCalculatedDates(inputTask, start, end, false, true);
+            }
             return inputTask;
         }
 

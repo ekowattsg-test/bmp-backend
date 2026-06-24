@@ -40,6 +40,12 @@ public class ProjectService {
     @Autowired
     private ProjectStreamDateRecalculationService projectStreamDateRecalculationService;
 
+    @Autowired
+    private ProjectTaskRecalculationService projectTaskRecalculationService;
+
+    @Autowired
+    private ProjectTaskDateCalculationService projectTaskDateCalculationService;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public List<Project> getAllProjects(Long customerId, String status) {
@@ -236,8 +242,56 @@ public class ProjectService {
             project.setProjectLocation(projectDetails.getProjectLocation());
             project.setStatus(projectDetails.getStatus());
             project.setStreamCount(projectDetails.getStreamCount());
-            return projectRepository.save(project);
+            Project savedProject = projectRepository.save(project);
+
+            // Update baselined tasks and milestones to match new project dates
+            updateBaselineTasksAndMilestones(savedProject);
+
+            return savedProject;
         }).orElseThrow(() -> new RuntimeException("Project not found with projectCode " + projectCode));
+    }
+
+    private void updateBaselineTasksAndMilestones(Project project) {
+        // Get all baseline (P) streams for the project
+        List<ProjectStream> baselineStreams = projectStreamRepository.findByProjectCodeAndStreamType(project.getProjectCode(), "P");
+
+        if (baselineStreams.isEmpty()) {
+            return;
+        }
+
+        // For each baseline stream, update baselined tasks and first milestone
+        for (ProjectStream stream : baselineStreams) {
+            List<ProjectTask> streamTasks = projectTaskRepository.findByProjectStreamId(stream.getProjectStreamId());
+
+            if (streamTasks.isEmpty()) {
+                continue;
+            }
+
+            // Update baseline tasks from new project start date and let calculation service recompute dates.
+            for (ProjectTask task : streamTasks) {
+                if ("B".equalsIgnoreCase(task.getTaskType())) {
+                    task.setTaskStartDate(project.getStartDate());
+                    ProjectTask calculatedTask = projectTaskDateCalculationService.calculateTaskDates(task);
+                    ProjectTask savedTask = projectTaskRepository.save(calculatedTask);
+                    // Trigger cascading recalculation for this baseline task and all its dependents
+                    projectTaskRecalculationService.recalculateAfterTaskChange(savedTask.getProjectTaskId());
+                }
+            }
+
+            // Find first milestone task (type "M") and update its start and end date to project end date
+            ProjectTask firstMilestone = streamTasks.stream()
+                    .filter(t -> "M".equalsIgnoreCase(t.getTaskType()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (firstMilestone != null) {
+                firstMilestone.setTaskStartDate(project.getEndDate());
+                firstMilestone.setTaskEndDate(project.getEndDate());
+                projectTaskRepository.save(firstMilestone);
+                // Trigger cascading recalculation for the milestone
+                projectTaskRecalculationService.recalculateAfterTaskChange(firstMilestone.getProjectTaskId());
+            }
+        }
     }
 
     public void deleteProject(String projectCode) {

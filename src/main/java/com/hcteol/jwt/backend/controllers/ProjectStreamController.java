@@ -14,8 +14,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hcteol.jwt.backend.dtos.ProjectStreamReplicationRequest;
 import com.hcteol.jwt.backend.entities.ProjectStream;
 import com.hcteol.jwt.backend.services.ProjectStreamDateRecalculationService;
+import com.hcteol.jwt.backend.services.ProjectStreamReplicationService;
 import com.hcteol.jwt.backend.services.ProjectStreamService;
 
 @RestController
@@ -27,6 +29,9 @@ public class ProjectStreamController {
 
     @Autowired
     private ProjectStreamDateRecalculationService projectStreamDateRecalculationService;
+
+    @Autowired
+    private ProjectStreamReplicationService projectStreamReplicationService;
 
     @GetMapping
     public List<ProjectStream> getAllProjectStreams(
@@ -50,6 +55,20 @@ public class ProjectStreamController {
     @PostMapping
     public ProjectStream createProjectStream(@RequestBody ProjectStream projectStream) {
         return projectStreamService.createProjectStream(projectStream);
+    }
+
+    @PostMapping("/{id}/replicate")
+    public ResponseEntity<ProjectStream> replicateProjectStream(
+            @PathVariable Long id,
+            @RequestBody ProjectStreamReplicationRequest request) {
+        try {
+            ProjectStream replicated = projectStreamReplicationService.replicateStream(id, request);
+            return ResponseEntity.ok(replicated);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PutMapping("/{id}")
