@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.hcteol.jwt.backend.dtos.ProjectStreamReplicationRequest;
 import com.hcteol.jwt.backend.entities.ProjectAsset;
 import com.hcteol.jwt.backend.entities.ProjectBundle;
-import com.hcteol.jwt.backend.entities.ProjectManpower;
+import com.hcteol.jwt.backend.entities.ProjectSkill;
 import com.hcteol.jwt.backend.entities.ProjectStock;
 import com.hcteol.jwt.backend.entities.ProjectStream;
 import com.hcteol.jwt.backend.entities.ProjectStreamAsset;
@@ -27,7 +27,7 @@ import com.hcteol.jwt.backend.entities.ProjectStreamBundle;
 import com.hcteol.jwt.backend.entities.ProjectTask;
 import com.hcteol.jwt.backend.repositories.ProjectAssetRepository;
 import com.hcteol.jwt.backend.repositories.ProjectBundleRepository;
-import com.hcteol.jwt.backend.repositories.ProjectManpowerRepository;
+import com.hcteol.jwt.backend.repositories.ProjectSkillRepository;
 import com.hcteol.jwt.backend.repositories.ProjectStockRepository;
 import com.hcteol.jwt.backend.repositories.ProjectStreamAssetRepository;
 import com.hcteol.jwt.backend.repositories.ProjectStreamBundleRepository;
@@ -59,7 +59,7 @@ public class ProjectStreamReplicationService {
     private ProjectBundleRepository projectBundleRepository;
 
     @Autowired
-    private ProjectManpowerRepository projectManpowerRepository;
+    private ProjectSkillRepository projectSkillRepository;
 
     @Autowired
     private ProjectTaskDateCalculationService projectTaskDateCalculationService;
@@ -300,18 +300,17 @@ public class ProjectStreamReplicationService {
             projectBundleRepository.saveAll(clonedBundles);
         }
 
-        List<ProjectManpower> sourceManpowers = projectManpowerRepository.findByProjectTaskId(sourceTaskId);
-        if (!sourceManpowers.isEmpty()) {
-            List<ProjectManpower> clonedManpowers = new ArrayList<>();
-            for (ProjectManpower sourceManpower : sourceManpowers) {
-                ProjectManpower cloned = new ProjectManpower();
+        List<ProjectSkill> sourceSkills = projectSkillRepository.findByProjectTaskId(sourceTaskId);
+        if (!sourceSkills.isEmpty()) {
+            List<ProjectSkill> clonedSkills = new ArrayList<>();
+            for (ProjectSkill sourceSkill : sourceSkills) {
+                ProjectSkill cloned = new ProjectSkill();
                 cloned.setProjectTaskId(newTaskId);
-                cloned.setStaffId(sourceManpower.getStaffId());
-                cloned.setRole(sourceManpower.getRole());
-                cloned.setLoading(sourceManpower.getLoading());
-                clonedManpowers.add(cloned);
+                cloned.setSkillId(sourceSkill.getSkillId());
+                cloned.setUnit(sourceSkill.getUnit());
+                clonedSkills.add(cloned);
             }
-            projectManpowerRepository.saveAll(clonedManpowers);
+            projectSkillRepository.saveAll(clonedSkills);
         }
     }
 

@@ -131,6 +131,15 @@ Before calculation, dependency chain is validated to prevent infinite parent-tas
 - PUT /api/projectassets/{id} — update project asset
 - DELETE /api/projectassets/{id} — delete project asset
 
+## ProjectSkill endpoints
+
+- GET /api/projectskills — list all project skills
+- GET /api/projectskills/{id} — get project skill by id
+- GET /api/projectskills/task/{projectTaskId} — list project skills by project task id
+- POST /api/projectskills — create project skill
+- PUT /api/projectskills/{id} — update project skill
+- DELETE /api/projectskills/{id} — delete project skill
+
 ## ProjectStreamAsset endpoints
 
 - GET /api/projectstreamassets — list all project stream assets
