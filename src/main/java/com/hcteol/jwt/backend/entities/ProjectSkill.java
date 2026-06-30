@@ -14,6 +14,6 @@ public class ProjectSkill {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long projectSkillId;
     private Long projectTaskId;
-    private String skillId; // skills needed by the task
+    private Long skillId; // skills needed by the task
     private Integer unit; // number of skilled workers required for the task
 }

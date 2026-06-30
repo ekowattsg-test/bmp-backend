@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.hcteol.jwt.backend.entities.ProjectSkill;
+import com.hcteol.jwt.backend.dtos.ProjectSkillDto;
 import com.hcteol.jwt.backend.services.ProjectSkillService;
 
 @RestController
@@ -24,31 +24,31 @@ public class ProjectSkillController {
     private ProjectSkillService projectSkillService;
 
     @GetMapping
-    public List<ProjectSkill> getAllProjectSkills() {
+    public List<ProjectSkillDto> getAllProjectSkills() {
         return projectSkillService.getAllProjectSkills();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProjectSkill> getProjectSkillById(@PathVariable Long id) {
+    public ResponseEntity<ProjectSkillDto> getProjectSkillById(@PathVariable Long id) {
         return projectSkillService.getProjectSkillById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/task/{projectTaskId}")
-    public List<ProjectSkill> getByProjectTaskId(@PathVariable Long projectTaskId) {
+    public List<ProjectSkillDto> getByProjectTaskId(@PathVariable Long projectTaskId) {
         return projectSkillService.getProjectSkillsByTaskId(projectTaskId);
     }
 
     @PostMapping
-    public ProjectSkill createProjectSkill(@RequestBody ProjectSkill projectSkill) {
+    public ProjectSkillDto createProjectSkill(@RequestBody ProjectSkillDto projectSkill) {
         return projectSkillService.createProjectSkill(projectSkill);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProjectSkill> updateProjectSkill(@PathVariable Long id, @RequestBody ProjectSkill projectSkill) {
+    public ResponseEntity<ProjectSkillDto> updateProjectSkill(@PathVariable Long id, @RequestBody ProjectSkillDto projectSkill) {
         try {
-            ProjectSkill updated = projectSkillService.updateProjectSkill(id, projectSkill);
+            ProjectSkillDto updated = projectSkillService.updateProjectSkill(id, projectSkill);
             return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();

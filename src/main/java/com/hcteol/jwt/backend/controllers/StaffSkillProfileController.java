@@ -53,6 +53,11 @@ public class StaffSkillProfileController {
         return staffSkillProfileService.getStaffSkillProfilesByStaffName(staffName);
     }
 
+    @GetMapping("/staffid/{staffId}")
+    public List<staffSkillProfile> getStaffSkillProfilesByStaffId(@PathVariable String staffId) {
+        return staffSkillProfileService.getStaffSkillProfilesByStaffId(staffId);
+    }
+
     @GetMapping("/skill/{staffSkillId}")
     public List<staffSkillProfile> getStaffSkillProfilesByStaffSkillId(@PathVariable Long staffSkillId) {
         return staffSkillProfileService.getStaffSkillProfilesByStaffSkillId(staffSkillId);

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 
@@ -61,6 +62,14 @@ import com.hcteol.jwt.backend.repositories.WorkStepsTypeRepository;
 @Component
 @ConditionalOnProperty(prefix = "app.data.init", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class DataInitializer implements ApplicationRunner {
+
+    private static final Set<String> REQUIRED_VIEW_SCRIPTS = Set.of(
+            "project_inventory_view.sql",
+            "project_manpower_view.sql",
+            "project_skill_view.sql",
+            "purchase_order_view.sql",
+            "stock_view.sql",
+            "userrole_view.sql");
 
     @Autowired
     private CompanyRepository companyRepository;
@@ -1177,12 +1186,28 @@ public class DataInitializer implements ApplicationRunner {
             System.out.println("[DataInitializer] Created param 'baselineDate' with value " + baselineDateValue);
         }
 
+        executeSqlViewScripts();
+    }
+
+    private void executeSqlViewScripts() {
         try {
             // Keep view DDL in resources so DB schema SQL is not hardcoded in Java.
             // Execute all SQL files under sqlView in lexical order.
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
             Resource[] viewScripts = resolver.getResources("classpath*:sqlView/*.sql");
             Arrays.sort(viewScripts, Comparator.comparing(Resource::getFilename, Comparator.nullsLast(String::compareToIgnoreCase)));
+
+            Set<String> foundScripts = Arrays.stream(viewScripts)
+                    .map(Resource::getFilename)
+                    .filter(name -> name != null && !name.isBlank())
+                    .collect(Collectors.toSet());
+
+            Set<String> missingScripts = REQUIRED_VIEW_SCRIPTS.stream()
+                    .filter(required -> !foundScripts.contains(required))
+                    .collect(Collectors.toSet());
+            if (!missingScripts.isEmpty()) {
+                throw new RuntimeException("Missing required sqlView scripts: " + missingScripts);
+            }
 
             try (Connection connection = dataSource.getConnection()) {
                 for (Resource viewScript : viewScripts) {

@@ -171,6 +171,22 @@ Before calculation, dependency chain is validated to prevent infinite parent-tas
 - GET /api/projectinventoryviews/product/{productId} — list inventory rows for one product
 - GET /api/projectinventoryviews/activity/{activityId} — list inventory rows for one task/stream activity id
 
+## ProjectSkillView endpoints
+
+- GET /api/projectskillviews — search project skill rows with optional filters: `projectCode`, `projectStreamId`, `projectTaskId`, `staffSkillId`, `taskStatus`, `active`, `projectStatus`
+- GET /api/projectskillviews/{rowId} — get one project skill view row by synthetic row id
+- GET /api/projectskillviews/project/{projectCode} — list project skill rows for one project
+- GET /api/projectskillviews/task/{projectTaskId} — list project skill rows for one task
+- GET /api/projectskillviews/skill/{staffSkillId} — list project skill rows for one staff skill id
+
+## ProjectManpowerView endpoints
+
+- GET /api/projectmanpowerviews — search project manpower rows with optional filters: `projectCode`, `projectStreamId`, `projectTaskId`, `staffId`, `taskStatus`, `active`, `projectStatus`
+- GET /api/projectmanpowerviews/{rowId} — get one project manpower view row by synthetic row id
+- GET /api/projectmanpowerviews/project/{projectCode} — list project manpower rows for one project
+- GET /api/projectmanpowerviews/task/{projectTaskId} — list project manpower rows for one task
+- GET /api/projectmanpowerviews/staff/{staffId} — list project manpower rows for one staff id
+
 ## Notable other endpoints (summary)
 
 - /api/customers — customer CRUD/read endpoints

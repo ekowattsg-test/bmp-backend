@@ -18,10 +18,12 @@ import lombok.NoArgsConstructor;
 @Data
 @Entity
 public class staffSkillProfile {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long staffSkillProfileId;
     private String staffName;
+    private String staffId;
     private Long staffSkillId;
     private String issuedBy;
     private Date acquiredDate;

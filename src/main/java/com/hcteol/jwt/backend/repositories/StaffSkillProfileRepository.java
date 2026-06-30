@@ -6,6 +6,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.hcteol.jwt.backend.entities.staffSkillProfile;
 
 public interface StaffSkillProfileRepository extends JpaRepository<staffSkillProfile, Long> {
+
+    List<staffSkillProfile> findByStaffId(String staffId);
+
     List<staffSkillProfile> findByStaffName(String staffName);
+
     List<staffSkillProfile> findByStaffSkillId(Long staffSkillId);
 }

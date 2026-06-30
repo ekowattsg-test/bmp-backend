@@ -30,6 +30,7 @@ public class StaffSkillProfileService {
         staffSkillProfile existingProfile = staffSkillProfileRepository.findById(staffSkillProfileId).orElse(null);
         if (existingProfile != null) {
             existingProfile.setStaffName(staffSkillProfileDetails.getStaffName());
+            existingProfile.setStaffId(staffSkillProfileDetails.getStaffId());
             existingProfile.setStaffSkillId(staffSkillProfileDetails.getStaffSkillId());
             existingProfile.setIssuedBy(staffSkillProfileDetails.getIssuedBy());
             existingProfile.setAcquiredDate(staffSkillProfileDetails.getAcquiredDate());
@@ -42,11 +43,18 @@ public class StaffSkillProfileService {
     }
 
     public void deleteStaffSkillProfile(Long staffSkillProfileId) {
+        if (staffSkillProfileId == null) {
+            return;
+        }
         staffSkillProfileRepository.deleteById(staffSkillProfileId);
     }
 
     public List<staffSkillProfile> getStaffSkillProfilesByStaffName(String staffName) {
         return staffSkillProfileRepository.findByStaffName(staffName);
+    }
+
+    public List<staffSkillProfile> getStaffSkillProfilesByStaffId(String staffId) {
+        return staffSkillProfileRepository.findByStaffId(staffId);
     }
 
     public List<staffSkillProfile> getStaffSkillProfilesByStaffSkillId(Long staffSkillId) {
