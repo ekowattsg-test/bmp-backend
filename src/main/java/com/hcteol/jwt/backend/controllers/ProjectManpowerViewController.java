@@ -25,6 +25,8 @@ public class ProjectManpowerViewController {
             @RequestParam(required = false) String projectCode,
             @RequestParam(required = false) Long projectStreamId,
             @RequestParam(required = false) Long projectTaskId,
+            @RequestParam(required = false) Integer manpowerTouched,
+            @RequestParam(required = false) String workDate,
             @RequestParam(required = false) String staffId,
             @RequestParam(required = false) String taskStatus,
             @RequestParam(required = false) Integer active,
@@ -33,6 +35,8 @@ public class ProjectManpowerViewController {
                 projectCode,
                 projectStreamId,
                 projectTaskId,
+                manpowerTouched,
+                workDate,
                 staffId,
                 taskStatus,
                 active,
@@ -54,6 +58,11 @@ public class ProjectManpowerViewController {
     @GetMapping("/task/{projectTaskId}")
     public List<ProjectManpowerView> getByTaskId(@PathVariable Long projectTaskId) {
         return projectManpowerViewService.getProjectManpowerViewsByTaskId(projectTaskId);
+    }
+
+    @GetMapping("/skill/{projectSkillId}")
+    public List<ProjectManpowerView> getBySkillId(@PathVariable Long projectSkillId) {
+        return projectManpowerViewService.getProjectManpowerViewsBySkillId(projectSkillId);
     }
 
     @GetMapping("/staff/{staffId}")

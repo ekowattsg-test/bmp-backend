@@ -14,7 +14,8 @@ public class ProjectManpower {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long projectManpowerId;
     private Long projectTaskId;
+    private Long projectSkillId;
+    private String workDate;
     private String staffId; // staff assigned to task
-    private String role; // role of staff in task (e.g. worker, supervisor)
     private Double loading = 1.0; // percentage of staff workload needed in task
 }

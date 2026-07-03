@@ -68,6 +68,7 @@ public class DataInitializer implements ApplicationRunner {
             "project_manpower_view.sql",
             "project_skill_view.sql",
             "purchase_order_view.sql",
+            "staff_skill_profile_view.sql",
             "stock_view.sql",
             "userrole_view.sql");
 

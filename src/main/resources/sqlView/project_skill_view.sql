@@ -7,6 +7,7 @@ CREATE OR REPLACE VIEW project_skill_view AS
   s.project_stream_id,
   s.stream_name,
   t.project_task_id,
+    t.manpower_touched,
   t.task_status,
   t.task_start_date,
   t.task_end_date,

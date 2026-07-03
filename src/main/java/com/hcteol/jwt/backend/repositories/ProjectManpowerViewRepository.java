@@ -13,5 +13,7 @@ public interface ProjectManpowerViewRepository extends JpaRepository<ProjectManp
 
     List<ProjectManpowerView> findByProjectTaskId(Long projectTaskId);
 
+    List<ProjectManpowerView> findByProjectSkillId(Long projectSkillId);
+
     List<ProjectManpowerView> findByStaffId(String staffId);
 }

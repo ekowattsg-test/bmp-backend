@@ -12,7 +12,7 @@ import lombok.Data;
 @Data
 @Entity
 @Immutable
-@Subselect("select row_number() over (order by v.project_code, v.project_stream_id, v.project_task_id, v.staff_id, v.staff_name) as row_id, v.* from project_manpower_view v")
+@Subselect("select row_number() over (order by v.project_code, v.project_stream_id, v.project_task_id, v.project_skill_id, v.work_date, v.staff_id, v.staff_name) as row_id, v.* from project_manpower_view v")
 @Synchronize({"project_manpower", "project_task", "project_stream", "project", "staff"})
 public class ProjectManpowerView {
 
@@ -36,6 +36,12 @@ public class ProjectManpowerView {
     @Column(name = "project_task_id")
     private Long projectTaskId;
 
+    @Column(name = "manpower_touched")
+    private Integer manpowerTouched;
+
+    @Column(name = "project_skill_id")
+    private Long projectSkillId;
+
     @Column(name = "task_status")
     private String taskStatus;
 
@@ -50,6 +56,9 @@ public class ProjectManpowerView {
 
     @Column(name = "actual_end_date")
     private String actualEndDate;
+
+    @Column(name = "work_date")
+    private String workDate;
 
     @Column(name = "staff_id")
     private String staffId;

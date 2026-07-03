@@ -36,6 +36,9 @@ public class ProjectSkillView {
     @Column(name = "project_task_id")
     private Long projectTaskId;
 
+    @Column(name = "manpower_touched")
+    private Integer manpowerTouched;
+
     @Column(name = "task_status")
     private String taskStatus;
 

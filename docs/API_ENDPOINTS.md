@@ -76,6 +76,7 @@ DeliveryOrderItemDto fields (summary): `itemId`, `orderId`, `itemType`, `product
 - `taskStatus` (String) — e.g. `Not Started`, `In Progress`, `Completed`
 - `actualStartDate` (String)
 - `actualEndDate` (String)
+- `manpowerTouched` (Integer) — `1` when manpower was manually adjusted, `0` otherwise
 - `remarks` (String)
 
 ## ProjectTask endpoints
@@ -181,11 +182,37 @@ Before calculation, dependency chain is validated to prevent infinite parent-tas
 
 ## ProjectManpowerView endpoints
 
-- GET /api/projectmanpowerviews — search project manpower rows with optional filters: `projectCode`, `projectStreamId`, `projectTaskId`, `staffId`, `taskStatus`, `active`, `projectStatus`
+- GET /api/projectmanpowerviews — search project manpower rows with optional filters: `projectCode`, `projectStreamId`, `projectTaskId`, `manpowerTouched`, `workDate`, `staffId`, `taskStatus`, `active`, `projectStatus`
 - GET /api/projectmanpowerviews/{rowId} — get one project manpower view row by synthetic row id
 - GET /api/projectmanpowerviews/project/{projectCode} — list project manpower rows for one project
 - GET /api/projectmanpowerviews/task/{projectTaskId} — list project manpower rows for one task
+- GET /api/projectmanpowerviews/skill/{projectSkillId} — list project manpower rows for one project skill
 - GET /api/projectmanpowerviews/staff/{staffId} — list project manpower rows for one staff id
+
+## ProjectManpower entity payload (request/response)
+
+- `projectManpowerId` (Long)
+- `projectTaskId` (Long) — parent project task identifier
+- `projectSkillId` (Long) — parent project skill identifier
+- `workDate` (String) — assigned work date
+- `staffId` (String) — assigned staff member
+- `loading` (Double) — workload loading
+
+## ProjectManpower endpoints
+
+- GET /api/projectmanpowers — list all project manpower rows
+- GET /api/projectmanpowers/{id} — get project manpower by id
+- GET /api/projectmanpowers/task/{projectTaskId} — list project manpower rows for one task via linked project skills
+- GET /api/projectmanpowers/skill/{projectSkillId} — list project manpower rows for one project skill
+- GET /api/projectmanpowers/staff/{staffId} — list project manpower rows for one staff id
+- GET /api/staffskillprofileviews — list/query staff skill profile view rows (`staffId`, `staffSkillId`, `staffName`, `skillName`)
+- GET /api/staffskillprofileviews/{rowId} — get one staff skill profile view row by id
+- GET /api/staffskillprofileviews/staff/{staffId} — list rows by staff id
+- GET /api/staffskillprofileviews/skill/{staffSkillId} — list rows by staff skill id
+- POST /api/projectmanpowers — create project manpower (body: ProjectManpowerDto)
+- PUT /api/projectmanpowers/{id} — update project manpower (body: ProjectManpowerDto)
+- DELETE /api/projectmanpowers/{id} — delete project manpower
+- POST /api/projectmanpowers/regenerate?runDate=YYYY-MM-DD — trigger forward manpower cleanup/regeneration and return `{ deletedCount, createdCount, assignedCount, serviceStartTime, serviceEndTime, totalTimeTakenMs }`
 
 ## Notable other endpoints (summary)
 

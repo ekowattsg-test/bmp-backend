@@ -69,6 +69,7 @@ public class ProjectTaskService {
             projectTask.setTaskStatus(projectTaskDetails.getTaskStatus());
             projectTask.setActualStartDate(projectTaskDetails.getActualStartDate());
             projectTask.setActualEndDate(projectTaskDetails.getActualEndDate());
+            projectTask.setManpowerTouched(projectTaskDetails.getManpowerTouched());
             projectTask.setRemarks(projectTaskDetails.getRemarks());
             ProjectTask savedTask = projectTaskRepository.save(projectTask);
             projectTaskRepository.flush();

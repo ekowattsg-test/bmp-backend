@@ -21,6 +21,8 @@ public class ProjectManpowerViewService {
             String projectCode,
             Long projectStreamId,
             Long projectTaskId,
+            Integer manpowerTouched,
+            String workDate,
             String staffId,
             String taskStatus,
             Integer active,
@@ -30,6 +32,8 @@ public class ProjectManpowerViewService {
                 projectCode,
                 projectStreamId,
                 projectTaskId,
+                manpowerTouched,
+                workDate,
                 staffId,
                 taskStatus,
                 active,
@@ -51,6 +55,10 @@ public class ProjectManpowerViewService {
 
     public List<ProjectManpowerView> getProjectManpowerViewsByTaskId(Long projectTaskId) {
         return projectManpowerViewRepository.findByProjectTaskId(projectTaskId);
+    }
+
+    public List<ProjectManpowerView> getProjectManpowerViewsBySkillId(Long projectSkillId) {
+        return projectManpowerViewRepository.findByProjectSkillId(projectSkillId);
     }
 
     public List<ProjectManpowerView> getProjectManpowerViewsByStaffId(String staffId) {

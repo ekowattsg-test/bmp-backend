@@ -45,3 +45,29 @@ Notes and recommendations:
 
 - This change only updates connection settings and adds the JDBC driver. No schema/data conversion included.
 - If you later need to migrate data, consider using `pgloader` or `mysqldump` + `pg_restore` workflows, or a migration tool like Flyway for controlled schema evolution.
+
+---
+
+## Flyway Startup Migration (Implemented)
+
+To support environments without direct DB admin access, this project now includes Flyway startup migrations.
+
+- Flyway dependency: `org.flywaydb:flyway-core`
+- Migration location: `src/main/resources/db/migration`
+- Baseline settings enabled in both resource configs:
+  - `spring.flyway.enabled=true`
+  - `spring.flyway.locations=classpath:db/migration`
+  - `spring.flyway.baseline-on-migrate=true`
+  - `spring.flyway.baseline-version=0`
+
+Included migration:
+
+- `V1__project_skill_skill_id_to_bigint.sql`
+  - Converts `project_skill.skill_id` to `bigint` with explicit `USING` casting logic for PostgreSQL.
+  - Handles null/blank/non-numeric values safely by mapping invalid values to `NULL` during conversion.
+
+How it runs:
+
+1. Application starts.
+2. Flyway runs pending SQL scripts.
+3. Hibernate starts with `ddl-auto=update` after migration.

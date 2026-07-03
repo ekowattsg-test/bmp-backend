@@ -13,6 +13,8 @@ public final class ProjectManpowerViewSpecification {
             String projectCode,
             Long projectStreamId,
             Long projectTaskId,
+            Integer manpowerTouched,
+            String workDate,
             String staffId,
             String taskStatus,
             Integer active,
@@ -28,6 +30,12 @@ public final class ProjectManpowerViewSpecification {
         }
         if (projectTaskId != null) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("projectTaskId"), projectTaskId));
+        }
+        if (manpowerTouched != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("manpowerTouched"), manpowerTouched));
+        }
+        if (workDate != null && !workDate.isBlank()) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("workDate"), workDate));
         }
         if (staffId != null && !staffId.isBlank()) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("staffId"), staffId));
