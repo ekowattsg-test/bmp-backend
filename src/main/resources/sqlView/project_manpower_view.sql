@@ -7,7 +7,7 @@ CREATE OR REPLACE VIEW project_manpower_view AS
     s.project_stream_id,
     s.stream_name,
     t.project_task_id,
-   t.manpower_touched,
+  m.manpower_touched,
     m.project_skill_id,
     t.task_status,
     t.task_start_date,

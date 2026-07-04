@@ -18,4 +18,5 @@ public class ProjectManpower {
     private String workDate;
     private String staffId; // staff assigned to task
     private Double loading = 1.0; // percentage of staff workload needed in task
+    private Integer manpowerTouched = 0; // 1 - manpower manually adjusted, 0 - manpower not adjusted
 }

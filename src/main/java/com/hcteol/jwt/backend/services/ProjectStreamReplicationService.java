@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.hcteol.jwt.backend.dtos.ProjectStreamReplicationRequest;
 import com.hcteol.jwt.backend.entities.ProjectAsset;
 import com.hcteol.jwt.backend.entities.ProjectBundle;
+import com.hcteol.jwt.backend.entities.ProjectManpower;
 import com.hcteol.jwt.backend.entities.ProjectSkill;
 import com.hcteol.jwt.backend.entities.ProjectStock;
 import com.hcteol.jwt.backend.entities.ProjectStream;
@@ -27,6 +28,7 @@ import com.hcteol.jwt.backend.entities.ProjectStreamBundle;
 import com.hcteol.jwt.backend.entities.ProjectTask;
 import com.hcteol.jwt.backend.repositories.ProjectAssetRepository;
 import com.hcteol.jwt.backend.repositories.ProjectBundleRepository;
+import com.hcteol.jwt.backend.repositories.ProjectManpowerRepository;
 import com.hcteol.jwt.backend.repositories.ProjectSkillRepository;
 import com.hcteol.jwt.backend.repositories.ProjectStockRepository;
 import com.hcteol.jwt.backend.repositories.ProjectStreamAssetRepository;
@@ -60,6 +62,9 @@ public class ProjectStreamReplicationService {
 
     @Autowired
     private ProjectSkillRepository projectSkillRepository;
+
+    @Autowired
+    private ProjectManpowerRepository projectManpowerRepository;
 
     @Autowired
     private ProjectTaskDateCalculationService projectTaskDateCalculationService;
@@ -310,8 +315,63 @@ public class ProjectStreamReplicationService {
                 cloned.setUnit(sourceSkill.getUnit());
                 clonedSkills.add(cloned);
             }
-            projectSkillRepository.saveAll(clonedSkills);
+            List<ProjectSkill> savedClonedSkills = projectSkillRepository.saveAll(clonedSkills);
+
+            Map<Long, Long> sourceToNewSkillId = new HashMap<>();
+            for (int i = 0; i < sourceSkills.size() && i < savedClonedSkills.size(); i++) {
+                Long sourceSkillId = sourceSkills.get(i).getProjectSkillId();
+                Long newSkillId = savedClonedSkills.get(i).getProjectSkillId();
+                if (sourceSkillId != null && newSkillId != null) {
+                    sourceToNewSkillId.put(sourceSkillId, newSkillId);
+                }
+            }
+
+            replicateTaskManpower(sourceTaskId, newTaskId, sourceToNewSkillId);
         }
+    }
+
+    private void replicateTaskManpower(Long sourceTaskId, Long newTaskId, Map<Long, Long> sourceToNewSkillId) {
+        List<ProjectManpower> sourceManpowers = projectManpowerRepository.findByProjectTaskId(sourceTaskId);
+        if (sourceManpowers.isEmpty()) {
+            return;
+        }
+
+        LocalDate today = LocalDate.now();
+        List<ProjectManpower> clonedManpowers = new ArrayList<>();
+        for (ProjectManpower sourceManpower : sourceManpowers) {
+            Long sourceSkillId = sourceManpower.getProjectSkillId();
+            Long newSkillId = sourceSkillId == null ? null : sourceToNewSkillId.get(sourceSkillId);
+            if (sourceSkillId != null && newSkillId == null) {
+                continue;
+            }
+
+            ProjectManpower cloned = new ProjectManpower();
+            cloned.setProjectTaskId(newTaskId);
+            cloned.setProjectSkillId(newSkillId);
+            cloned.setWorkDate(sourceManpower.getWorkDate());
+            cloned.setStaffId(sourceManpower.getStaffId());
+            cloned.setLoading(sourceManpower.getLoading());
+            cloned.setManpowerTouched(resolveReplicatedManpowerTouched(sourceManpower, today));
+            clonedManpowers.add(cloned);
+        }
+
+        if (!clonedManpowers.isEmpty()) {
+            projectManpowerRepository.saveAll(clonedManpowers);
+        }
+    }
+
+    private Integer resolveReplicatedManpowerTouched(ProjectManpower sourceManpower, LocalDate today) {
+        String workDate = sourceManpower.getWorkDate();
+        if (workDate == null || workDate.isBlank()) {
+            return sourceManpower.getManpowerTouched();
+        }
+
+        LocalDate clonedWorkDate = safeDateForSort(workDate);
+        if (clonedWorkDate.isAfter(today)) {
+            return 0;
+        }
+
+        return sourceManpower.getManpowerTouched();
     }
 
     private LocalDate safeDateForSort(String dateValue) {

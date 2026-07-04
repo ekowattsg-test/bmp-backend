@@ -25,6 +25,5 @@ public class ProjectTask {
     private String taskStatus; // "Not Started", "In Progress", "Completed"
     private String actualStartDate;
     private String actualEndDate;
-    private Integer manpowerTouched = 0; // 1 - manpower manually adjusted, 0 - manpower not adjusted
     private String remarks;
 }

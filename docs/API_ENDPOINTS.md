@@ -76,7 +76,6 @@ DeliveryOrderItemDto fields (summary): `itemId`, `orderId`, `itemType`, `product
 - `taskStatus` (String) — e.g. `Not Started`, `In Progress`, `Completed`
 - `actualStartDate` (String)
 - `actualEndDate` (String)
-- `manpowerTouched` (Integer) — `1` when manpower was manually adjusted, `0` otherwise
 - `remarks` (String)
 
 ## ProjectTask endpoints
@@ -197,6 +196,7 @@ Before calculation, dependency chain is validated to prevent infinite parent-tas
 - `workDate` (String) — assigned work date
 - `staffId` (String) — assigned staff member
 - `loading` (Double) — workload loading
+- `manpowerTouched` (Integer) — `1` when the manpower row was manually adjusted, `0` otherwise
 
 ## ProjectManpower endpoints
 

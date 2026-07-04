@@ -33,5 +33,10 @@
     "param_key": "lastWorkDay",
     "value_string": 5,
     "changeable": 1
+  },
+  {
+    "param_key": "manpowerAssignmentHorizonDays",
+    "value_string": 45,
+    "changeable": 1
   }
 ]

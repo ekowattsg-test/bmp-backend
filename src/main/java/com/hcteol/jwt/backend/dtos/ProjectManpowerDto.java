@@ -8,17 +8,26 @@ public class ProjectManpowerDto {
     private String workDate;
     private String staffId;
     private Double loading;
+    private Integer manpowerTouched;
 
     public ProjectManpowerDto() {
     }
 
-    public ProjectManpowerDto(Long projectManpowerId, Long projectTaskId, Long projectSkillId, String workDate, String staffId, Double loading) {
+    public ProjectManpowerDto(
+            Long projectManpowerId,
+            Long projectTaskId,
+            Long projectSkillId,
+            String workDate,
+            String staffId,
+            Double loading,
+            Integer manpowerTouched) {
         this.projectManpowerId = projectManpowerId;
         this.projectTaskId = projectTaskId;
         this.projectSkillId = projectSkillId;
         this.workDate = workDate;
         this.staffId = staffId;
         this.loading = loading;
+        this.manpowerTouched = manpowerTouched;
     }
 
     public Long getProjectManpowerId() {
@@ -67,5 +76,13 @@ public class ProjectManpowerDto {
 
     public void setLoading(Double loading) {
         this.loading = loading;
+    }
+
+    public Integer getManpowerTouched() {
+        return manpowerTouched;
+    }
+
+    public void setManpowerTouched(Integer manpowerTouched) {
+        this.manpowerTouched = manpowerTouched;
     }
 }

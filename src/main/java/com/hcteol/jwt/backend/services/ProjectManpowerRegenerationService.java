@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -92,8 +91,6 @@ public class ProjectManpowerRegenerationService {
         List<ProjectTask> eligibleTasks = allTasks.stream()
                 .filter(task -> task != null)
                 .filter(task -> !isCompleted(task))
-                .filter(task -> getManpowerTouched(task) == 0)
-                .filter(task -> resolveEffectiveEndDate(task).map(end -> end.isAfter(runDate)).orElse(false))
                 .toList();
 
         if (eligibleTasks.isEmpty()) {
@@ -101,97 +98,182 @@ public class ProjectManpowerRegenerationService {
         }
 
         LinkedHashSet<Long> eligibleTaskIds = new LinkedHashSet<>();
-        LinkedHashSet<Long> projectSkillIds = new LinkedHashSet<>();
         for (ProjectTask task : eligibleTasks) {
             Long taskId = task.getProjectTaskId();
             if (taskId == null) {
                 continue;
             }
             eligibleTaskIds.add(taskId);
-            for (ProjectSkill projectSkill : projectSkillRepository.findByProjectTaskId(taskId)) {
-                if (projectSkill.getProjectSkillId() != null) {
-                    projectSkillIds.add(projectSkill.getProjectSkillId());
-                }
-            }
         }
 
-        LinkedHashMap<Long, ProjectManpower> candidateRows = new LinkedHashMap<>();
+        Map<Long, List<ProjectManpower>> futureRowsByTaskId = new HashMap<>();
         if (!eligibleTaskIds.isEmpty()) {
             for (ProjectManpower manpower : projectManpowerRepository.findByProjectTaskIdIn(new ArrayList<>(eligibleTaskIds))) {
-                if (manpower != null && manpower.getProjectManpowerId() != null) {
-                    candidateRows.put(manpower.getProjectManpowerId(), manpower);
+                if (manpower == null || manpower.getProjectTaskId() == null) {
+                    continue;
                 }
-            }
-        }
-        if (!projectSkillIds.isEmpty()) {
-            for (ProjectManpower manpower : projectManpowerRepository.findByProjectSkillIdIn(new ArrayList<>(projectSkillIds))) {
-                if (manpower != null && manpower.getProjectManpowerId() != null) {
-                    candidateRows.put(manpower.getProjectManpowerId(), manpower);
+                LocalDate workDate = parseToLocalDate(manpower.getWorkDate());
+                if (workDate == null || !workDate.isAfter(runDate)) {
+                    continue;
                 }
+                futureRowsByTaskId.computeIfAbsent(manpower.getProjectTaskId(), ignored -> new ArrayList<>()).add(manpower);
             }
         }
 
-        for (ProjectManpower manpower : candidateRows.values()) {
-            if (manpower == null) {
-                continue;
-            }
-            LocalDate workDate = parseToLocalDate(manpower.getWorkDate());
-            if (workDate != null && workDate.isAfter(runDate)) {
-                projectManpowerRepository.delete(manpower);
-                deletedCount++;
-            }
-        }
-
-        List<ProjectManpower> regeneratedRows = new ArrayList<>();
+        List<ProjectManpower> rowsToSave = new ArrayList<>();
+        List<ProjectManpower> rowsToDelete = new ArrayList<>();
+        List<ProjectManpower> rowsToCreate = new ArrayList<>();
         for (ProjectTask task : eligibleTasks) {
             LocalDate effectiveStart = resolveEffectiveStartDate(task).orElse(null);
             LocalDate effectiveEnd = resolveEffectiveEndDate(task).orElse(null);
-            if (effectiveStart == null || effectiveEnd == null || effectiveEnd.isBefore(runDate)) {
-                continue;
-            }
-
-            LocalDate generationStart = effectiveStart.isAfter(runDate) ? effectiveStart : runDate.plusDays(1);
-            if (generationStart.isAfter(effectiveEnd)) {
-                continue;
-            }
-
             Long taskId = task.getProjectTaskId();
             if (taskId == null) {
                 continue;
             }
 
             List<ProjectSkill> projectSkills = projectSkillRepository.findByProjectTaskId(taskId);
-            for (ProjectSkill projectSkill : projectSkills) {
-                if (projectSkill == null || projectSkill.getProjectSkillId() == null) {
-                    continue;
-                }
+            Map<ManpowerSlotKey, Integer> requiredCountBySlot = new HashMap<>();
+            if (effectiveStart != null && effectiveEnd != null && !effectiveEnd.isBefore(runDate)) {
+                LocalDate generationStart = effectiveStart.isAfter(runDate) ? effectiveStart : runDate.plusDays(1);
+                if (!generationStart.isAfter(effectiveEnd)) {
+                    for (ProjectSkill projectSkill : projectSkills) {
+                        if (projectSkill == null || projectSkill.getProjectSkillId() == null) {
+                            continue;
+                        }
 
-                Integer unit = projectSkill.getUnit();
-                int rowCount = unit == null || unit < 1 ? 0 : unit;
-                for (LocalDate cursor = generationStart; !cursor.isAfter(effectiveEnd); cursor = cursor.plusDays(1)) {
-                    if (!isWorkingDay(cursor.getDayOfWeek(), workdaySettings)) {
-                        continue;
-                    }
-                    for (int i = 0; i < rowCount; i++) {
-                        ProjectManpower manpower = new ProjectManpower();
-                        manpower.setProjectTaskId(taskId);
-                        manpower.setProjectSkillId(projectSkill.getProjectSkillId());
-                        manpower.setWorkDate(cursor.toString());
-                        manpower.setStaffId(null);
-                        manpower.setLoading(1.0);
-                        regeneratedRows.add(manpower);
+                        int requiredCount = normalizeRequiredCount(projectSkill.getUnit());
+                        for (LocalDate cursor = generationStart; !cursor.isAfter(effectiveEnd); cursor = cursor.plusDays(1)) {
+                            if (!isWorkingDay(cursor.getDayOfWeek(), workdaySettings)) {
+                                continue;
+                            }
+                            requiredCountBySlot.put(new ManpowerSlotKey(taskId, projectSkill.getProjectSkillId(), cursor), requiredCount);
+                        }
                     }
                 }
             }
+
+            Map<ManpowerSlotKey, List<ProjectManpower>> existingRowsBySlot = new HashMap<>();
+            for (ProjectManpower manpower : futureRowsByTaskId.getOrDefault(taskId, List.of())) {
+                if (manpower == null) {
+                    continue;
+                }
+                LocalDate workDate = parseToLocalDate(manpower.getWorkDate());
+                if (workDate == null) {
+                    continue;
+                }
+                ManpowerSlotKey slotKey = new ManpowerSlotKey(taskId, manpower.getProjectSkillId(), workDate);
+                existingRowsBySlot.computeIfAbsent(slotKey, ignored -> new ArrayList<>()).add(manpower);
+            }
+
+            LinkedHashSet<ManpowerSlotKey> slotsToProcess = new LinkedHashSet<>();
+            slotsToProcess.addAll(existingRowsBySlot.keySet());
+            slotsToProcess.addAll(requiredCountBySlot.keySet());
+
+            for (ManpowerSlotKey slotKey : slotsToProcess) {
+                int requiredCount = requiredCountBySlot.getOrDefault(slotKey, 0);
+                deletedCount += reconcileSlot(
+                        existingRowsBySlot.getOrDefault(slotKey, List.of()),
+                        slotKey,
+                        requiredCount,
+                        rowsToSave,
+                        rowsToDelete,
+                        rowsToCreate);
+            }
         }
 
-        if (!regeneratedRows.isEmpty()) {
-            projectManpowerRepository.saveAll(regeneratedRows);
+        if (!rowsToDelete.isEmpty()) {
+            projectManpowerRepository.deleteAll(rowsToDelete);
+        }
+        if (!rowsToSave.isEmpty()) {
+            projectManpowerRepository.saveAll(rowsToSave);
+        }
+        if (!rowsToCreate.isEmpty()) {
+            projectManpowerRepository.saveAll(rowsToCreate);
         }
 
         int assignedCount = assignForwardDatedRows(runDate);
 
-        return buildResult(deletedCount, regeneratedRows.size(), assignedCount, serviceStartTime);
+        return buildResult(deletedCount, rowsToCreate.size(), assignedCount, serviceStartTime);
+    }
+
+    private int reconcileSlot(
+            List<ProjectManpower> existingRows,
+            ManpowerSlotKey slotKey,
+            int requiredCount,
+            List<ProjectManpower> rowsToSave,
+            List<ProjectManpower> rowsToDelete,
+            List<ProjectManpower> rowsToCreate) {
+
+        List<ProjectManpower> touchedRows = new ArrayList<>();
+        List<ProjectManpower> untouchedRows = new ArrayList<>();
+        for (ProjectManpower manpower : existingRows) {
+            if (getManpowerTouched(manpower) == 0) {
+                untouchedRows.add(manpower);
+            } else {
+                touchedRows.add(manpower);
+            }
+        }
+
+        List<ProjectManpower> clearedUntouchedRows = new ArrayList<>();
+        for (ProjectManpower manpower : untouchedRows) {
+            if (!isBlankStaffId(manpower.getStaffId())) {
+                manpower.setStaffId(null);
+                clearedUntouchedRows.add(manpower);
+            }
+        }
+
+        int existingCount = existingRows.size();
+        if (existingCount < requiredCount) {
+            for (int i = 0; i < requiredCount - existingCount; i++) {
+                ProjectManpower manpower = new ProjectManpower();
+                manpower.setProjectTaskId(slotKey.projectTaskId());
+                manpower.setProjectSkillId(slotKey.projectSkillId());
+                manpower.setWorkDate(slotKey.workDate().toString());
+                manpower.setStaffId(null);
+                manpower.setLoading(1.0);
+                manpower.setManpowerTouched(0);
+                rowsToCreate.add(manpower);
+            }
+            rowsToSave.addAll(clearedUntouchedRows);
+            return 0;
+        }
+
+        List<ProjectManpower> rowsSelectedForDelete = new ArrayList<>();
+        if (existingCount > requiredCount) {
+            int excessCount = existingCount - requiredCount;
+            List<ProjectManpower> removableUntouchedRows = untouchedRows.stream()
+                    .sorted(Comparator
+                            .comparing((ProjectManpower manpower) -> isBlankStaffId(manpower.getStaffId()) ? 0 : 1)
+                            .thenComparing(
+                                    manpower -> Optional.ofNullable(manpower.getProjectManpowerId()).orElse(Long.MIN_VALUE),
+                                    Comparator.reverseOrder()))
+                    .toList();
+
+            int removableCount = Math.min(excessCount, removableUntouchedRows.size());
+            rowsSelectedForDelete.addAll(removableUntouchedRows.subList(0, removableCount));
+
+            // REVIEW_MARKER: Remove this preservation branch if the final business rule must strictly trim touched rows down to required unit.
+            if (excessCount > removableUntouchedRows.size() && !touchedRows.isEmpty()) {
+                // Preserve touched rows for now, even when they exceed the current required unit.
+            }
+        }
+
+        rowsToDelete.addAll(rowsSelectedForDelete);
+        for (ProjectManpower manpower : clearedUntouchedRows) {
+            if (!rowsSelectedForDelete.contains(manpower)) {
+                rowsToSave.add(manpower);
+            }
+        }
+
+        return rowsSelectedForDelete.size();
+    }
+
+    private int normalizeRequiredCount(Integer unit) {
+        return unit == null || unit < 1 ? 0 : unit;
+    }
+
+    private boolean isBlankStaffId(String staffId) {
+        return staffId == null || staffId.isBlank();
     }
 
     private ProjectManpowerRegenerationResult buildResult(
@@ -211,6 +293,9 @@ public class ProjectManpowerRegenerationService {
     }
 
     private int assignForwardDatedRows(LocalDate runDate) {
+        int assignmentHorizonDays = parseParamInt("manpowerAssignmentHorizonDays", 30, 0, 3650);
+        LocalDate assignmentHorizonDate = runDate.plusDays(assignmentHorizonDays);
+
         List<ProjectTask> allTasks = projectTaskRepository.findAll();
         List<ProjectSkill> allProjectSkills = projectSkillRepository.findAll();
         List<ProjectManpower> allManpowers = projectManpowerRepository.findAll();
@@ -312,7 +397,7 @@ public class ProjectManpowerRegenerationService {
                     projectCode,
                     safeString(task.getTaskName()),
                     workDate,
-                    getManpowerTouched(task),
+                    getManpowerTouched(manpower),
                     isCompleted(task)));
 
             busyByDate.computeIfAbsent(workDate, ignored -> new HashSet<>()).add(manpower.getStaffId());
@@ -325,12 +410,12 @@ public class ProjectManpowerRegenerationService {
             }
 
             LocalDate workDate = parseToLocalDate(manpower.getWorkDate());
-            if (workDate == null || !workDate.isAfter(runDate)) {
+            if (workDate == null || !workDate.isAfter(runDate) || workDate.isAfter(assignmentHorizonDate)) {
                 continue;
             }
 
             ProjectTask task = taskById.get(manpower.getProjectTaskId());
-            if (task == null || isCompleted(task) || getManpowerTouched(task) != 0) {
+            if (task == null || isCompleted(task) || getManpowerTouched(manpower) != 0) {
                 continue;
             }
 
@@ -451,7 +536,7 @@ public class ProjectManpowerRegenerationService {
                 projectCodeByStreamId.get(task.getProjectStreamId()),
                 safeString(task.getTaskName()),
                 workDate,
-                getManpowerTouched(task),
+                getManpowerTouched(target),
                 isCompleted(task)));
         return true;
     }
@@ -733,9 +818,13 @@ public class ProjectManpowerRegenerationService {
         return "completed".equals(normalizeStatus(task.getTaskStatus()));
     }
 
-    private int getManpowerTouched(ProjectTask task) {
-        Integer manpowerTouched = task.getManpowerTouched();
+    private int getManpowerTouched(ProjectManpower manpower) {
+        Integer manpowerTouched = manpower.getManpowerTouched();
         return manpowerTouched == null ? 0 : manpowerTouched;
+    }
+
+    private record ManpowerSlotKey(Long projectTaskId, Long projectSkillId, LocalDate workDate) {
+
     }
 
     private Optional<LocalDate> resolveEffectiveStartDate(ProjectTask task) {

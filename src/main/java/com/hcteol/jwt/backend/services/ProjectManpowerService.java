@@ -13,8 +13,6 @@ import com.hcteol.jwt.backend.dtos.ProjectManpowerDto;
 import com.hcteol.jwt.backend.dtos.ProjectManpowerRegenerationResult;
 import com.hcteol.jwt.backend.entities.ProjectManpower;
 import com.hcteol.jwt.backend.repositories.ProjectManpowerRepository;
-import com.hcteol.jwt.backend.repositories.ProjectSkillRepository;
-import com.hcteol.jwt.backend.repositories.ProjectTaskRepository;
 
 @Service
 public class ProjectManpowerService {
@@ -24,12 +22,6 @@ public class ProjectManpowerService {
 
     @Autowired
     private ProjectManpowerRegenerationService projectManpowerRegenerationService;
-
-    @Autowired
-    private ProjectTaskRepository projectTaskRepository;
-
-    @Autowired
-    private ProjectSkillRepository projectSkillRepository;
 
     public List<ProjectManpowerDto> getAllProjectManpowers() {
         return projectManpowerRepository.findAll().stream().map(this::toDto).toList();
@@ -60,11 +52,8 @@ public class ProjectManpowerService {
         ProjectManpower projectManpower = Objects.requireNonNull(
                 toEntity(projectManpowerDto),
                 "toEntity(projectManpowerDto) returned null");
+        projectManpower.setManpowerTouched(resolveManualTouched(projectManpowerDto.getManpowerTouched()));
         return Optional.ofNullable(projectManpowerRepository.save(projectManpower))
-                .map(saved -> {
-                    markParentTaskManpowerTouched(saved.getProjectTaskId(), saved.getProjectSkillId());
-                    return saved;
-                })
                 .map(this::toDto)
                 .orElseThrow(() -> new IllegalStateException("projectManpowerRepository.save returned null"));
     }
@@ -79,10 +68,11 @@ public class ProjectManpowerService {
             projectManpower.setProjectTaskId(projectManpowerDetails.getProjectTaskId());
             projectManpower.setProjectSkillId(projectManpowerDetails.getProjectSkillId());
             projectManpower.setWorkDate(projectManpowerDetails.getWorkDate());
-            projectManpower.setStaffId(projectManpowerDetails.getStaffId());
+            String normalizedStaffId = normalizeStaffId(projectManpowerDetails.getStaffId());
+            projectManpower.setStaffId(normalizedStaffId);
             projectManpower.setLoading(projectManpowerDetails.getLoading());
+            projectManpower.setManpowerTouched(normalizedStaffId == null ? 0 : 1);
             ProjectManpower saved = projectManpowerRepository.save(projectManpower);
-            markParentTaskManpowerTouched(saved.getProjectTaskId(), saved.getProjectSkillId());
             return toDto(saved);
         }).orElseThrow(() -> new RuntimeException("ProjectManpower not found with id " + id));
     }
@@ -105,26 +95,16 @@ public class ProjectManpowerService {
         return projectManpowerRegenerationService.regenerateForwardDatedManpower(runDate);
     }
 
-    private void markParentTaskManpowerTouched(Long projectTaskId, Long projectSkillId) {
-        Long resolvedTaskId = projectTaskId;
-        if (resolvedTaskId == null && projectSkillId != null) {
-            resolvedTaskId = projectSkillRepository.findById(projectSkillId)
-                    .map(projectSkill -> projectSkill.getProjectTaskId())
-                    .orElse(null);
-        }
+    private Integer resolveManualTouched(Integer manpowerTouched) {
+        return manpowerTouched == null ? 1 : manpowerTouched;
+    }
 
-        if (resolvedTaskId == null) {
-            return;
+    private String normalizeStaffId(String staffId) {
+        if (staffId == null) {
+            return null;
         }
-
-        projectTaskRepository.findById(resolvedTaskId).ifPresent(projectTask -> {
-            Integer touched = projectTask.getManpowerTouched();
-            if (touched != null && touched == 1) {
-                return;
-            }
-            projectTask.setManpowerTouched(1);
-            projectTaskRepository.save(projectTask);
-        });
+        String normalized = staffId.trim();
+        return normalized.isEmpty() ? null : normalized;
     }
 
     private ProjectManpowerDto toDto(ProjectManpower projectManpower) {
@@ -134,7 +114,8 @@ public class ProjectManpowerService {
                 projectManpower.getProjectSkillId(),
                 projectManpower.getWorkDate(),
                 projectManpower.getStaffId(),
-                projectManpower.getLoading());
+                projectManpower.getLoading(),
+                projectManpower.getManpowerTouched());
     }
 
     private ProjectManpower toEntity(ProjectManpowerDto projectManpowerDto) {
@@ -145,6 +126,7 @@ public class ProjectManpowerService {
         projectManpower.setWorkDate(projectManpowerDto.getWorkDate());
         projectManpower.setStaffId(projectManpowerDto.getStaffId());
         projectManpower.setLoading(projectManpowerDto.getLoading());
+        projectManpower.setManpowerTouched(projectManpowerDto.getManpowerTouched());
         return projectManpower;
     }
 }
