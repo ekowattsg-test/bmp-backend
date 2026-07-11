@@ -38,6 +38,24 @@ DeliveryOrderItemDto fields (summary): `itemId`, `orderId`, `itemType`, `product
 - DELETE /api/deliveryOrderItems/{itemId} — delete item
 - DELETE /api/deliveryOrderItems/order/{orderId} — delete items by order id
 
+## BriefingContent entity payload (request/response)
+
+- `briefingContentId` (Long)
+- `briefingId` (Long) — parent briefing identifier
+- `sequenceNumber` (String)
+- `imageKey` (String)
+- `contentText` (String) — base language content
+- `translatedText` (String) — translated content payload (JSON string)
+
+## BriefingContent endpoints
+
+- GET /api/briefingcontents — list all briefing content rows
+- GET /api/briefingcontents?briefingId={briefingId} — list briefing content rows by briefing id
+- GET /api/briefingcontents/{id} — get briefing content row by id
+- POST /api/briefingcontents — create briefing content row (body: BriefingContent)
+- PUT /api/briefingcontents/{id} — update briefing content row (body: BriefingContent)
+- DELETE /api/briefingcontents/{id} — delete briefing content row
+
 ## Project Leader endpoints
 
 - GET /api/projectleaders — list all project leaders

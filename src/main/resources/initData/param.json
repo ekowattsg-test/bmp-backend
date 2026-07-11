@@ -38,5 +38,10 @@
     "param_key": "manpowerAssignmentHorizonDays",
     "value_string": 45,
     "changeable": 1
+  },
+  {
+    "param_key": "baseLanguage",
+    "value_string": "EN",
+    "changeable": 1
   }
 ]

@@ -1,8 +1,18 @@
-npm install -g dotenv-cli
-dotenv -e .env mvn spring-boot:run
+old script: new the new script below.
 
-compile
+npm install -g dotenv-cli
+dotenv -e .env -- mvn spring-boot:run
+
+mvn -q -DskipTests compile
 mvn clean package -DskipTests
  
 # Example .env setting to override JWT timeout (milliseconds)
 # SECURITY_JWT_TOKEN_VALIDITY_MS=3600000  # 1 hour
+
+
+
+use this instead:
+  
+dotenv -e .env -- mvn spring-boot:run
+mvn -q -DskipTests compile
+mvn clean package -DskipTests
