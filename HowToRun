@@ -16,3 +16,7 @@ use this instead:
 dotenv -e .env -- mvn spring-boot:run
 mvn -q -DskipTests compile
 mvn clean package -DskipTests
+
+run this when flyaway failes:
+  
+  mvn --% -Dflyway.url=jdbc:postgresql://localhost:5432/bmp -Dflyway.user=bmp -Dflyway.password=bmpback flyway:repair

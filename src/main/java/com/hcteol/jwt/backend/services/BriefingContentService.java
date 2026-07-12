@@ -33,6 +33,12 @@ public class BriefingContentService {
         return briefingContentRepository.findByBriefingId(Objects.requireNonNull(briefingId, "briefingId cannot be null"));
     }
 
+    public Optional<BriefingContent> getByBriefingIdAndSequenceNumber(Long briefingId, String sequenceNumber) {
+        return briefingContentRepository.findByBriefingIdAndSequenceNumber(
+                Objects.requireNonNull(briefingId, "briefingId cannot be null"),
+                Objects.requireNonNull(sequenceNumber, "sequenceNumber cannot be null"));
+    }
+
     public BriefingContent updateBriefingContent(Long id, BriefingContent details) {
         BriefingContent existing = briefingContentRepository.findById(Objects.requireNonNull(id, "id cannot be null")).orElse(null);
         if (existing == null) {

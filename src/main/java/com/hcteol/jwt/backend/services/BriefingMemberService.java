@@ -29,6 +29,17 @@ public class BriefingMemberService {
         return briefingMemberRepository.findById(Objects.requireNonNull(id, "id cannot be null"));
     }
 
+    public Optional<BriefingMember> getBriefingMemberBySessionIdAndStaffId(Long briefingSessionId, String staffId) {
+        return briefingMemberRepository.findByBriefingSessionIdAndStaffId(
+                Objects.requireNonNull(briefingSessionId, "briefingSessionId cannot be null"),
+                Objects.requireNonNull(staffId, "staffId cannot be null"));
+    }
+
+    public List<BriefingMember> getBriefingMembersBySessionId(Long briefingSessionId) {
+        return briefingMemberRepository.findByBriefingSessionId(
+                Objects.requireNonNull(briefingSessionId, "briefingSessionId cannot be null"));
+    }
+
     public BriefingMember updateBriefingMember(Long id, BriefingMember details) {
         BriefingMember existing = briefingMemberRepository.findById(Objects.requireNonNull(id, "id cannot be null"))
                 .orElse(null);

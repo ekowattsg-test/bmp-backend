@@ -40,6 +40,15 @@ public class BriefingContentController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/briefing/{briefingId}/seq/{seqNumber}")
+    public ResponseEntity<BriefingContent> getBriefingContentByBriefingIdAndSeqNumber(
+            @PathVariable Long briefingId,
+            @PathVariable String seqNumber) {
+        return briefingContentService.getByBriefingIdAndSequenceNumber(briefingId, seqNumber)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping
     public ResponseEntity<BriefingContent> createBriefingContent(@RequestBody BriefingContent content) {
         BriefingContent created = briefingContentService.addBriefingContent(content);

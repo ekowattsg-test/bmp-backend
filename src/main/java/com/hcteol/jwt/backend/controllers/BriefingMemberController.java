@@ -36,6 +36,20 @@ public class BriefingMemberController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/session/{briefingSessionId}/staff/{staffId}")
+    public ResponseEntity<BriefingMember> getBriefingMemberBySessionAndStaff(
+            @PathVariable Long briefingSessionId,
+            @PathVariable String staffId) {
+        return briefingMemberService.getBriefingMemberBySessionIdAndStaffId(briefingSessionId, staffId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/session/{briefingSessionId}")
+    public List<BriefingMember> getBriefingMembersBySessionId(@PathVariable Long briefingSessionId) {
+        return briefingMemberService.getBriefingMembersBySessionId(briefingSessionId);
+    }
+
     @PostMapping
     public ResponseEntity<BriefingMember> createBriefingMember(@RequestBody BriefingMember briefingMember) {
         BriefingMember created = briefingMemberService.addBriefingMember(briefingMember);
