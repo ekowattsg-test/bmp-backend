@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -382,6 +383,12 @@ public class DataInitializer implements ApplicationRunner {
                 roleRepository.save(role);
                 System.out.println("[DataInitializer] Created role " + roleName);
                 existingRoles = roleRepository.findAll(); // refresh
+            } else {
+                if (!Objects.equals(role.getDescription(), description)) {
+                    role.setDescription(description);
+                    roleRepository.save(role);
+                    System.out.println("[DataInitializer] Updated role description for " + roleName);
+                }
             }
 
             // assign to builder if present

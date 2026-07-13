@@ -1,24 +1,24 @@
 [
   {
-    "description": "System Base Set Up",
+    "description": "System Set Up Menu",
     "level": 9,
     "menu": "BaseSetup",
     "role": "BaseSetup"
   },
   {
-    "description": "Administrator",
+    "description": "System Administrator Menu",
     "level": 9,
     "menu": "Admin",
     "role": "Admin"
   },
   {
-    "description": "Business Information",
+    "description": "Information Menu",
     "level": 1,
     "menu": "InformationPages",
     "role": "InformationPages"
   },
   {
-    "description": "Business Parameter Set Up",
+    "description": "Business Parameter Set Up Menu",
     "level": 1,
     "menu": "BusinessSetup",
     "role": "BusinessSetup"
@@ -30,25 +30,25 @@
     "role": "BusinessAdmin"
   },
   {
-    "description": "Staff Management",
+    "description": "Staff Management Menu",
     "level": 1,
     "menu": "StaffManagement",
     "role": "StaffManagement"
   },
   {
-    "description": "Inventory Control",
+    "description": "Inventory Control Menu",
     "level": 1,
     "menu": "Inventory",
     "role": "Inventory"
   },
   {
-    "description": "Project Control",
+    "description": "Project Control Menu",
     "level": 1,
     "menu": "ProjectControl",
     "role": "ProjectControl"
   },
   {
-    "description": "Operations",
+    "description": "Operations Menu",
     "level": 1,
     "menu": "Operations",
     "role": "Operations"
