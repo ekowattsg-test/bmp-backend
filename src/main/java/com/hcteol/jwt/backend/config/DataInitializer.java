@@ -36,6 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hcteol.jwt.backend.entities.Company;
 import com.hcteol.jwt.backend.entities.DocumentSeq;
 import com.hcteol.jwt.backend.entities.Language;
+import com.hcteol.jwt.backend.entities.LibraryCatelog;
 import com.hcteol.jwt.backend.entities.OperationRole;
 import com.hcteol.jwt.backend.entities.Param;
 import com.hcteol.jwt.backend.entities.ProjectTaskType;
@@ -49,6 +50,7 @@ import com.hcteol.jwt.backend.entities.WorkStepsType;
 import com.hcteol.jwt.backend.repositories.CompanyRepository;
 import com.hcteol.jwt.backend.repositories.DocumentSeqRepository;
 import com.hcteol.jwt.backend.repositories.LanguageRepository;
+import com.hcteol.jwt.backend.repositories.LibraryCatelogRepository;
 import com.hcteol.jwt.backend.repositories.OperationRoleRepository;
 import com.hcteol.jwt.backend.repositories.ParamRepository;
 import com.hcteol.jwt.backend.repositories.ProjectTaskTypeRepository;
@@ -90,6 +92,9 @@ public class DataInitializer implements ApplicationRunner {
 
     @Autowired
     private LanguageRepository languageRepository;
+
+    @Autowired
+    private LibraryCatelogRepository libraryCatelogRepository;
 
     @Autowired
     private StockMovementCodeRepository stockMovementCodeRepository;
@@ -402,6 +407,89 @@ public class DataInitializer implements ApplicationRunner {
                     System.out.println("[DataInitializer] Assigned role " + roleName + " to user " + builder.getLogin());
                 }
             }
+        }
+
+        // Load library catalogs from initData/catalog.json and ensure each projectCode exists in DB
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            InputStream is = null;
+            ClassPathResource cpr = new ClassPathResource("initData/catalog.json");
+            if (cpr.exists()) {
+                is = cpr.getInputStream();
+            } else {
+                File f = new File("initData/catalog.json");
+                if (f.exists()) {
+                    is = new java.io.FileInputStream(f);
+                }
+            }
+
+            if (is != null) {
+                List<?> raw = mapper.readValue(is, List.class);
+                for (Object o : raw) {
+                    if (!(o instanceof java.util.Map)) {
+                        continue;
+                    }
+                    java.util.Map m = (java.util.Map) o;
+
+                    Object projectCodeObj = m.get("projectCode");
+                    if (projectCodeObj == null) {
+                        throw new RuntimeException("[DataInitializer] catalog.json entry missing required 'projectCode' key; aborting initialization");
+                    }
+
+                    String projectCode = String.valueOf(projectCodeObj).trim();
+                    if (projectCode.isEmpty()) {
+                        throw new RuntimeException("[DataInitializer] catalog.json entry has empty 'projectCode'; aborting initialization");
+                    }
+
+                    List<LibraryCatelog> existing = libraryCatelogRepository.findByProjectCode(projectCode);
+                    if (!existing.isEmpty()) {
+                        continue;
+                    }
+
+                    LibraryCatelog catelog = new LibraryCatelog();
+                    if (m.get("libraryCatelogName") != null) {
+                        catelog.setLibraryCatelogName(String.valueOf(m.get("libraryCatelogName")));
+                    }
+
+                    Integer active = 0;
+                    try {
+                        if (m.get("active") != null) {
+                            active = Integer.parseInt(String.valueOf(m.get("active")));
+                        }
+                    } catch (Exception ex) {
+                    }
+                    catelog.setActive(active);
+
+                    Integer visibleLevel = 0;
+                    try {
+                        if (m.get("visibleLevel") != null) {
+                            visibleLevel = Integer.parseInt(String.valueOf(m.get("visibleLevel")));
+                        }
+                    } catch (Exception ex) {
+                    }
+                    catelog.setVisibleLevel(visibleLevel);
+
+                    if (m.get("description") != null) {
+                        catelog.setDescription(String.valueOf(m.get("description")));
+                    }
+                    catelog.setProjectCode(projectCode);
+
+                    Object quickSearchObj = m.get("quickSearchKey");
+                    if (quickSearchObj == null) {
+                        quickSearchObj = m.get("quicSearchKey");
+                    }
+                    if (quickSearchObj != null) {
+                        catelog.setQuicSearchKey(String.valueOf(quickSearchObj));
+                    }
+
+                    libraryCatelogRepository.save(catelog);
+                    System.out.println("[DataInitializer] Created library catelog for projectCode " + projectCode);
+                }
+            } else {
+                System.out.println("[DataInitializer] initData/catalog.json not found; skipping catalog import");
+            }
+        } catch (Exception ex) {
+            System.out.println("[DataInitializer] Failed to read initData/catalog.json: " + ex.getMessage());
         }
 
         // Recreate userrole_view: drop if exists then create

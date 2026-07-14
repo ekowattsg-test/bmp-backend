@@ -1,0 +1,26 @@
+[
+  {
+    "libraryCatelogName": "Purchase Orders",
+    "active": 1,
+    "visibleLevel": 1,
+    "description": "Purchase Order Folder",
+    "projectCode": "__PO",
+    "quickSearchKey": "po,purchase order"
+  },
+  {
+    "libraryCatelogName": "Delivery Orders",
+    "active": 1,
+    "visibleLevel": 1,
+    "description": "Delivery Order Folder",
+    "projectCode": "__DO",
+    "quickSearchKey": "do,delivery order"
+  },
+  {
+    "libraryCatelogName": "Work Orders",
+    "active": 1,
+    "visibleLevel": 1,
+    "description": "Work Order Folder",
+    "projectCode": "__WO",
+    "quickSearchKey": "wo,work order"
+  }
+]
