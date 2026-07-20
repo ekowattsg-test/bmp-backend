@@ -8,5 +8,8 @@ import java.util.List;
 
 @Repository
 public interface ProjectStockRepository extends JpaRepository<ProjectStock, Long> {
+
     List<ProjectStock> findByProjectTaskId(Long projectTaskId);
+
+    List<ProjectStock> findByProjectTaskIdAndRequisitionCycleIdIsNull(Long projectTaskId);
 }

@@ -11,4 +11,8 @@ import com.hcteol.jwt.backend.entities.ProjectStreamAsset;
 public interface ProjectStreamAssetRepository extends JpaRepository<ProjectStreamAsset, Long> {
 
     List<ProjectStreamAsset> findByProjectStreamId(Long projectStreamId);
+
+    List<ProjectStreamAsset> findByRequisitionCycleId(Long requisitionCycleId);
+
+    List<ProjectStreamAsset> findByProjectStreamIdAndRequisitionCycleId(Long projectStreamId, Long requisitionCycleId);
 }

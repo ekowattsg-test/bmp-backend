@@ -11,4 +11,8 @@ import com.hcteol.jwt.backend.entities.ProjectStreamBundle;
 public interface ProjectStreamBundleRepository extends JpaRepository<ProjectStreamBundle, Long> {
 
     List<ProjectStreamBundle> findByProjectStreamId(Long projectStreamId);
+
+    List<ProjectStreamBundle> findByRequisitionCycleId(Long requisitionCycleId);
+
+    List<ProjectStreamBundle> findByProjectStreamIdAndRequisitionCycleId(Long projectStreamId, Long requisitionCycleId);
 }

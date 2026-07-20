@@ -43,5 +43,20 @@
     "param_key": "baseLanguage",
     "value_string": "EN",
     "changeable": 1
+  },
+  {
+    "param_key": "procurementCycle",
+    "value_string": "MONTHLY",
+    "changeable": 1
+  },
+  {
+    "param_key": "procurementCycleDay",
+    "value_string": 1,
+    "changeable": 1
+  },
+  {
+    "param_key": "procurementLeadTimeDays",
+    "value_string": 15,
+    "changeable": 1
   }
 ]

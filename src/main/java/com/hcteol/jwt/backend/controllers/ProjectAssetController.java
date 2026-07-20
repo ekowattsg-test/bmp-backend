@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hcteol.jwt.backend.entities.ProjectAsset;
@@ -24,8 +25,10 @@ public class ProjectAssetController {
     private ProjectAssetService projectAssetService;
 
     @GetMapping
-    public List<ProjectAsset> getAllProjectAssets() {
-        return projectAssetService.getAllProjectAssets();
+    public List<ProjectAsset> getProjectAssets(
+            @RequestParam(required = false) Long projectTaskId,
+            @RequestParam(required = false) Long requisitionCycleId) {
+        return projectAssetService.getProjectAssets(projectTaskId, requisitionCycleId);
     }
 
     @GetMapping("/{id}")
@@ -38,6 +41,11 @@ public class ProjectAssetController {
     @GetMapping("/task/{projectTaskId}")
     public List<ProjectAsset> getByProjectTaskId(@PathVariable Long projectTaskId) {
         return projectAssetService.getProjectAssetsByTaskId(projectTaskId);
+    }
+
+    @GetMapping("/requisitioncycle/{requisitionCycleId}")
+    public List<ProjectAsset> getByRequisitionCycleId(@PathVariable Long requisitionCycleId) {
+        return projectAssetService.getProjectAssetsByRequisitionCycleId(requisitionCycleId);
     }
 
     @PostMapping

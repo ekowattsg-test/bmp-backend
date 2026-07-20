@@ -19,12 +19,29 @@ public class ProjectAssetService {
         return projectAssetRepository.findAll();
     }
 
+    public List<ProjectAsset> getProjectAssets(Long projectTaskId, Long requisitionCycleId) {
+        if (projectTaskId != null && requisitionCycleId != null) {
+            return projectAssetRepository.findByProjectTaskIdAndRequisitionCycleId(projectTaskId, requisitionCycleId);
+        }
+        if (projectTaskId != null) {
+            return projectAssetRepository.findByProjectTaskId(projectTaskId);
+        }
+        if (requisitionCycleId != null) {
+            return projectAssetRepository.findByRequisitionCycleId(requisitionCycleId);
+        }
+        return projectAssetRepository.findAll();
+    }
+
     public Optional<ProjectAsset> getProjectAssetById(Long id) {
         return projectAssetRepository.findById(id);
     }
 
     public List<ProjectAsset> getProjectAssetsByTaskId(Long projectTaskId) {
         return projectAssetRepository.findByProjectTaskId(projectTaskId);
+    }
+
+    public List<ProjectAsset> getProjectAssetsByRequisitionCycleId(Long requisitionCycleId) {
+        return projectAssetRepository.findByRequisitionCycleId(requisitionCycleId);
     }
 
     public ProjectAsset createProjectAsset(ProjectAsset projectAsset) {
@@ -36,6 +53,7 @@ public class ProjectAssetService {
             projectAsset.setProjectTaskId(projectAssetDetails.getProjectTaskId());
             projectAsset.setProductId(projectAssetDetails.getProductId());
             projectAsset.setQuantity(projectAssetDetails.getQuantity());
+            projectAsset.setRequisitionCycleId(projectAssetDetails.getRequisitionCycleId());
             return projectAssetRepository.save(projectAsset);
         }).orElseThrow(() -> new RuntimeException("ProjectAsset not found with id " + id));
     }

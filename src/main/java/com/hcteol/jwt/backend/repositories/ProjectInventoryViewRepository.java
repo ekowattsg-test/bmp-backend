@@ -17,5 +17,7 @@ public interface ProjectInventoryViewRepository extends JpaRepository<ProjectInv
 
     List<ProjectInventoryView> findByActivityId(Long activityId);
 
+    List<ProjectInventoryView> findByRequisitionCycleId(Long requisitionCycleId);
+
     List<ProjectInventoryView> findByProjectCodeAndInventoryType(String projectCode, String inventoryType);
 }

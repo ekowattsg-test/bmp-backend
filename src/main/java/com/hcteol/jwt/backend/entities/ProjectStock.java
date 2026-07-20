@@ -16,4 +16,5 @@ public class ProjectStock {
     private Long projectTaskId;
     private Long productId;
     private Double quantity;
+    private Long requisitionCycleId;
 }

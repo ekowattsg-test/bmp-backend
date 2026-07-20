@@ -15,4 +15,6 @@ public interface PurchaseOrderItemRepository extends JpaRepository<PurchaseOrder
     void deleteByOrderId(String orderId);
 
     java.util.List<PurchaseOrderItem> findByInternalOrderId(Long internalOrderId);
+
+    java.util.List<PurchaseOrderItem> findByProductCode(String productCode);
 }

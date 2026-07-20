@@ -27,12 +27,14 @@ public class ProjectInventoryViewService {
             String inventoryType,
             Long productId,
             Long activityId,
+            Long requisitionCycleId,
             String status,
             Long minQuantity,
             Long maxQuantity) {
 
         Specification<ProjectInventoryView> spec = ProjectInventoryViewSpecification.withFilters(
-                projectCode, inventoryType, productId, activityId, status, minQuantity, maxQuantity);
+                projectCode, inventoryType, productId, activityId, requisitionCycleId, status, minQuantity,
+                maxQuantity);
 
         return projectInventoryViewRepository.findAll(spec);
     }
@@ -45,7 +47,7 @@ public class ProjectInventoryViewService {
             String inventoryType,
             Long productId,
             Long activityId) {
-        return getProjectInventoryViews(projectCode, inventoryType, productId, activityId, null, null, null);
+        return getProjectInventoryViews(projectCode, inventoryType, productId, activityId, null, null, null, null);
     }
 
     public Optional<ProjectInventoryView> getProjectInventoryViewById(String rowId) {
@@ -62,5 +64,9 @@ public class ProjectInventoryViewService {
 
     public List<ProjectInventoryView> getProjectInventoryViewsByActivityId(Long activityId) {
         return projectInventoryViewRepository.findByActivityId(activityId);
+    }
+
+    public List<ProjectInventoryView> getProjectInventoryViewsByRequisitionCycleId(Long requisitionCycleId) {
+        return projectInventoryViewRepository.findByRequisitionCycleId(requisitionCycleId);
     }
 }

@@ -15,7 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hcteol.jwt.backend.entities.ProjectStream;
 import com.hcteol.jwt.backend.entities.ProjectTask;
+import com.hcteol.jwt.backend.repositories.ProjectStreamRepository;
 import com.hcteol.jwt.backend.repositories.ProjectTaskRepository;
 
 @Service
@@ -23,6 +25,9 @@ public class ProjectTaskRecalculationService {
 
     @Autowired
     private ProjectTaskRepository projectTaskRepository;
+
+    @Autowired
+    private ProjectStreamRepository projectStreamRepository;
 
     @Autowired
     private ProjectTaskDateCalculationService projectTaskDateCalculationService;
@@ -64,6 +69,31 @@ public class ProjectTaskRecalculationService {
         for (Long streamId : affectedStreamIds) {
             projectStreamDateRecalculationService.recalculateStreamDatesFromTasks(streamId);
         }
+    }
+
+    @Transactional
+    public void recalculateProjectByProjectCode(String projectCode) {
+        if (projectCode == null || projectCode.isBlank()) {
+            throw new IllegalArgumentException("projectCode is required");
+        }
+
+        List<ProjectStream> streams = projectStreamRepository.findByProjectCode(projectCode.trim());
+        for (ProjectStream stream : streams) {
+            Long streamId = stream.getProjectStreamId();
+            if (streamId == null) {
+                continue;
+            }
+
+            List<ProjectTask> tasks = projectTaskRepository.findByProjectStreamId(streamId);
+            for (ProjectTask task : tasks) {
+                if (task.getProjectTaskId() == null) {
+                    continue;
+                }
+                recalculateAfterTaskChange(task.getProjectTaskId());
+            }
+        }
+
+        projectStreamDateRecalculationService.recalculateStreamDatesForProject(projectCode.trim());
     }
 
     private void validateDependencyChainsUpFront(Long rootTaskId) {

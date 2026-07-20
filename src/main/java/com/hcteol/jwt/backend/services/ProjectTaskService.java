@@ -67,6 +67,7 @@ public class ProjectTaskService {
             projectTask.setTaskStartDate(projectTaskDetails.getTaskStartDate());
             projectTask.setTaskEndDate(projectTaskDetails.getTaskEndDate());
             projectTask.setTaskStatus(projectTaskDetails.getTaskStatus());
+            projectTask.setProgress(projectTaskDetails.getProgress());
             projectTask.setActualStartDate(projectTaskDetails.getActualStartDate());
             projectTask.setActualEndDate(projectTaskDetails.getActualEndDate());
             projectTask.setRemarks(projectTaskDetails.getRemarks());
@@ -91,6 +92,11 @@ public class ProjectTaskService {
                 .orElse(null);
         projectTaskRepository.deleteById(id);
         projectStreamDateRecalculationService.recalculateStreamDatesFromTasks(streamId);
+    }
+
+    @Transactional
+    public void recalculateProjectTasksByProjectCode(String projectCode) {
+        projectTaskRecalculationService.recalculateProjectByProjectCode(projectCode);
     }
 
 }

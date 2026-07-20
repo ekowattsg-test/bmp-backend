@@ -54,6 +54,16 @@ public class ProjectTaskController {
         }
     }
 
+    @PostMapping("/recalculate/project/{projectCode}")
+    public ResponseEntity<Void> recalculateProjectTasksByProjectCode(@PathVariable String projectCode) {
+        try {
+            projectTaskService.recalculateProjectTasksByProjectCode(projectCode);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<ProjectTask> updateProjectTask(@PathVariable Long id, @RequestBody ProjectTask projectTask) {
         try {

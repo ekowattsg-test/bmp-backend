@@ -9,10 +9,12 @@ import lombok.Data;
 @Data
 @Entity
 public class ProjectBundle {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long projectBundleId;
     private Long projectTaskId;
     private Long bundleId;
     private Long quantity;
+    private Long requisitionCycleId;
 }

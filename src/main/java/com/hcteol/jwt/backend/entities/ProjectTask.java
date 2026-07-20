@@ -23,6 +23,7 @@ public class ProjectTask {
     private String taskStartDate;
     private String taskEndDate;
     private String taskStatus; // "Not Started", "In Progress", "Completed"
+    private Integer progress; // task progress percentage, 0-100
     private String actualStartDate;
     private String actualEndDate;
     private String remarks;

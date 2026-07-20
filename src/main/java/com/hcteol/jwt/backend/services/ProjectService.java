@@ -133,6 +133,7 @@ public class ProjectService {
             }
 
             task.setTaskStatus(template.getTaskStatus() != null ? template.getTaskStatus() : "Not Started");
+            task.setProgress(template.getProgress());
             task.setActualStartDate(template.getActualStartDate());
             task.setActualEndDate(template.getActualEndDate());
             task.setRemarks(template.getRemarks());

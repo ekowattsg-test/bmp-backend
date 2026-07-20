@@ -6,15 +6,15 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Data;
 
-@Data
 @Entity
-public class ProjectAsset {
+@Data
+public class RequisitionCycle {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long projectStockId;
-    private Long projectTaskId;
-    private Long productId;
-    private Double quantity;
     private Long requisitionCycleId;
+    private String requisitionCycleDate;
+    private String dateCreated;
+    private String status; // created, generated, worked on, po issued;
+
 }

@@ -16,4 +16,5 @@ public class ProjectStreamAsset {
     private Long projectStreamId;
     private Long productId;
     private Double quantity;
+    private Long requisitionCycleId;
 }

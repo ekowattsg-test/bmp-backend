@@ -10,10 +10,24 @@ import java.util.Optional;
 
 @Service
 public class ProjectBundleService {
+
     @Autowired
     private ProjectBundleRepository projectBundleRepository;
 
     public List<ProjectBundle> getAllProjectBundles() {
+        return projectBundleRepository.findAll();
+    }
+
+    public List<ProjectBundle> getProjectBundles(Long projectTaskId, Long requisitionCycleId) {
+        if (projectTaskId != null && requisitionCycleId != null) {
+            return projectBundleRepository.findByProjectTaskIdAndRequisitionCycleId(projectTaskId, requisitionCycleId);
+        }
+        if (projectTaskId != null) {
+            return projectBundleRepository.findByProjectTaskId(projectTaskId);
+        }
+        if (requisitionCycleId != null) {
+            return projectBundleRepository.findByRequisitionCycleId(requisitionCycleId);
+        }
         return projectBundleRepository.findAll();
     }
 
@@ -25,6 +39,10 @@ public class ProjectBundleService {
         return projectBundleRepository.findByProjectTaskId(projectTaskId);
     }
 
+    public List<ProjectBundle> getProjectBundlesByRequisitionCycleId(Long requisitionCycleId) {
+        return projectBundleRepository.findByRequisitionCycleId(requisitionCycleId);
+    }
+
     public ProjectBundle createProjectBundle(ProjectBundle projectBundle) {
         return projectBundleRepository.save(projectBundle);
     }
@@ -34,6 +52,7 @@ public class ProjectBundleService {
             projectBundle.setProjectTaskId(projectBundleDetails.getProjectTaskId());
             projectBundle.setBundleId(projectBundleDetails.getBundleId());
             projectBundle.setQuantity(projectBundleDetails.getQuantity());
+            projectBundle.setRequisitionCycleId(projectBundleDetails.getRequisitionCycleId());
             return projectBundleRepository.save(projectBundle);
         }).orElseThrow(() -> new RuntimeException("ProjectBundle not found with id " + id));
     }

@@ -19,6 +19,7 @@ SELECT (t.inventory_type || '-' || t.inventory_id || '-' || t.qualifier) AS row_
        t.actual_start_date,
        t.actual_end_date,
        t.status,
+      t.requisition_cycle_id,
        t.project_code,
        t.inventory_type
 FROM (
@@ -37,6 +38,7 @@ FROM (
          t.actual_start_date,
          t.actual_end_date,
          t.task_status AS status,
+         a.requisition_cycle_id,
          p.project_code,
          'Asset'::text AS inventory_type
     FROM project_asset a,
@@ -64,6 +66,7 @@ FROM (
          t.actual_start_date,
          t.actual_end_date,
          t.task_status AS status,
+         a.requisition_cycle_id,
          p.project_code,
          'Stock'::text AS inventory_type
     FROM project_stock a,
@@ -91,6 +94,7 @@ FROM (
          t.actual_start_date,
          t.actual_end_date,
          t.task_status AS status,
+         b.requisition_cycle_id,
          s.project_code,
          'Bundle'::text AS inventory_type
     FROM project_bundle b,
@@ -120,6 +124,7 @@ FROM (
          s.stream_start_date AS actual_start_date,
          s.stream_end_date AS actual_end_date,
          'In Progress'::text AS status,
+         a.requisition_cycle_id,
          s.project_code,
          'StreamAsset'::text AS inventory_type
     FROM project_stream_asset a,
@@ -143,6 +148,7 @@ FROM (
          s.stream_start_date AS actual_start_date,
          s.stream_end_date AS actual_end_date,
          'In Progress'::text AS status,
+         b.requisition_cycle_id,
          s.project_code,
          'StreamBundle'::text AS inventory_type
     FROM project_stream_bundle b,

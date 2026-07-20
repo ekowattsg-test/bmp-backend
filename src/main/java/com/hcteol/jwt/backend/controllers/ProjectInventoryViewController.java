@@ -38,11 +38,13 @@ public class ProjectInventoryViewController {
             @RequestParam(required = false) String inventoryType,
             @RequestParam(required = false) Long productId,
             @RequestParam(required = false) Long activityId,
+            @RequestParam(required = false) Long requisitionCycleId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long minQuantity,
             @RequestParam(required = false) Long maxQuantity) {
         return projectInventoryViewService.getProjectInventoryViews(
-                projectCode, inventoryType, productId, activityId, status, minQuantity, maxQuantity);
+                projectCode, inventoryType, productId, activityId, requisitionCycleId, status, minQuantity,
+                maxQuantity);
     }
 
     /**
@@ -85,5 +87,15 @@ public class ProjectInventoryViewController {
     @GetMapping("/activity/{activityId}")
     public List<ProjectInventoryView> getByActivityId(@PathVariable Long activityId) {
         return projectInventoryViewService.getProjectInventoryViewsByActivityId(activityId);
+    }
+
+    /**
+     * Get all inventory for a specific requisition cycle.
+     *
+     * Example: /api/projectinventoryviews/requisitioncycle/5
+     */
+    @GetMapping("/requisitioncycle/{requisitionCycleId}")
+    public List<ProjectInventoryView> getByRequisitionCycleId(@PathVariable Long requisitionCycleId) {
+        return projectInventoryViewService.getProjectInventoryViewsByRequisitionCycleId(requisitionCycleId);
     }
 }

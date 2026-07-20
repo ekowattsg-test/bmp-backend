@@ -11,6 +11,7 @@ public class ProjectInventoryViewSpecification {
             String inventoryType,
             Long productId,
             Long activityId,
+            Long requisitionCycleId,
             String status,
             Long minQuantity,
             Long maxQuantity) {
@@ -20,6 +21,7 @@ public class ProjectInventoryViewSpecification {
                 .and(inventoryType != null && !inventoryType.isBlank() ? byInventoryType(inventoryType) : null)
                 .and(productId != null ? byProductId(productId) : null)
                 .and(activityId != null ? byActivityId(activityId) : null)
+                .and(requisitionCycleId != null ? byRequisitionCycleId(requisitionCycleId) : null)
                 .and(status != null && !status.isBlank() ? byStatus(status) : null)
                 .and(minQuantity != null ? byMinQuantity(minQuantity) : null)
                 .and(maxQuantity != null ? byMaxQuantity(maxQuantity) : null);
@@ -39,6 +41,10 @@ public class ProjectInventoryViewSpecification {
 
     public static Specification<ProjectInventoryView> byActivityId(Long activityId) {
         return (root, query, cb) -> cb.equal(root.get("activityId"), activityId);
+    }
+
+    public static Specification<ProjectInventoryView> byRequisitionCycleId(Long requisitionCycleId) {
+        return (root, query, cb) -> cb.equal(root.get("requisitionCycleId"), requisitionCycleId);
     }
 
     public static Specification<ProjectInventoryView> byStatus(String status) {

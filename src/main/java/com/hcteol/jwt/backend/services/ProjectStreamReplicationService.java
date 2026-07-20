@@ -108,6 +108,7 @@ public class ProjectStreamReplicationService {
         anchorTask.setTaskDuration(1L);
         anchorTask.setTaskStartDate(anchorStartDate.toString());
         anchorTask.setTaskStatus("Not Started");
+        anchorTask.setProgress(0);
         anchorTask.setActualStartDate(null);
         anchorTask.setActualEndDate(null);
         ProjectTask savedAnchorTask = projectTaskRepository.save(projectTaskDateCalculationService.calculateTaskDates(anchorTask));
@@ -198,6 +199,7 @@ public class ProjectStreamReplicationService {
             clonedTask.setTaskStartDate(sourceTask.getTaskStartDate());
             clonedTask.setTaskEndDate(sourceTask.getTaskEndDate());
             clonedTask.setTaskStatus("Not Started");
+            clonedTask.setProgress(sourceTask.getProgress() == null ? 0 : sourceTask.getProgress());
             clonedTask.setActualStartDate(null);
             clonedTask.setActualEndDate(null);
             clonedTask.setRemarks(sourceTask.getRemarks());

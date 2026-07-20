@@ -19,12 +19,30 @@ public class ProjectStreamBundleService {
         return projectStreamBundleRepository.findAll();
     }
 
+    public List<ProjectStreamBundle> getProjectStreamBundles(Long projectStreamId, Long requisitionCycleId) {
+        if (projectStreamId != null && requisitionCycleId != null) {
+            return projectStreamBundleRepository.findByProjectStreamIdAndRequisitionCycleId(projectStreamId,
+                    requisitionCycleId);
+        }
+        if (projectStreamId != null) {
+            return projectStreamBundleRepository.findByProjectStreamId(projectStreamId);
+        }
+        if (requisitionCycleId != null) {
+            return projectStreamBundleRepository.findByRequisitionCycleId(requisitionCycleId);
+        }
+        return projectStreamBundleRepository.findAll();
+    }
+
     public Optional<ProjectStreamBundle> getProjectStreamBundleById(Long id) {
         return projectStreamBundleRepository.findById(id);
     }
 
     public List<ProjectStreamBundle> getProjectStreamBundlesByStreamId(Long projectStreamId) {
         return projectStreamBundleRepository.findByProjectStreamId(projectStreamId);
+    }
+
+    public List<ProjectStreamBundle> getProjectStreamBundlesByRequisitionCycleId(Long requisitionCycleId) {
+        return projectStreamBundleRepository.findByRequisitionCycleId(requisitionCycleId);
     }
 
     public ProjectStreamBundle createProjectStreamBundle(ProjectStreamBundle projectStreamBundle) {
@@ -36,6 +54,7 @@ public class ProjectStreamBundleService {
             projectStreamBundle.setProjectStreamId(projectStreamBundleDetails.getProjectStreamId());
             projectStreamBundle.setBundleId(projectStreamBundleDetails.getBundleId());
             projectStreamBundle.setQuantity(projectStreamBundleDetails.getQuantity());
+            projectStreamBundle.setRequisitionCycleId(projectStreamBundleDetails.getRequisitionCycleId());
             return projectStreamBundleRepository.save(projectStreamBundle);
         }).orElseThrow(() -> new RuntimeException("ProjectStreamBundle not found with id " + id));
     }

@@ -92,6 +92,7 @@ DeliveryOrderItemDto fields (summary): `itemId`, `orderId`, `itemType`, `product
 - `taskStartDate` (String)
 - `taskEndDate` (String)
 - `taskStatus` (String) — e.g. `Not Started`, `In Progress`, `Completed`
+- `progress` (Integer) — progress percentage (`0` to `100`)
 - `actualStartDate` (String)
 - `actualEndDate` (String)
 - `remarks` (String)
@@ -103,8 +104,42 @@ DeliveryOrderItemDto fields (summary): `itemId`, `orderId`, `itemType`, `product
 - GET /api/projecttasks/stream/{projectStreamId} — list project tasks by stream id
 - POST /api/projecttasks — create project task (body: ProjectTask)
 - POST /api/projecttasks/calculate — calculate task dates from submitted task + task type alignWith rules (body: ProjectTask, response: calculated ProjectTask, not persisted)
+- POST /api/projecttasks/recalculate/project/{projectCode} — recalculate all project tasks for one project code (special realignment / scheduled trigger)
 - PUT /api/projecttasks/{id} — update project task (body: ProjectTask)
 - DELETE /api/projecttasks/{id} — delete project task
+
+## ProjectTaskProgress entity payload (request/response)
+
+- `projectTaskProgressId` (Long)
+- `projectTaskId` (Long) — parent project task identifier
+- `progressDate` (String) — date when the progress was recorded
+- `executedBy` (String) — staff id of person who executed the task for the day
+- `progress` (Integer) — progress percentage (`0` to `100`)
+- `completed` (Integer) — `1` completed, `0` not completed
+- `reportedBy` (String) — staff id of person who reported the progress
+- `marker` (String) — `M` marked task for manpower planning, `C` confirmed task
+
+## ProjectTaskProgress endpoints
+
+- GET /api/projecttaskprogresses — list all progress rows
+- GET /api/projecttaskprogresses?projectTaskId={projectTaskId} — list progress rows by project task id
+- GET /api/projecttaskprogresses?projectTaskId={projectTaskId}&progressDate={progressDate} — get one progress row by task id + progress date
+- GET /api/projecttaskprogresses?projectTaskId={projectTaskId}&completed={completed} — list progress rows by task id + completed flag
+- GET /api/projecttaskprogresses?projectTaskId={projectTaskId}&marker={marker} — list progress rows by task id + marker
+- GET /api/projecttaskprogresses?executedBy={executedBy} — list progress rows by executor
+- GET /api/projecttaskprogresses?reportedBy={reportedBy} — list progress rows by reporter
+- GET /api/projecttaskprogresses?completed={completed} — list progress rows by completed flag
+- GET /api/projecttaskprogresses?marker={marker} — list progress rows by marker (`M` or `C`)
+- GET /api/projecttaskprogresses/{id} — get project task progress row by id
+- GET /api/projecttaskprogresses/task/{projectTaskId} — list project task progress rows by project task id (path variant)
+- POST /api/projecttaskprogresses — create project task progress row (body: ProjectTaskProgress)
+- PUT /api/projecttaskprogresses/{id} — update project task progress row (body: ProjectTaskProgress)
+- DELETE /api/projecttaskprogresses/{id} — delete project task progress row
+
+PUT /api/projecttaskprogresses/{id} response payload:
+
+- `projectTaskProgress` (ProjectTaskProgress) — updated progress record
+- `projectTask` (ProjectTask) — updated task snapshot after backend sync + recalculation
 
 ProjectTask calculate rules (by ProjectTaskType.alignWith):
 
@@ -231,6 +266,37 @@ Before calculation, dependency chain is validated to prevent infinite parent-tas
 - PUT /api/projectmanpowers/{id} — update project manpower (body: ProjectManpowerDto)
 - DELETE /api/projectmanpowers/{id} — delete project manpower
 - POST /api/projectmanpowers/regenerate?runDate=YYYY-MM-DD — trigger forward manpower cleanup/regeneration and return `{ deletedCount, createdCount, assignedCount, serviceStartTime, serviceEndTime, totalTimeTakenMs }`
+
+## RequisitionOrder entity payload (request/response)
+
+- `requisitionOrderId` (Long)
+- `requisitionCycleId` (Long)
+- `projectCode` (String)
+- `requisitionDate` (String)
+- `productRequested` (Long)
+- `quantityRequested` (Long)
+- `vendorSuggested` (Long)
+- `priceSuggested` (Double)
+- `productPurchased` (Long) — renamed from `productRequisited`
+- `quantityPurchased` (Long)
+- `vendorPurchased` (Long)
+- `unitPrice` (Double)
+- `selected` (Integer) — `0` not selected, `1` selected
+- `purchaseOrderId` (String) — stored PO id (e.g. `PO-7`)
+- `purchaseDate` (String)
+- `status` (String)
+
+## RequisitionOrder endpoints
+
+- GET /api/requisitionorders — list/filter requisition orders (`requisitionCycleId`, `projectCode`, `productRequested`, `purchaseOrderId`)
+- GET /api/requisitionorders/ready-for-po — list requisition orders eligible for PO inclusion (`purchaseOrderId` is null)
+- GET /api/requisitionorders/{id} — get requisition order by id
+- POST /api/requisitionorders — create requisition order
+- POST /api/requisitionorders/create-po — create PO(s) from submitted requisition rows where `selected=1`; groups by `vendorPurchased` then `product`, generates PO + items, and updates requisitions with `purchaseOrderId`, `purchaseDate`, `status=generated`
+- PUT /api/requisitionorders/{id} — update requisition order
+- DELETE /api/requisitionorders/{id} — delete requisition order
+- POST /api/requisitionorders/generate — generate requisition orders for cycle
+- POST /api/requisitionorders/reconcile — reconcile requisition orders for cycle
 
 ## Notable other endpoints (summary)
 

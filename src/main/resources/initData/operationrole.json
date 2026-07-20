@@ -10,5 +10,9 @@
   {
     "roleName": "Deliver",
     "roleDescription": "Can drive the company's vehicle for delivery"
+  },
+  {
+    "roleName": "SiteLeader",
+    "roleDescription": "Work Site Leader, can manage task activities and stock operations"
   }
 ]

@@ -8,5 +8,10 @@ import java.util.List;
 
 @Repository
 public interface ProjectBundleRepository extends JpaRepository<ProjectBundle, Long> {
+
     List<ProjectBundle> findByProjectTaskId(Long projectTaskId);
+
+    List<ProjectBundle> findByRequisitionCycleId(Long requisitionCycleId);
+
+    List<ProjectBundle> findByProjectTaskIdAndRequisitionCycleId(Long projectTaskId, Long requisitionCycleId);
 }

@@ -69,6 +69,9 @@ public class ProjectInventoryView {
 
     private String status;
 
+    @Column(name = "requisition_cycle_id")
+    private Long requisitionCycleId;
+
     @Column(name = "project_code")
     private String projectCode;
 

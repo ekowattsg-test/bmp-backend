@@ -16,4 +16,5 @@ public class ProjectStreamBundle {
     private Long projectStreamId;
     private Long bundleId;
     private Double quantity;
+    private Long requisitionCycleId;
 }

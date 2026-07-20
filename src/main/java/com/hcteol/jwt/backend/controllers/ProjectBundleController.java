@@ -11,12 +11,15 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/projectbundles")
 public class ProjectBundleController {
+
     @Autowired
     private ProjectBundleService projectBundleService;
 
     @GetMapping
-    public List<ProjectBundle> getAllProjectBundles() {
-        return projectBundleService.getAllProjectBundles();
+    public List<ProjectBundle> getProjectBundles(
+            @RequestParam(required = false) Long projectTaskId,
+            @RequestParam(required = false) Long requisitionCycleId) {
+        return projectBundleService.getProjectBundles(projectTaskId, requisitionCycleId);
     }
 
     @GetMapping("/{id}")
@@ -29,6 +32,11 @@ public class ProjectBundleController {
     @GetMapping("/task/{projectTaskId}")
     public List<ProjectBundle> getByProjectTaskId(@PathVariable Long projectTaskId) {
         return projectBundleService.getProjectBundlesByTaskId(projectTaskId);
+    }
+
+    @GetMapping("/requisitioncycle/{requisitionCycleId}")
+    public List<ProjectBundle> getByRequisitionCycleId(@PathVariable Long requisitionCycleId) {
+        return projectBundleService.getProjectBundlesByRequisitionCycleId(requisitionCycleId);
     }
 
     @PostMapping
