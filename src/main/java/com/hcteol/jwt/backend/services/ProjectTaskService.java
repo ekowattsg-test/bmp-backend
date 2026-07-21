@@ -1,13 +1,21 @@
 package com.hcteol.jwt.backend.services;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hcteol.jwt.backend.entities.ProjectStream;
 import com.hcteol.jwt.backend.entities.ProjectTask;
+import com.hcteol.jwt.backend.repositories.ProjectRepository;
+import com.hcteol.jwt.backend.repositories.ProjectStreamRepository;
 import com.hcteol.jwt.backend.repositories.ProjectTaskRepository;
 
 @Service
@@ -15,6 +23,12 @@ public class ProjectTaskService {
 
     @Autowired
     private ProjectTaskRepository projectTaskRepository;
+
+    @Autowired
+    private ProjectStreamRepository projectStreamRepository;
+
+    @Autowired
+    private ProjectRepository projectRepository;
 
     @Autowired
     private ProjectTaskDateCalculationService projectTaskDateCalculationService;
@@ -56,6 +70,7 @@ public class ProjectTaskService {
     @Transactional
     public ProjectTask updateProjectTask(Long id, ProjectTask projectTaskDetails) {
         return projectTaskRepository.findById(id).map(projectTask -> {
+            String originalActualStartDate = projectTask.getActualStartDate();
             Long originalStreamId = projectTask.getProjectStreamId();
             projectTask.setProjectStreamId(projectTaskDetails.getProjectStreamId());
             projectTask.setTaskType(projectTaskDetails.getTaskType());
@@ -82,8 +97,107 @@ public class ProjectTaskService {
                 projectStreamDateRecalculationService.recalculateStreamDatesFromTasks(updatedStreamId);
             }
 
+            boolean actualStartDateUpdated = !Objects.equals(originalActualStartDate,
+                    projectTaskDetails.getActualStartDate());
+            if (actualStartDateUpdated) {
+                activateProjectAndRefreshProjectStartDateFromInProgressTasks(refreshedTask);
+            }
+
             return refreshedTask;
         }).orElseThrow(() -> new RuntimeException("ProjectTask not found with id " + id));
+    }
+
+    private void activateProjectAndRefreshProjectStartDateFromInProgressTasks(ProjectTask task) {
+        if (task == null || task.getProjectStreamId() == null) {
+            return;
+        }
+
+        Optional<ProjectStream> streamOptional = projectStreamRepository.findById(task.getProjectStreamId());
+        if (streamOptional.isEmpty()) {
+            return;
+        }
+
+        String projectCode = streamOptional.get().getProjectCode();
+        if (projectCode == null || projectCode.isBlank()) {
+            return;
+        }
+
+        projectRepository.findById(projectCode).ifPresent(project -> {
+            boolean changed = false;
+
+            if (project.getStatus() == null || !"active".equalsIgnoreCase(project.getStatus().trim())) {
+                project.setStatus("Active");
+                changed = true;
+            }
+
+            String earliestActualStartDate = resolveEarliestActualStartDateForInProgressTasks(projectCode);
+            if (earliestActualStartDate != null && !earliestActualStartDate.equals(project.getStartDate())) {
+                project.setStartDate(earliestActualStartDate);
+                changed = true;
+            }
+
+            if (changed) {
+                projectRepository.save(project);
+            }
+        });
+    }
+
+    private String resolveEarliestActualStartDateForInProgressTasks(String projectCode) {
+        List<ProjectStream> streams = projectStreamRepository.findByProjectCode(projectCode);
+
+        LocalDate earliestDate = null;
+        String earliestDateRaw = null;
+
+        for (ProjectStream stream : streams) {
+            if (stream.getProjectStreamId() == null) {
+                continue;
+            }
+
+            List<ProjectTask> tasks = projectTaskRepository.findByProjectStreamId(stream.getProjectStreamId());
+            for (ProjectTask task : tasks) {
+                if (!"in progress".equalsIgnoreCase(normalizeStatus(task.getTaskStatus()))) {
+                    continue;
+                }
+
+                String actualStartDate = task.getActualStartDate();
+                LocalDate parsed = parseToLocalDate(actualStartDate);
+                if (parsed == null) {
+                    continue;
+                }
+
+                if (earliestDate == null || parsed.isBefore(earliestDate)) {
+                    earliestDate = parsed;
+                    earliestDateRaw = actualStartDate;
+                }
+            }
+        }
+
+        return earliestDateRaw;
+    }
+
+    private String normalizeStatus(String status) {
+        return status == null ? "" : status.trim().toLowerCase();
+    }
+
+    private LocalDate parseToLocalDate(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        String trimmed = value.trim();
+        try {
+            return Instant.parse(trimmed).atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+        } catch (DateTimeParseException ignored) {
+            try {
+                return LocalDate.parse(trimmed);
+            } catch (DateTimeParseException ignoredDateOnly) {
+                try {
+                    return LocalDateTime.parse(trimmed).toLocalDate();
+                } catch (DateTimeParseException ignoredDateTime) {
+                    return null;
+                }
+            }
+        }
     }
 
     public void deleteProjectTask(Long id) {

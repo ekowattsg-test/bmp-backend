@@ -15,5 +15,5 @@ public class Briefing {
     private Long briefingId;
     private String briefingTitle;
     private String briefingDescription;
-    private Integer active; // defaultl 0; only one of all briefing can have active = 1
+    private Integer active; // default 0; active marker is managed per briefing package
 }

@@ -13,8 +13,13 @@ public interface ProjectRepository extends JpaRepository<Project, String> {
 
     List<Project> findByStatus(String status);
 
+    List<Project> findByBriefingId(Long briefingId);
+
     List<Project> findByCustomerIdAndStatus(Long customerId, String status);
+
+    List<Project> findByCustomerIdAndBriefingId(Long customerId, Long briefingId);
+
+    List<Project> findByStatusAndBriefingId(String status, Long briefingId);
+
+    List<Project> findByCustomerIdAndStatusAndBriefingId(Long customerId, String status, Long briefingId);
 }
-
-
-            

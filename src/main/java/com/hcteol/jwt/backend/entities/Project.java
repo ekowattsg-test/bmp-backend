@@ -18,4 +18,5 @@ public class Project {
     private String projectLocation;
     private String status; // "PLAN" - Planning, "ACTIVE" - Active, "COMPLETE" - Completed, "CLOSE" - Closed
     private Long streamCount;
+    private Long briefingId;
 }

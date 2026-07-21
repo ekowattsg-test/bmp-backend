@@ -41,16 +41,6 @@ public class BriefingService {
 
         BeanUtils.copyProperties(details, existing, "briefingId");
 
-        if (Integer.valueOf(1).equals(existing.getActive())) {
-            List<Briefing> otherActiveBriefings = briefingRepository.findByActive(1);
-            for (Briefing other : otherActiveBriefings) {
-                if (!other.getBriefingId().equals(existing.getBriefingId())) {
-                    other.setActive(0);
-                    briefingRepository.save(other);
-                }
-            }
-        }
-
         return briefingRepository.save(existing);
     }
 

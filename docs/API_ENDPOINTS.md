@@ -67,6 +67,46 @@ DeliveryOrderItemDto fields (summary): `itemId`, `orderId`, `itemType`, `product
 - PUT /api/projectleaders/{id} — update project leader
 - DELETE /api/projectleaders/{id} — delete project leader
 
+## Vendor entity payload (request/response)
+
+- `vendorId` (Long)
+- `vendorName` (String)
+- `active` (Boolean)
+- `address` (String) — long text address value
+- `contactEmail` (String)
+- `latitude` (String)
+- `longitude` (String)
+
+## Vendor endpoints
+
+- GET /api/vendors — list all vendors
+- GET /api/vendors/{vendorId} — get vendor by id
+- GET /api/vendors/search?name={name} — search vendors by name
+- POST /api/vendors — create vendor
+- PUT /api/vendors/{vendorId} — update vendor
+- DELETE /api/vendors/{vendorId} — delete vendor
+
+## Project entity payload (request/response)
+
+- `projectCode` (String)
+- `projectName` (String)
+- `projectDescription` (String)
+- `customerId` (Long)
+- `startDate` (String)
+- `endDate` (String)
+- `projectLocation` (String)
+- `status` (String) — `PLAN`, `ACTIVE`, `COMPLETE`, `CLOSE`
+- `streamCount` (Long)
+- `briefingId` (Long) — linked briefing package id
+
+## Project endpoints
+
+- GET /api/projects — list/filter projects (`customerId`, `status`, `briefingId`)
+- GET /api/projects/{projectCode} — get project by code
+- POST /api/projects — create project
+- PUT /api/projects/{projectCode} — update project
+- DELETE /api/projects/{projectCode} — delete project
+
 ## Project Stream endpoints
 
 - GET /api/projectstreams — list all project streams

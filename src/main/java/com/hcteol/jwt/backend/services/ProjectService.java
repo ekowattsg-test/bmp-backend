@@ -48,15 +48,27 @@ public class ProjectService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public List<Project> getAllProjects(Long customerId, String status) {
+    public List<Project> getAllProjects(Long customerId, String status, Long briefingId) {
+        if (customerId != null && status != null && !status.isBlank() && briefingId != null) {
+            return projectRepository.findByCustomerIdAndStatusAndBriefingId(customerId, status, briefingId);
+        }
         if (customerId != null && status != null && !status.isBlank()) {
             return projectRepository.findByCustomerIdAndStatus(customerId, status);
+        }
+        if (customerId != null && briefingId != null) {
+            return projectRepository.findByCustomerIdAndBriefingId(customerId, briefingId);
+        }
+        if (status != null && !status.isBlank() && briefingId != null) {
+            return projectRepository.findByStatusAndBriefingId(status, briefingId);
         }
         if (customerId != null) {
             return projectRepository.findByCustomerId(customerId);
         }
         if (status != null && !status.isBlank()) {
             return projectRepository.findByStatus(status);
+        }
+        if (briefingId != null) {
+            return projectRepository.findByBriefingId(briefingId);
         }
         return projectRepository.findAll();
     }
@@ -243,6 +255,7 @@ public class ProjectService {
             project.setProjectLocation(projectDetails.getProjectLocation());
             project.setStatus(projectDetails.getStatus());
             project.setStreamCount(projectDetails.getStreamCount());
+            project.setBriefingId(projectDetails.getBriefingId());
             Project savedProject = projectRepository.save(project);
 
             // Update baselined tasks and milestones to match new project dates

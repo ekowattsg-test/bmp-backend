@@ -18,8 +18,9 @@ public class ProjectController {
     @GetMapping
     public List<Project> getAllProjects(
             @RequestParam(required = false) Long customerId,
-            @RequestParam(required = false) String status) {
-        return projectService.getAllProjects(customerId, status);
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long briefingId) {
+        return projectService.getAllProjects(customerId, status, briefingId);
     }
 
     @GetMapping("/{projectCode}")
