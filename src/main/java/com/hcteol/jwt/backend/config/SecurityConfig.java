@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -32,6 +33,8 @@ public class SecurityConfig {
                 .cors().and() // add this to your security filter chain
                 .authorizeHttpRequests((requests) -> requests
                 .requestMatchers("/login", "/register", "/api/mobile-logins/verify", "/api/mobile-logins/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/tv-auth/session", "/api/tv-auth/exchange").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/tv-auth/session/*/status").permitAll()
                 .anyRequest().authenticated()
                 );
         return http.build();

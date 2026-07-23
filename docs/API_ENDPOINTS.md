@@ -86,6 +86,42 @@ DeliveryOrderItemDto fields (summary): `itemId`, `orderId`, `itemType`, `product
 - PUT /api/vendors/{vendorId} — update vendor
 - DELETE /api/vendors/{vendorId} — delete vendor
 
+## TV Screen QR Login (Office Screen Mode)
+
+All TV auth timestamps are returned in ISO 8601 format with an explicit timezone offset, for example `2026-07-23T10:30:00+08:00`.
+
+Environment parameters (`.env`):
+
+- `TV_AUTH_CHALLENGE_EXPIRY_SECONDS` — QR challenge validity (default `120`)
+- `TV_AUTH_SESSION_MAX_SECONDS` — maximum TV session duration (default `28800`)
+- `TV_AUTH_EXCHANGE_CODE_EXPIRY_SECONDS` — one-time exchange code validity (default `60`)
+- `TV_AUTH_POLL_INTERVAL_SECONDS` — recommended status poll interval for TV bootstrap page (default `2`)
+- `TV_AUTH_REFRESH_INTERVAL_SECONDS` — recommended data refresh interval after approval (default `30`)
+- `TV_AUTH_REQUIRE_PIN` — require TV PIN entry during approval (default `true`)
+- `TV_AUTH_DEFAULT_DESTINATION_URL` — destination route after approval (default `/tv/projects`)
+- `TV_AUTH_QR_SCHEME_BASE` — QR payload prefix (default `bmp://tv-auth?code=`)
+
+Endpoints:
+
+- POST /api/tv-auth/session — create TV login challenge (public)
+  - request: `{ "destinationUrl": "/tv/projects" }` (optional)
+  - response: `{ sessionCode, pin, qrPayload, challengeExpiresAt, pollIntervalSeconds }`
+- GET /api/tv-auth/session/{sessionCode}/status — poll challenge status (public)
+  - response: `{ sessionCode, status, exchangeCode, destinationUrl, challengeExpiresAt, sessionExpiresAt }`
+- POST /api/tv-auth/approve — approve challenge from authenticated BMP app user
+  - request: `{ sessionCode, pin, destinationUrl }` (`pin` required when `TV_AUTH_REQUIRE_PIN=true`)
+  - response: `{ sessionCode, status, approvedAt, sessionExpiresAt }`
+- POST /api/tv-auth/exchange — exchange one-time code for TV JWT + screen payload (public)
+  - request: `{ exchangeCode }`
+  - response: `{ token, destinationUrl, sessionExpiresAt, refreshIntervalSeconds, projectCodes }`
+
+Status values:
+
+- `PENDING`
+- `APPROVED`
+- `EXCHANGED`
+- `EXPIRED`
+
 ## Project entity payload (request/response)
 
 - `projectCode` (String)
