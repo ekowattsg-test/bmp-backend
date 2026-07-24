@@ -1,14 +1,13 @@
-package com.hcteol.jwt.backend.entities;
+package com.hcteol.jwt.backend.dtos;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Entity
 @Data
-public class Company {
-
-    @Id
+@NoArgsConstructor
+@AllArgsConstructor
+public class CompanyDto {
     private String companyId;
     private String companyName;
     private String biZCode;

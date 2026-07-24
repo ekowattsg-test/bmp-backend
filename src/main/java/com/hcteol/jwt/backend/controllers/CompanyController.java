@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-import com.hcteol.jwt.backend.entities.Company;
+import com.hcteol.jwt.backend.dtos.CompanyDto;
 import com.hcteol.jwt.backend.services.CompanyService;
 
 @RestController
@@ -25,27 +25,31 @@ public class CompanyController {
 	private CompanyService companyService;
 
 	@PostMapping
-	public ResponseEntity<Company> addCompany(@RequestBody Company company) {
-		Company savedCompany = companyService.addCompany(company);
+	public ResponseEntity<CompanyDto> addCompany(@RequestBody CompanyDto companyDto) {
+		CompanyDto savedCompany = companyService.addCompany(companyDto);
 		return ResponseEntity.status(HttpStatus.CREATED).body(savedCompany);
 	}
 
 	@GetMapping
-	public ResponseEntity<List<Company>> getCompanies() {
-		List<Company> companies = companyService.getCompany();
+	public ResponseEntity<List<CompanyDto>> getCompanies() {
+		List<CompanyDto> companies = companyService.getCompany();
 		return ResponseEntity.ok(companies);
 	}
 
-	@GetMapping("/get/{companyId}")
-	public ResponseEntity<Company> getCompanyById(@RequestBody String companyId) {
-		Company company = companyService.getCompanyById(companyId);
-		return ResponseEntity.ok(company);
+	@GetMapping("/{companyId}")
+	public ResponseEntity<CompanyDto> getCompanyById(@PathVariable String companyId) {
+		try {
+			CompanyDto company = companyService.getCompanyById(companyId);
+			return ResponseEntity.ok(company);
+		} catch (RuntimeException e) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+		}
 	}
 
 	@PutMapping("/{companyId}")
-	public ResponseEntity<Company> updateCompany(@PathVariable String companyId, @RequestBody Company companyDetails) {
+	public ResponseEntity<CompanyDto> updateCompany(@PathVariable String companyId, @RequestBody CompanyDto companyDto) {
 		try {
-			Company updatedCompany = companyService.updateCompany(companyId, companyDetails);
+			CompanyDto updatedCompany = companyService.updateCompany(companyId, companyDto);
 			return ResponseEntity.ok(updatedCompany);
 		} catch (RuntimeException e) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
