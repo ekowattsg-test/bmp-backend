@@ -16,6 +16,8 @@ public class Project {
     private String startDate;
     private String endDate;
     private String projectLocation;
+    private String latitude;
+    private String longitude;
     private String status; // "PLAN" - Planning, "ACTIVE" - Active, "COMPLETE" - Completed, "CLOSE" - Closed
     private Long streamCount;
     private Long briefingId;

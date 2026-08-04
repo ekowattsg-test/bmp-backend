@@ -9,6 +9,7 @@ import com.hcteol.jwt.backend.repositories.ProjectRepository;
 import com.hcteol.jwt.backend.repositories.ProjectStreamRepository;
 import com.hcteol.jwt.backend.repositories.ProjectTaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,8 @@ import java.util.Optional;
 @Service
 public class ProjectService {
 
+    private static final double EARTH_RADIUS_METERS = 6_371_000.0d;
+
     @Autowired
     private ProjectRepository projectRepository;
 
@@ -45,6 +48,9 @@ public class ProjectService {
 
     @Autowired
     private ProjectTaskDateCalculationService projectTaskDateCalculationService;
+
+    @Value("${project.gps.nearby-radius-meters}")
+    private Double projectGpsNearbyRadiusMeters;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -75,6 +81,36 @@ public class ProjectService {
 
     public Optional<Project> getProjectByCode(String projectCode) {
         return projectRepository.findById(projectCode);
+    }
+
+    public List<Project> getProjectsNearCoordinate(Double latitude, Double longitude) {
+        if (latitude == null || longitude == null) {
+            throw new IllegalArgumentException("latitude and longitude are required");
+        }
+
+        List<Project> candidates = projectRepository.findAll();
+        List<Project> matchedProjects = new ArrayList<>();
+
+        for (Project candidate : candidates) {
+            Double candidateLatitude = parseCoordinate(candidate.getLatitude());
+            Double candidateLongitude = parseCoordinate(candidate.getLongitude());
+
+            if (candidateLatitude == null || candidateLongitude == null) {
+                continue;
+            }
+
+            double distanceMeters = calculateDistanceMeters(
+                    latitude,
+                    longitude,
+                    candidateLatitude,
+                    candidateLongitude);
+
+            if (distanceMeters <= projectGpsNearbyRadiusMeters) {
+                matchedProjects.add(candidate);
+            }
+        }
+
+        return matchedProjects;
     }
 
     @Transactional
@@ -253,6 +289,8 @@ public class ProjectService {
             project.setStartDate(projectDetails.getStartDate());
             project.setEndDate(projectDetails.getEndDate());
             project.setProjectLocation(projectDetails.getProjectLocation());
+            project.setLatitude(projectDetails.getLatitude());
+            project.setLongitude(projectDetails.getLongitude());
             project.setStatus(projectDetails.getStatus());
             project.setStreamCount(projectDetails.getStreamCount());
             project.setBriefingId(projectDetails.getBriefingId());
@@ -310,5 +348,41 @@ public class ProjectService {
 
     public void deleteProject(String projectCode) {
         projectRepository.deleteById(projectCode);
+    }
+
+    private Double parseCoordinate(String coordinateValue) {
+        if (coordinateValue == null || coordinateValue.isBlank()) {
+            return null;
+        }
+
+        try {
+            return Double.valueOf(coordinateValue);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private double calculateDistanceMeters(
+            double sourceLatitude,
+            double sourceLongitude,
+            double targetLatitude,
+            double targetLongitude) {
+
+        double sourceLatitudeRadians = Math.toRadians(sourceLatitude);
+        double sourceLongitudeRadians = Math.toRadians(sourceLongitude);
+        double targetLatitudeRadians = Math.toRadians(targetLatitude);
+        double targetLongitudeRadians = Math.toRadians(targetLongitude);
+
+        double deltaLatitude = targetLatitudeRadians - sourceLatitudeRadians;
+        double deltaLongitude = targetLongitudeRadians - sourceLongitudeRadians;
+
+        double haversine = Math.sin(deltaLatitude / 2.0d) * Math.sin(deltaLatitude / 2.0d)
+                + Math.cos(sourceLatitudeRadians)
+                * Math.cos(targetLatitudeRadians)
+                * Math.sin(deltaLongitude / 2.0d)
+                * Math.sin(deltaLongitude / 2.0d);
+
+        double arc = 2.0d * Math.atan2(Math.sqrt(haversine), Math.sqrt(1.0d - haversine));
+        return EARTH_RADIUS_METERS * arc;
     }
 }
