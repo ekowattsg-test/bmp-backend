@@ -86,6 +86,44 @@ DeliveryOrderItemDto fields (summary): `itemId`, `orderId`, `itemType`, `product
 - PUT /api/vendors/{vendorId} — update vendor
 - DELETE /api/vendors/{vendorId} — delete vendor
 
+## StaffMerit entity payload (request/response)
+
+- `staffMeritId` (Long)
+- `meritName` (String)
+- `meritDescription` (String)
+- `meritCategory` (String) — `M` merit, `D` demerit
+
+## StaffMerit endpoints
+
+- GET /api/staffmerits — list all staff merits
+- GET /api/staffmerits?meritCategory={meritCategory} — list by merit category
+- GET /api/staffmerits/{id} — get staff merit by id
+- POST /api/staffmerits — create staff merit
+- PUT /api/staffmerits/{id} — update staff merit
+- DELETE /api/staffmerits/{id} — delete staff merit
+
+## StaffMeritProfile entity payload (request/response)
+
+- `staffMeritProfileId` (Long)
+- `staffId` (String)
+- `staffMeritId` (Long)
+- `issuedBy` (String)
+- `issuedDate` (Date)
+- `meritPoints` (Integer) — negative for demerit, positive for merit
+- `meritRemarks` (String)
+- `documentationLink` (String)
+
+## StaffMeritProfile endpoints
+
+- GET /api/staffmeritprofiles — list all merit profiles
+- GET /api/staffmeritprofiles?staffId={staffId} — list by staff id
+- GET /api/staffmeritprofiles?staffMeritId={staffMeritId} — list by merit id
+- GET /api/staffmeritprofiles?staffId={staffId}&staffMeritId={staffMeritId} — combined filter
+- GET /api/staffmeritprofiles/{id} — get merit profile by id
+- POST /api/staffmeritprofiles — create merit profile
+- PUT /api/staffmeritprofiles/{id} — update merit profile
+- DELETE /api/staffmeritprofiles/{id} — delete merit profile
+
 ## TV Screen QR Login (Office Screen Mode)
 
 All TV auth timestamps are returned in ISO 8601 format with an explicit timezone offset, for example `2026-07-23T10:30:00+08:00`.
@@ -131,6 +169,8 @@ Status values:
 - `startDate` (String)
 - `endDate` (String)
 - `projectLocation` (String)
+- `latitude` (String)
+- `longitude` (String)
 - `status` (String) — `PLAN`, `ACTIVE`, `COMPLETE`, `CLOSE`
 - `streamCount` (Long)
 - `briefingId` (Long) — linked briefing package id
@@ -140,8 +180,14 @@ Status values:
 - GET /api/projects — list/filter projects (`customerId`, `status`, `briefingId`)
 - GET /api/projects/{projectCode} — get project by code
 - POST /api/projects — create project
+- POST /api/projects/nearby — find projects with valid GPS coordinates within configured radius from submitted coordinate (body: ProjectNearbySearchDto)
 - PUT /api/projects/{projectCode} — update project
 - DELETE /api/projects/{projectCode} — delete project
+
+ProjectNearbySearchDto fields:
+
+- `latitude` (Double) — source latitude for proximity search
+- `longitude` (Double) — source longitude for proximity search
 
 ## Project Stream endpoints
 

@@ -71,3 +71,19 @@ How it runs:
 1. Application starts.
 2. Flyway runs pending SQL scripts.
 3. Hibernate starts with `ddl-auto=update` after migration.
+
+## Schema Change Policy (Current Project Standard)
+
+This project keeps both schema mechanisms enabled, with different responsibilities:
+
+- Spring Boot + Hibernate (`spring.jpa.hibernate.ddl-auto=update`) may auto-apply entity-to-table updates at startup.
+- Flyway is the source of versioned, reviewable, reproducible database change history.
+
+Working rule for all future entity changes:
+
+1. Update the Java entity and related CRUD/service/controller code.
+2. Add one new Flyway migration SQL file in `src/main/resources/db/migration` for the same change.
+3. Keep migration naming versioned and descriptive (example: `V5__project_add_gps_coordinates.sql`).
+4. Treat Flyway SQL as the authoritative record for cross-environment schema consistency.
+
+Note: Keeping `ddl-auto=update` is acceptable for this project, but Flyway scripts are still required for every schema change so environments do not drift.
