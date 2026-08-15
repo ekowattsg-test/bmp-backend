@@ -8,11 +8,15 @@ import com.hcteol.jwt.backend.entities.ProjectTask;
 import com.hcteol.jwt.backend.repositories.ProjectRepository;
 import com.hcteol.jwt.backend.repositories.ProjectStreamRepository;
 import com.hcteol.jwt.backend.repositories.ProjectTaskRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.annotation.PostConstruct;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -51,6 +55,13 @@ public class ProjectService {
 
     @Value("${project.gps.nearby-radius-meters}")
     private Double projectGpsNearbyRadiusMeters;
+
+    private static final Logger logger = LoggerFactory.getLogger(ProjectService.class);
+
+    @PostConstruct
+    public void logNearbyRadius() {
+        logger.info("PROJECT_GPS_NEARBY_RADIUS_METERS configured value: {}", projectGpsNearbyRadiusMeters);
+    }
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 

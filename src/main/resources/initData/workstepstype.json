@@ -138,5 +138,33 @@
     "takePhoto": 1,
     "endAction": "stock-tx",
     "noConfirm": 0
+  },
+  {
+    "workOrderType": "TransferOut",
+    "stepNumber": 1,
+    "stepDescription": "Transfer stock out to remote warehouse",
+    "fromEntity": "location",
+    "toEntity": "location",
+    "startAction": "",
+    "scanData": 1,
+    "checkQuantity": 0,
+    "newStock": 0,
+    "takePhoto": 1,
+    "endAction": "transfer-out",
+    "noConfirm": 0
+  },
+  {
+    "workOrderType": "TransferIn",
+    "stepNumber": 1,
+    "stepDescription": "Receive transferred stock at remote warehouse",
+    "fromEntity": "location",
+    "toEntity": "location",
+    "startAction": "",
+    "scanData": 1,
+    "checkQuantity": 0,
+    "newStock": 1,
+    "takePhoto": 1,
+    "endAction": "transfer-in",
+    "noConfirm": 0
   }
 ]

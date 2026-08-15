@@ -15,7 +15,7 @@
     "roleName": "Driver",
     "numberOfSteps": 2,
     "needDetails": 1,
-    "active": 0s
+    "active": 0
   },
   {
     "workOrderType": "Collection",

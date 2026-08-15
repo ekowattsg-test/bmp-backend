@@ -308,41 +308,14 @@ public class WorkStepsService {
                     throw new IllegalStateException("Source location (fromLocation) not set on step record for stock-out action");
                 }
 
-                String actionedByOut = null;
-                String workByOut = wo.getWorkBy();
-                if (workByOut != null && !workByOut.isBlank()) {
-                    var sOpt = staffRepository.findByMobileNumber(workByOut);
-                    if (sOpt != null && sOpt.isPresent()) {
-                        actionedByOut = sOpt.get().getStaffName();
-                    } else {
-                        var sOpt2 = staffRepository.findById(workByOut);
-                        if (sOpt2.isPresent()) {
-                            actionedByOut = sOpt2.get().getStaffName();
-                        }
-                    }
-                }
-                if (actionedByOut == null) {
+                // actionBy = the operator who created/issued the work order
+                String actionedByOut = wo.getIssuedBy();
+                if (actionedByOut == null || actionedByOut.isBlank()) {
                     actionedByOut = "unknown";
                 }
 
-                String refCandidate = null;
-                if ("STAFF".equalsIgnoreCase(def.getToEntity())) {
-                    String raw = inProgress.getToLocation();
-                    if (raw != null && !raw.isBlank()) {
-                        var sOpt = staffRepository.findByMobileNumber(raw);
-                        if (sOpt != null && sOpt.isPresent()) {
-                            refCandidate = sOpt.get().getStaffName();
-                        } else {
-                            var sOpt2 = staffRepository.findById(raw);
-                            if (sOpt2.isPresent()) {
-                                refCandidate = sOpt2.get().getStaffName();
-                            }
-                        }
-                    }
-                }
-                if (refCandidate == null) {
-                    refCandidate = def.getToEntity();
-                }
+                // reference = the work order that generated the movement
+                String refCandidate = workOrderId;
 
                 java.util.List<com.hcteol.jwt.backend.entities.WorkOrderData> wodList2 = workOrderDataRepository.findByWorkOrderId(workOrderId);
                 for (com.hcteol.jwt.backend.entities.WorkOrderData wod : wodList2) {
@@ -371,6 +344,157 @@ public class WorkStepsService {
                         mv.setActionBy(actionedByOut);
                         stockMovementRepository.save(mv);
                         logger.info("Created stock-out movement {} for stock {} qty {}", mv.getMovementId(), stock.getStockId(), qty);
+                    }
+                }
+                break;
+            }
+
+            case "transfer-out": {
+                String fromLocationOut = inProgress.getFromLocation();
+                if (!ignoreFromLocation && (fromLocationOut == null || fromLocationOut.isBlank())) {
+                    throw new IllegalStateException("Source location (fromLocation) not set on step record for transfer-out action");
+                }
+
+                String actionedByTransferOut = wo.getIssuedBy();
+                if (actionedByTransferOut == null || actionedByTransferOut.isBlank()) {
+                    actionedByTransferOut = "unknown";
+                }
+
+                String refCandidateTransferOut = workOrderId;
+                String doCandidateTransferOut = null;
+
+                // Frontend stores a DO-linked location as "DO_ID|locationCode"
+                String fromLocationRaw = inProgress.getFromLocation();
+                if (fromLocationRaw != null && !fromLocationRaw.isBlank() && fromLocationRaw.contains("|")) {
+                    String[] parts = fromLocationRaw.split("\\|", 2);
+                    doCandidateTransferOut = parts[0];
+                    fromLocationOut = parts[1];
+                }
+
+                if (doCandidateTransferOut != null && !doCandidateTransferOut.isBlank()) {
+                    doCandidateTransferOut = doCandidateTransferOut.trim();
+                    refCandidateTransferOut = doCandidateTransferOut;
+                }
+
+                java.util.List<com.hcteol.jwt.backend.entities.WorkOrderData> wodListOut = workOrderDataRepository.findByWorkOrderId(workOrderId);
+                for (com.hcteol.jwt.backend.entities.WorkOrderData wod : wodListOut) {
+                    java.util.List<com.hcteol.jwt.backend.entities.WorkOrderSubData> subListOut = workOrderSubDataRepository.findByWorkOrderDataId(wod.getWorkOrderDataId());
+                    for (com.hcteol.jwt.backend.entities.WorkOrderSubData sub : subListOut) {
+                        Long productId = sub.getProductId();
+                        String stockCode = sub.getStockId();
+                        Long qtyLong = sub.getSubQuantity();
+                        int qty = qtyLong != null ? qtyLong.intValue() : 0;
+
+                        com.hcteol.jwt.backend.entities.Stock stock = stockRepository.findByProductIdAndStockCode(productId, stockCode);
+                        if (stock == null) {
+                            throw new IllegalStateException("Stock not found for product " + productId + " and code " + stockCode + " during transfer-out for workOrder " + workOrderId);
+                        }
+
+                        com.hcteol.jwt.backend.entities.StockMovement mv = new com.hcteol.jwt.backend.entities.StockMovement();
+                        mv.setStockId(stock.getStockId());
+                        mv.setMovementType("G");
+                        mv.setQuantity(qty);
+                        if (!ignoreFromLocation && hasText(fromLocationOut)) {
+                            mv.setLocation(fromLocationOut);
+                        }
+                        mv.setReference(refCandidateTransferOut);
+                        mv.setWorkOrderId(workOrderId);
+                        mv.setRecordDate(LocalDateTime.now().toString());
+                        mv.setActionBy(actionedByTransferOut);
+                        stockMovementRepository.save(mv);
+                        logger.info("Created transfer-out movement {} for stock {} qty {}", mv.getMovementId(), stock.getStockId(), qty);
+                    }
+                }
+
+                if (doCandidateTransferOut != null && !doCandidateTransferOut.isBlank()) {
+                    if (deliveryOrderRepository.existsById(doCandidateTransferOut)) {
+                        var doOpt = deliveryOrderRepository.findById(doCandidateTransferOut);
+                        if (doOpt.isPresent()) {
+                            var d = doOpt.get();
+                            d.setOrderStatus("IN_TRANSIT");
+                            deliveryOrderRepository.save(d);
+                            logger.info("Marked DeliveryOrder {} as IN_TRANSIT", doCandidateTransferOut);
+                        }
+                    } else {
+                        logger.warn("Candidate delivery order id '{}' not found, skipping DO status update", doCandidateTransferOut);
+                    }
+                }
+                break;
+            }
+
+            case "transfer-in": {
+                String targetLocationIn = inProgress.getToLocation();
+                if (!ignoreToLocation && (targetLocationIn == null || targetLocationIn.isBlank())) {
+                    throw new IllegalStateException("Target location not set on step record for transfer-in action");
+                }
+
+                String actionedByTransferIn = wo.getIssuedBy();
+                if (actionedByTransferIn == null || actionedByTransferIn.isBlank()) {
+                    actionedByTransferIn = "unknown";
+                }
+
+                String refCandidateTransferIn = workOrderId;
+                String doCandidateTransferIn = null;
+
+                // Frontend stores a DO-linked location as "DO_ID|locationCode"
+                String fromLocationRawIn = inProgress.getFromLocation();
+                if (fromLocationRawIn != null && !fromLocationRawIn.isBlank() && fromLocationRawIn.contains("|")) {
+                    String[] parts = fromLocationRawIn.split("\\|", 2);
+                    doCandidateTransferIn = parts[0];
+                }
+
+                if (doCandidateTransferIn != null && !doCandidateTransferIn.isBlank()) {
+                    doCandidateTransferIn = doCandidateTransferIn.trim();
+                    refCandidateTransferIn = doCandidateTransferIn;
+                }
+
+                java.util.List<com.hcteol.jwt.backend.entities.WorkOrderData> wodListIn = workOrderDataRepository.findByWorkOrderId(workOrderId);
+                for (com.hcteol.jwt.backend.entities.WorkOrderData wod : wodListIn) {
+                    java.util.List<com.hcteol.jwt.backend.entities.WorkOrderSubData> subListIn = workOrderSubDataRepository.findByWorkOrderDataId(wod.getWorkOrderDataId());
+                    for (com.hcteol.jwt.backend.entities.WorkOrderSubData sub : subListIn) {
+                        Long productId = sub.getProductId();
+                        String stockCode = sub.getStockId();
+                        Long qtyLong = sub.getSubQuantity();
+                        int qty = qtyLong != null ? qtyLong.intValue() : 0;
+
+                        com.hcteol.jwt.backend.entities.Stock stock = stockRepository.findByProductIdAndStockCode(productId, stockCode);
+                        if (stock == null) {
+                            stock = new com.hcteol.jwt.backend.entities.Stock();
+                            stock.setProductId(productId);
+                            stock.setStockCode(stockCode);
+                            stock.setCreateDate(LocalDateTime.now().toString());
+                            stock = stockRepository.save(stock);
+                            logger.info("Created stock {} for product {} during transfer-in", stock.getStockId(), productId);
+                        }
+
+                        com.hcteol.jwt.backend.entities.StockMovement mv = new com.hcteol.jwt.backend.entities.StockMovement();
+                        mv.setStockId(stock.getStockId());
+                        mv.setMovementType("C");
+                        mv.setQuantity(qty);
+                        if (!ignoreToLocation && hasText(targetLocationIn)) {
+                            mv.setLocation(targetLocationIn);
+                        }
+                        mv.setReference(refCandidateTransferIn);
+                        mv.setWorkOrderId(workOrderId);
+                        mv.setRecordDate(LocalDateTime.now().toString());
+                        mv.setActionBy(actionedByTransferIn);
+                        stockMovementRepository.save(mv);
+                        logger.info("Created transfer-in movement {} for stock {} qty {}", mv.getMovementId(), stock.getStockId(), qty);
+                    }
+                }
+
+                if (doCandidateTransferIn != null && !doCandidateTransferIn.isBlank()) {
+                    if (deliveryOrderRepository.existsById(doCandidateTransferIn)) {
+                        var doOpt = deliveryOrderRepository.findById(doCandidateTransferIn);
+                        if (doOpt.isPresent()) {
+                            var d = doOpt.get();
+                            d.setOrderStatus("DELIVERED");
+                            d.setDeliveredDate(new java.sql.Date(System.currentTimeMillis()));
+                            deliveryOrderRepository.save(d);
+                            logger.info("Marked DeliveryOrder {} as DELIVERED", doCandidateTransferIn);
+                        }
+                    } else {
+                        logger.warn("Candidate delivery order id '{}' not found, skipping DO status update", doCandidateTransferIn);
                     }
                 }
                 break;

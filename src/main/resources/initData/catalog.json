@@ -22,5 +22,29 @@
     "description": "Work Order Folder",
     "projectCode": "__WO",
     "quickSearchKey": "wo,work order"
+  },
+  {
+    "libraryCatelogName": "Stock Receipts",
+    "active": 1,
+    "visibleLevel": 1,
+    "description": "Generated stock receipt documents",
+    "projectCode": "__STOCK_RECEIPT",
+    "quickSearchKey": "stock receipt,goods receipt note,po receipt"
+  },
+  {
+    "libraryCatelogName": "Stock Issues",
+    "active": 1,
+    "visibleLevel": 1,
+    "description": "Generated stock issue documents",
+    "projectCode": "__STOCK_ISSUE",
+    "quickSearchKey": "stock issue,drawing,stock out"
+  },
+  {
+    "libraryCatelogName": "Asset Assignments",
+    "active": 1,
+    "visibleLevel": 1,
+    "description": "Generated asset assignment documents",
+    "projectCode": "__ASSET_ASSIGNMENT",
+    "quickSearchKey": "asset assignment,allocating,stock transfer"
   }
 ]
