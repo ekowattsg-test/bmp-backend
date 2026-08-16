@@ -1,17 +1,24 @@
 package com.hcteol.jwt.backend.services;
 
-import com.hcteol.jwt.backend.entities.Product;
-import com.hcteol.jwt.backend.repositories.ProductRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.hcteol.jwt.backend.entities.Product;
+import com.hcteol.jwt.backend.repositories.ProductRepository;
 
 @Service
 public class ProductService {
+
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private DocumentSeqService documentSeqService;
 
     public List<Product> getProductsByCategoryAndClass(String productCategory, String productClass) {
         return productRepository.findByProductCategoryAndProductClass(productCategory, productClass);
@@ -25,7 +32,13 @@ public class ProductService {
         return productRepository.findById(id);
     }
 
+    @Transactional
     public Product createProduct(Product product) {
+        if (product.getProductCode() == null || product.getProductCode().trim().isEmpty()) {
+            String token = UUID.randomUUID().toString();
+            Long seq = documentSeqService.getNextSeq("PD", token);
+            product.setProductCode("PD-" + seq);
+        }
         return productRepository.save(product);
     }
 
