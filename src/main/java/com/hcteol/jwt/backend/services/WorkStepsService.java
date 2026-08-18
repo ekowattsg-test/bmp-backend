@@ -48,6 +48,30 @@ public class WorkStepsService {
     @Autowired
     private com.hcteol.jwt.backend.repositories.DeliveryOrderRepository deliveryOrderRepository;
 
+    @Autowired
+    private com.hcteol.jwt.backend.repositories.DeliveryOrderItemRepository deliveryOrderItemRepository;
+
+    @Autowired
+    private com.hcteol.jwt.backend.repositories.PurchaseReturnRepository purchaseReturnRepository;
+
+    @Autowired
+    private com.hcteol.jwt.backend.repositories.PurchaseReturnItemRepository purchaseReturnItemRepository;
+
+    @Autowired
+    private com.hcteol.jwt.backend.repositories.DeliveryReturnRepository deliveryReturnRepository;
+
+    @Autowired
+    private com.hcteol.jwt.backend.repositories.DeliveryReturnItemRepository deliveryReturnItemRepository;
+
+    @Autowired
+    private com.hcteol.jwt.backend.repositories.ProductRepository productRepository;
+
+    @Autowired
+    private com.hcteol.jwt.backend.repositories.StockDisposalRepository stockDisposalRepository;
+
+    @Autowired
+    private com.hcteol.jwt.backend.repositories.StockDisposalItemRepository stockDisposalItemRepository;
+
     private static final Logger logger = LoggerFactory.getLogger(WorkStepsService.class);
 
     public WorkSteps addWorkStep(WorkSteps step) {
@@ -90,6 +114,24 @@ public class WorkStepsService {
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
+    }
+
+    private Long parseReturnIdFromDescription(String description, String expectedDocType) {
+        if (description == null || expectedDocType == null) {
+            return null;
+        }
+        String[] parts = description.split(":", 4);
+        if (parts.length < 4 || !"RETURN".equalsIgnoreCase(parts[0])) {
+            return null;
+        }
+        if (!expectedDocType.equalsIgnoreCase(parts[2])) {
+            return null;
+        }
+        try {
+            return Long.valueOf(parts[1]);
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
     }
 
     /**
@@ -726,6 +768,401 @@ public class WorkStepsService {
                         }
                     }
                 }
+                break;
+            }
+
+            case "stock-return": {
+                String toLocation = inProgress.getToLocation();
+                if (toLocation == null || toLocation.isBlank()) {
+                    throw new IllegalStateException("Destination location (toLocation) not set on step record for stock-return action");
+                }
+
+                String actionedByOut = wo.getIssuedBy();
+                if (actionedByOut == null || actionedByOut.isBlank()) {
+                    actionedByOut = "unknown";
+                }
+
+                String refCandidate = workOrderId;
+
+                java.util.List<com.hcteol.jwt.backend.entities.WorkOrderData> wodListOut = workOrderDataRepository.findByWorkOrderId(workOrderId);
+                for (com.hcteol.jwt.backend.entities.WorkOrderData wod : wodListOut) {
+                    java.util.List<com.hcteol.jwt.backend.entities.WorkOrderSubData> subListOut = workOrderSubDataRepository.findByWorkOrderDataId(wod.getWorkOrderDataId());
+                    for (com.hcteol.jwt.backend.entities.WorkOrderSubData sub : subListOut) {
+                        Long productId = sub.getProductId();
+                        String stockCode = sub.getStockId();
+                        Long qtyLong = sub.getSubQuantity();
+                        int qty = qtyLong != null ? qtyLong.intValue() : 0;
+
+                        com.hcteol.jwt.backend.entities.Stock stock = stockRepository.findByProductIdAndStockCode(productId, stockCode);
+                        if (stock == null) {
+                            throw new IllegalStateException("Stock not found for product " + productId + " and code " + stockCode + " during stock-return for workOrder " + workOrderId);
+                        }
+
+                        com.hcteol.jwt.backend.entities.StockMovement mv = new com.hcteol.jwt.backend.entities.StockMovement();
+                        mv.setStockId(stock.getStockId());
+                        mv.setMovementType("W");
+                        mv.setQuantity(qty);
+                        mv.setLocation(toLocation);
+                        mv.setReference(refCandidate);
+                        mv.setActionBy(actionedByOut);
+                        mv.setWorkOrderId(workOrderId);
+                        mv.setRecordDate(LocalDateTime.now().toString());
+                        stockMovementRepository.save(mv);
+                        logger.info("Created worker-return movement {} for stock {} qty {}", mv.getMovementId(), stock.getStockId(), qty);
+                    }
+                }
+                break;
+            }
+
+            case "transfer-return-in": {
+                String toLocation = inProgress.getToLocation();
+                if (toLocation == null || toLocation.isBlank()) {
+                    throw new IllegalStateException("Destination location (toLocation) not set on step record for transfer-return-in action");
+                }
+
+                String actionedByOut = wo.getIssuedBy();
+                if (actionedByOut == null || actionedByOut.isBlank()) {
+                    actionedByOut = "unknown";
+                }
+
+                String refCandidate = workOrderId;
+                String doCandidate = null;
+
+                String fromLocationRaw = inProgress.getFromLocation();
+                if (fromLocationRaw != null && !fromLocationRaw.isBlank() && fromLocationRaw.contains("|")) {
+                    String[] parts = fromLocationRaw.split("\\|", 2);
+                    doCandidate = parts[0];
+                }
+
+                if (doCandidate != null && !doCandidate.isBlank()) {
+                    doCandidate = doCandidate.trim();
+                }
+
+                Long deliveryReturnId = null;
+                if (doCandidate != null) {
+                    deliveryReturnId = parseReturnIdFromDescription(wo.getWorkDescription(), "DO");
+                    if (deliveryReturnId == null) {
+                        throw new IllegalStateException("DeliveryReturn id not found in work order description for transfer-return-in action on workOrder " + workOrderId);
+                    }
+                }
+
+                java.util.List<com.hcteol.jwt.backend.entities.WorkOrderData> wodListIn = workOrderDataRepository.findByWorkOrderId(workOrderId);
+                for (com.hcteol.jwt.backend.entities.WorkOrderData wod : wodListIn) {
+                    java.util.List<com.hcteol.jwt.backend.entities.WorkOrderSubData> subListIn = workOrderSubDataRepository.findByWorkOrderDataId(wod.getWorkOrderDataId());
+                    for (com.hcteol.jwt.backend.entities.WorkOrderSubData sub : subListIn) {
+                        Long productId = sub.getProductId();
+                        String stockCode = sub.getStockId();
+                        Long qtyLong = sub.getSubQuantity();
+                        int qty = qtyLong != null ? qtyLong.intValue() : 0;
+
+                        com.hcteol.jwt.backend.entities.Stock stock = stockRepository.findByProductIdAndStockCode(productId, stockCode);
+                        if (stock == null) {
+                            stock = new com.hcteol.jwt.backend.entities.Stock();
+                            stock.setProductId(productId);
+                            stock.setStockCode(stockCode);
+                            stock.setCreateDate(LocalDateTime.now().toString());
+                            stock = stockRepository.save(stock);
+                            logger.info("Created stock {} for product {} during transfer-return-in", stock.getStockId(), productId);
+                        }
+
+                        com.hcteol.jwt.backend.entities.StockMovement mv = new com.hcteol.jwt.backend.entities.StockMovement();
+                        mv.setStockId(stock.getStockId());
+                        mv.setMovementType("T");
+                        mv.setQuantity(qty);
+                        mv.setLocation(toLocation);
+                        mv.setReference(deliveryReturnId != null ? deliveryReturnId.toString() : refCandidate);
+                        mv.setActionBy(actionedByOut);
+                        mv.setWorkOrderId(workOrderId);
+                        mv.setRecordDate(LocalDateTime.now().toString());
+                        stockMovementRepository.save(mv);
+                        logger.info("Created customer-return movement {} for stock {} qty {}", mv.getMovementId(), stock.getStockId(), qty);
+                    }
+                }
+
+                if (doCandidate != null && !doCandidate.isBlank()) {
+                    com.hcteol.jwt.backend.entities.DeliveryReturn deliveryReturn = deliveryReturnRepository.findById(deliveryReturnId).orElse(null);
+                    if (deliveryReturn == null) {
+                        throw new IllegalStateException("DeliveryReturn " + deliveryReturnId + " not found for transfer-return-in action on workOrder " + workOrderId);
+                    }
+                    if (deliveryReturn.getDoId() == null || !doCandidate.equalsIgnoreCase(deliveryReturn.getDoId().trim())) {
+                        throw new IllegalStateException("DeliveryReturn " + deliveryReturnId + " is linked to DO " + deliveryReturn.getDoId() + " but work order references DO " + doCandidate);
+                    }
+
+                    int thisReturnQty = 0;
+                    java.util.List<com.hcteol.jwt.backend.entities.DeliveryReturnItem> thisReturnItems = deliveryReturnItemRepository.findByReturnId(deliveryReturnId);
+                    for (com.hcteol.jwt.backend.entities.DeliveryReturnItem item : thisReturnItems) {
+                        Integer itemQty = item.getQuantity();
+                        thisReturnQty += itemQty != null ? itemQty : 0;
+                    }
+
+                    com.hcteol.jwt.backend.entities.DeliveryOrder deliveryOrder = deliveryOrderRepository.findById(doCandidate).orElse(null);
+                    if (deliveryOrder == null) {
+                        throw new IllegalStateException("DeliveryOrder " + doCandidate + " not found for transfer-return-in action on workOrder " + workOrderId);
+                    }
+
+                    int doTotalQty = 0;
+                    java.util.List<com.hcteol.jwt.backend.entities.DeliveryOrderItem> doItems = deliveryOrderItemRepository.findByOrderId(doCandidate);
+                    for (com.hcteol.jwt.backend.entities.DeliveryOrderItem item : doItems) {
+                        Integer itemQty = item.getQuantity();
+                        doTotalQty += itemQty != null ? itemQty : 0;
+                    }
+
+                    int alreadyCreditedQty = 0;
+                    java.util.List<com.hcteol.jwt.backend.entities.DeliveryReturn> priorReturns = deliveryReturnRepository.findByDoId(doCandidate);
+                    for (com.hcteol.jwt.backend.entities.DeliveryReturn prior : priorReturns) {
+                        if (java.util.Objects.equals(deliveryReturnId, prior.getReturnId())) {
+                            continue;
+                        }
+                        if (!"CREDITED".equalsIgnoreCase(prior.getReturnStatus())) {
+                            continue;
+                        }
+                        java.util.List<com.hcteol.jwt.backend.entities.DeliveryReturnItem> priorItems = deliveryReturnItemRepository.findByReturnId(prior.getReturnId());
+                        for (com.hcteol.jwt.backend.entities.DeliveryReturnItem item : priorItems) {
+                            Integer itemQty = item.getQuantity();
+                            alreadyCreditedQty += itemQty != null ? itemQty : 0;
+                        }
+                    }
+
+                    if (alreadyCreditedQty + thisReturnQty > doTotalQty) {
+                        throw new IllegalStateException("Return quantity " + thisReturnQty + " would exceed delivered quantity " + doTotalQty + " for DO " + doCandidate);
+                    }
+
+                    deliveryReturn.setReturnStatus("CREDITED");
+                    deliveryReturn.setTotalQuantity(thisReturnQty);
+                    deliveryReturnRepository.save(deliveryReturn);
+                    logger.info("Marked DeliveryReturn {} as CREDITED for DO {}", deliveryReturnId, doCandidate);
+
+                    int cumulativeReturned = alreadyCreditedQty + thisReturnQty;
+                    if (doTotalQty > 0 && cumulativeReturned < doTotalQty) {
+                        deliveryOrder.setOrderStatus("PARTIALLY_RETURNED");
+                    } else {
+                        deliveryOrder.setOrderStatus("RETURNED");
+                    }
+                    deliveryOrderRepository.save(deliveryOrder);
+                    logger.info("Marked DeliveryOrder {} as {} after customer return", doCandidate, deliveryOrder.getOrderStatus());
+                }
+                break;
+            }
+
+            case "stock-return-to-vendor": {
+                String fromLocation = inProgress.getFromLocation();
+                if (fromLocation == null || fromLocation.isBlank()) {
+                    throw new IllegalStateException("Source location (fromLocation) not set on step record for stock-return-to-vendor action");
+                }
+
+                String poId = inProgress.getToLocation();
+                if (poId == null || poId.isBlank()) {
+                    throw new IllegalStateException("Purchase order id (toLocation) not set on step record for stock-return-to-vendor action");
+                }
+
+                Long returnId = parseReturnIdFromDescription(wo.getWorkDescription(), "PO");
+                if (returnId == null) {
+                    throw new IllegalStateException("PurchaseReturn id not found in work order description for stock-return-to-vendor action on workOrder " + workOrderId);
+                }
+
+                com.hcteol.jwt.backend.entities.PurchaseReturn purchaseReturn = purchaseReturnRepository.findById(returnId).orElse(null);
+                if (purchaseReturn == null) {
+                    throw new IllegalStateException("PurchaseReturn " + returnId + " not found for stock-return-to-vendor action on workOrder " + workOrderId);
+                }
+
+                String actionedByOut = wo.getIssuedBy();
+                if (actionedByOut == null || actionedByOut.isBlank()) {
+                    actionedByOut = "unknown";
+                }
+
+                String refCandidate = purchaseReturn.getReturnId().toString();
+
+                int totalQuantity = 0;
+                java.math.BigDecimal creditAmount = java.math.BigDecimal.ZERO;
+
+                java.util.List<com.hcteol.jwt.backend.entities.WorkOrderData> wodListReturn = workOrderDataRepository.findByWorkOrderId(workOrderId);
+                for (com.hcteol.jwt.backend.entities.WorkOrderData wod : wodListReturn) {
+                    java.util.List<com.hcteol.jwt.backend.entities.WorkOrderSubData> subListReturn = workOrderSubDataRepository.findByWorkOrderDataId(wod.getWorkOrderDataId());
+                    for (com.hcteol.jwt.backend.entities.WorkOrderSubData sub : subListReturn) {
+                        Long productId = sub.getProductId();
+                        String stockCode = sub.getStockId();
+                        Long qtyLong = sub.getSubQuantity();
+                        int qty = qtyLong != null ? qtyLong.intValue() : 0;
+
+                        com.hcteol.jwt.backend.entities.Stock stock = stockRepository.findByProductIdAndStockCode(productId, stockCode);
+                        if (stock == null) {
+                            throw new IllegalStateException("Stock not found for product " + productId + " and code " + stockCode + " during purchase return for workOrder " + workOrderId);
+                        }
+
+                        com.hcteol.jwt.backend.entities.StockMovement mv = new com.hcteol.jwt.backend.entities.StockMovement();
+                        mv.setStockId(stock.getStockId());
+                        mv.setMovementType("P");
+                        mv.setQuantity(qty);
+                        mv.setLocation(fromLocation);
+                        mv.setReference(refCandidate);
+                        mv.setActionBy(actionedByOut);
+                        mv.setWorkOrderId(workOrderId);
+                        mv.setRecordDate(LocalDateTime.now().toString());
+                        stockMovementRepository.save(mv);
+                        logger.info("Created purchase-return movement {} for stock {} qty {}", mv.getMovementId(), stock.getStockId(), qty);
+
+                        totalQuantity += qty;
+                    }
+                }
+
+                java.util.List<com.hcteol.jwt.backend.entities.PurchaseReturnItem> items = purchaseReturnItemRepository.findByReturnId(returnId);
+                for (com.hcteol.jwt.backend.entities.PurchaseReturnItem item : items) {
+                    creditAmount = creditAmount.add(
+                            item.getLineTotal() != null ? item.getLineTotal() : java.math.BigDecimal.ZERO
+                    );
+                }
+
+                purchaseReturn.setReturnStatus("CREDITED");
+                purchaseReturn.setTotalQuantity(totalQuantity);
+                purchaseReturn.setCreditAmount(creditAmount);
+                purchaseReturnRepository.save(purchaseReturn);
+                break;
+            }
+
+            case "asset-return": {
+                String toLocation = inProgress.getToLocation();
+                if (toLocation == null || toLocation.isBlank()) {
+                    throw new IllegalStateException("Destination location (toLocation) not set on step record for asset-return action");
+                }
+
+                String fromLocation = inProgress.getFromLocation();
+                if (fromLocation == null || fromLocation.isBlank()) {
+                    throw new IllegalStateException("Source worker/location (fromLocation) not set on step record for asset-return action");
+                }
+
+                String actionedByOut = wo.getIssuedBy();
+                if (actionedByOut == null || actionedByOut.isBlank()) {
+                    actionedByOut = "unknown";
+                }
+
+                String refCandidate = workOrderId;
+
+                java.util.List<com.hcteol.jwt.backend.entities.WorkOrderData> wodListOut = workOrderDataRepository.findByWorkOrderId(workOrderId);
+                for (com.hcteol.jwt.backend.entities.WorkOrderData wod : wodListOut) {
+                    java.util.List<com.hcteol.jwt.backend.entities.WorkOrderSubData> subListOut = workOrderSubDataRepository.findByWorkOrderDataId(wod.getWorkOrderDataId());
+                    for (com.hcteol.jwt.backend.entities.WorkOrderSubData sub : subListOut) {
+                        Long productId = sub.getProductId();
+                        String stockCode = sub.getStockId();
+                        Long qtyLong = sub.getSubQuantity();
+                        int qty = qtyLong != null ? qtyLong.intValue() : 0;
+
+                        com.hcteol.jwt.backend.entities.Product product = productRepository.findById(productId).orElse(null);
+                        if (product != null && !"A".equalsIgnoreCase(product.getProductCategory())) {
+                            throw new IllegalStateException("Asset return is only allowed for product category A for workOrder " + workOrderId);
+                        }
+
+                        com.hcteol.jwt.backend.entities.Stock stock = stockRepository.findByProductIdAndStockCode(productId, stockCode);
+                        if (stock == null) {
+                            stock = new com.hcteol.jwt.backend.entities.Stock();
+                            stock.setProductId(productId);
+                            stock.setStockCode(stockCode);
+                            stock.setCreateDate(LocalDateTime.now().toString());
+                            stock = stockRepository.save(stock);
+                        }
+
+                        // 1. Transfer out from the worker location.
+                        com.hcteol.jwt.backend.entities.StockMovement sourceMv = new com.hcteol.jwt.backend.entities.StockMovement();
+                        sourceMv.setStockId(stock.getStockId());
+                        sourceMv.setMovementType("G");
+                        sourceMv.setQuantity(qty);
+                        sourceMv.setLocation(fromLocation);
+                        sourceMv.setReference(refCandidate);
+                        sourceMv.setActionBy(actionedByOut);
+                        sourceMv.setWorkOrderId(workOrderId);
+                        sourceMv.setRecordDate(LocalDateTime.now().toString());
+                        stockMovementRepository.save(sourceMv);
+                        logger.info("Created asset-return source movement {} for stock {} qty {}", sourceMv.getMovementId(), stock.getStockId(), qty);
+
+                        // 2. Transfer in to the destination location.
+                        com.hcteol.jwt.backend.entities.StockMovement destMv = new com.hcteol.jwt.backend.entities.StockMovement();
+                        destMv.setStockId(stock.getStockId());
+                        destMv.setMovementType("C");
+                        destMv.setQuantity(qty);
+                        destMv.setLocation(toLocation);
+                        destMv.setReference(refCandidate);
+                        destMv.setActionBy(actionedByOut);
+                        destMv.setWorkOrderId(workOrderId);
+                        destMv.setRecordDate(LocalDateTime.now().toString());
+                        stockMovementRepository.save(destMv);
+                        logger.info("Created asset-return destination movement {} for stock {} qty {}", destMv.getMovementId(), stock.getStockId(), qty);
+                    }
+                }
+                break;
+            }
+
+            case "stock-disposal": {
+                String fromLocation = inProgress.getFromLocation();
+                if (fromLocation == null || fromLocation.isBlank()) {
+                    throw new IllegalStateException("Source location (fromLocation) not set on step record for stock-disposal action");
+                }
+
+                Long disposalId = null;
+                String woDescription = wo.getWorkDescription();
+                if (woDescription != null) {
+                    String[] parts = woDescription.split(":", 2);
+                    if (parts.length >= 2 && "DISPOSAL".equalsIgnoreCase(parts[0])) {
+                        try {
+                            disposalId = Long.valueOf(parts[1]);
+                        } catch (NumberFormatException ignored) {
+                        }
+                    }
+                }
+
+                if (disposalId == null) {
+                    throw new IllegalStateException("StockDisposal id not found in work order description for stock-disposal action on workOrder " + workOrderId);
+                }
+
+                com.hcteol.jwt.backend.entities.StockDisposal stockDisposal = stockDisposalRepository.findById(disposalId).orElse(null);
+                if (stockDisposal == null) {
+                    throw new IllegalStateException("StockDisposal " + disposalId + " not found for stock-disposal action on workOrder " + workOrderId);
+                }
+
+                String actionedByOut = wo.getIssuedBy();
+                if (actionedByOut == null || actionedByOut.isBlank()) {
+                    actionedByOut = "unknown";
+                }
+
+                String refCandidate = stockDisposal.getDisposalId().toString();
+                int totalQuantity = 0;
+
+                java.util.List<com.hcteol.jwt.backend.entities.WorkOrderData> wodListOut = workOrderDataRepository.findByWorkOrderId(workOrderId);
+                for (com.hcteol.jwt.backend.entities.WorkOrderData wod : wodListOut) {
+                    java.util.List<com.hcteol.jwt.backend.entities.WorkOrderSubData> subListOut = workOrderSubDataRepository.findByWorkOrderDataId(wod.getWorkOrderDataId());
+                    for (com.hcteol.jwt.backend.entities.WorkOrderSubData sub : subListOut) {
+                        Long productId = sub.getProductId();
+                        String stockCode = sub.getStockId();
+                        Long qtyLong = sub.getSubQuantity();
+                        int qty = qtyLong != null ? qtyLong.intValue() : 0;
+
+                        com.hcteol.jwt.backend.entities.Product product = productRepository.findById(productId).orElse(null);
+                        if (product != null && !"C".equalsIgnoreCase(product.getProductCategory())) {
+                            throw new IllegalStateException("Stock disposal is only allowed for product category C for workOrder " + workOrderId);
+                        }
+
+                        com.hcteol.jwt.backend.entities.Stock stock = stockRepository.findByProductIdAndStockCode(productId, stockCode);
+                        if (stock == null) {
+                            throw new IllegalStateException("Stock not found for product " + productId + " and code " + stockCode + " during stock-disposal for workOrder " + workOrderId);
+                        }
+
+                        com.hcteol.jwt.backend.entities.StockMovement mv = new com.hcteol.jwt.backend.entities.StockMovement();
+                        mv.setStockId(stock.getStockId());
+                        mv.setMovementType("D");
+                        mv.setQuantity(qty);
+                        mv.setLocation(fromLocation);
+                        mv.setReference(refCandidate);
+                        mv.setActionBy(actionedByOut);
+                        mv.setWorkOrderId(workOrderId);
+                        mv.setRecordDate(LocalDateTime.now().toString());
+                        stockMovementRepository.save(mv);
+                        logger.info("Created stock-disposal movement {} for stock {} qty {}", mv.getMovementId(), stock.getStockId(), qty);
+
+                        totalQuantity += qty;
+                    }
+                }
+
+                stockDisposal.setDisposalStatus("DISPOSED");
+                stockDisposal.setTotalQuantity(totalQuantity);
+                stockDisposalRepository.save(stockDisposal);
                 break;
             }
 

@@ -52,5 +52,50 @@
     "numberOfSteps": 1,
     "needDetails": 1,
     "active": 1
+  },
+  {
+    "workOrderType": "Return",
+    "workOrderDescription": "Return stock from worker 工人退料",
+    "contentType": "stock",
+    "roleName": "",
+    "numberOfSteps": 1,
+    "needDetails": 1,
+    "active": 1
+  },
+  {
+    "workOrderType": "ReturnIn",
+    "workOrderDescription": "Receive returned stock from customer/site 客户退货入库",
+    "contentType": "stock",
+    "roleName": "",
+    "numberOfSteps": 1,
+    "needDetails": 0,
+    "active": 1
+  },
+  {
+    "workOrderType": "PurchaseReturn",
+    "workOrderDescription": "Return stock to vendor 退货给供应商",
+    "contentType": "stock",
+    "roleName": "",
+    "numberOfSteps": 1,
+    "needDetails": 0,
+    "active": 1
+  },
+  {
+    "workOrderType": "AssetReturn",
+    "workOrderDescription": "Return asset to location 资产归还",
+    "contentType": "asset",
+    "roleName": "",
+    "numberOfSteps": 1,
+    "needDetails": 1,
+    "active": 1
+  },
+  {
+    "workOrderType": "StockDisposal",
+    "workOrderDescription": "Dispose stock from location 库存报废",
+    "contentType": "stock",
+    "roleName": "",
+    "numberOfSteps": 1,
+    "needDetails": 0,
+    "active": 1
   }
 ]

@@ -70,5 +70,29 @@
     "holdModifier": 0,
     "movementDescription": "Transferred In",
     "stockModifier": 1
+  },
+  {
+    "movement": "W",
+    "holdModifier": 0,
+    "movementDescription": "Worker Return",
+    "stockModifier": 1
+  },
+  {
+    "movement": "T",
+    "holdModifier": 0,
+    "movementDescription": "Customer Return",
+    "stockModifier": 1
+  },
+  {
+    "movement": "P",
+    "holdModifier": 0,
+    "movementDescription": "Purchase Return",
+    "stockModifier": -1
+  },
+  {
+    "movement": "A",
+    "holdModifier": 0,
+    "movementDescription": "Asset Return",
+    "stockModifier": 1
   }
 ]

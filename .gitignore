@@ -42,3 +42,5 @@ out/
 
 # Ignore project reference files (user may keep notes locally)
 src/reference/
+
+*.md
