@@ -288,9 +288,37 @@ public class RequisitionOrderService {
             throw new IllegalArgumentException("No selected requisition records (selected=1) found in request.");
         }
 
+        Map<Long, RequisitionOrder> submittedById = new HashMap<>();
+        for (RequisitionOrder record : submittedRequisitions) {
+            if (record != null && record.getRequisitionOrderId() != null) {
+                submittedById.put(record.getRequisitionOrderId(), record);
+            }
+        }
+
         List<RequisitionOrder> selectedRecords = requisitionOrderRepository.findAllById(selectedIds).stream()
                 .filter(record -> record.getPurchaseOrderId() == null || record.getPurchaseOrderId().isBlank())
+                .peek(record -> {
+                    RequisitionOrder submitted = submittedById.get(record.getRequisitionOrderId());
+                    if (submitted != null) {
+                        if (submitted.getVendorPurchased() != null) {
+                            record.setVendorPurchased(submitted.getVendorPurchased());
+                        }
+                        if (submitted.getProductPurchased() != null) {
+                            record.setProductPurchased(submitted.getProductPurchased());
+                        }
+                        if (submitted.getQuantityPurchased() != null) {
+                            record.setQuantityPurchased(submitted.getQuantityPurchased());
+                        }
+                        if (submitted.getUnitPrice() != null) {
+                            record.setUnitPrice(submitted.getUnitPrice());
+                        }
+                        if (submitted.getPriceSuggested() != null) {
+                            record.setPriceSuggested(submitted.getPriceSuggested());
+                        }
+                    }
+                })
                 .toList();
+        requisitionOrderRepository.saveAll(selectedRecords);
 
         if (selectedRecords.isEmpty()) {
             throw new IllegalArgumentException("No selected requisition records are eligible for PO creation.");
