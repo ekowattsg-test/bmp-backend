@@ -1,13 +1,13 @@
 package com.hcteol.jwt.backend.services;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.Objects;
 
 import com.hcteol.jwt.backend.dtos.DeliveryOrderDto;
 import com.hcteol.jwt.backend.entities.DeliveryOrder;
@@ -24,6 +24,9 @@ public class DeliveryOrderService {
 
     @Autowired
     private DeliveryOrderItemService deliveryOrderItemService;
+
+    @Autowired
+    private AutoHoldMovementService autoHoldMovementService;
 
     @Transactional
     public DeliveryOrderDto createDeliveryOrder(DeliveryOrderDto dto) {
@@ -113,6 +116,7 @@ public class DeliveryOrderService {
     @Transactional
     public void deleteDeliveryOrder(String orderId) {
         deliveryOrderItemService.deleteDeliveryOrderItemsByOrderId(orderId);
+        autoHoldMovementService.deleteDeliveryOrderHolds(orderId);
         deliveryOrderRepository.deleteById(orderId);
     }
 

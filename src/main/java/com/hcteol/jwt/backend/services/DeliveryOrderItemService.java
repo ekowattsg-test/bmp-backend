@@ -17,6 +17,9 @@ public class DeliveryOrderItemService {
     @Autowired
     private DeliveryOrderItemRepository deliveryOrderItemRepository;
 
+    @Autowired
+    private AutoHoldMovementService autoHoldMovementService;
+
     @Transactional
     public DeliveryOrderItemDto createDeliveryOrderItem(DeliveryOrderItemDto itemDto) {
         DeliveryOrderItem item = DeliveryOrderItem.builder()
@@ -32,6 +35,7 @@ public class DeliveryOrderItemService {
                 .build();
 
         DeliveryOrderItem savedItem = deliveryOrderItemRepository.save(item);
+        autoHoldMovementService.createOrUpdateDeliveryOrderItemHold(savedItem);
         return convertToDto(savedItem);
     }
 
@@ -66,20 +70,26 @@ public class DeliveryOrderItemService {
         existingItem.setLineTotal(itemDto.getLineTotal());
 
         DeliveryOrderItem updatedItem = deliveryOrderItemRepository.save(existingItem);
+        autoHoldMovementService.createOrUpdateDeliveryOrderItemHold(updatedItem);
         return convertToDto(updatedItem);
     }
 
     @Transactional
     public void deleteDeliveryOrderItem(String itemId) {
-        if (!deliveryOrderItemRepository.existsById(itemId)) {
+        DeliveryOrderItem item = deliveryOrderItemRepository.findById(itemId).orElse(null);
+        if (item == null) {
             throw new RuntimeException("Delivery Order Item not found with id: " + itemId);
         }
+        String orderId = item.getOrderId();
         deliveryOrderItemRepository.deleteById(itemId);
+        autoHoldMovementService.resyncDeliveryOrderHolds(orderId,
+                () -> deliveryOrderItemRepository.findByOrderId(orderId));
     }
 
     @Transactional
     public void deleteDeliveryOrderItemsByOrderId(String orderId) {
         deliveryOrderItemRepository.deleteByOrderId(orderId);
+        autoHoldMovementService.deleteDeliveryOrderHolds(orderId);
     }
 
     private DeliveryOrderItemDto convertToDto(DeliveryOrderItem item) {

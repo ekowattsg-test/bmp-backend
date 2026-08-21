@@ -13,4 +13,6 @@ public interface StockViewRepositoryCustom {
     List<StockView> findByStockCode(String stockCode);
 
     List<StockView> findByWorkOrderId(String workOrderId);
+
+    Long getAvailableQuantityByProductIdAndLocation(Long productId, String location);
 }

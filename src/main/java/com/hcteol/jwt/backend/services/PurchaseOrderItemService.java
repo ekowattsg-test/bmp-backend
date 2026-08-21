@@ -17,6 +17,9 @@ public class PurchaseOrderItemService {
     @Autowired
     private PurchaseOrderItemRepository purchaseOrderItemRepository;
 
+    @Autowired
+    private AutoHoldMovementService autoHoldMovementService;
+
     /**
      * Create a new purchase order item
      */
@@ -35,6 +38,7 @@ public class PurchaseOrderItemService {
                 .build();
 
         PurchaseOrderItem savedItem = purchaseOrderItemRepository.save(item);
+        autoHoldMovementService.createOrUpdatePurchaseOrderItemHold(savedItem);
         return convertToDto(savedItem);
     }
 
@@ -85,6 +89,7 @@ public class PurchaseOrderItemService {
         existingItem.setLineTotal(itemDto.getLineTotal());
 
         PurchaseOrderItem updatedItem = purchaseOrderItemRepository.save(existingItem);
+        autoHoldMovementService.createOrUpdatePurchaseOrderItemHold(updatedItem);
         return convertToDto(updatedItem);
     }
 
@@ -93,10 +98,14 @@ public class PurchaseOrderItemService {
      */
     @Transactional
     public void deletePurchaseOrderItem(String itemId) {
-        if (!purchaseOrderItemRepository.existsById(itemId)) {
+        PurchaseOrderItem item = purchaseOrderItemRepository.findById(itemId).orElse(null);
+        if (item == null) {
             throw new RuntimeException("Purchase Order Item not found with id: " + itemId);
         }
+        String orderId = item.getOrderId();
         purchaseOrderItemRepository.deleteById(itemId);
+        autoHoldMovementService.resyncPurchaseOrderHolds(orderId,
+                () -> purchaseOrderItemRepository.findByOrderId(orderId));
     }
 
     /**
@@ -105,6 +114,7 @@ public class PurchaseOrderItemService {
     @Transactional
     public void deletePurchaseOrderItemsByOrderId(String orderId) {
         purchaseOrderItemRepository.deleteByOrderId(orderId);
+        autoHoldMovementService.deletePurchaseOrderHolds(orderId);
     }
 
     /**

@@ -420,6 +420,40 @@ Before calculation, dependency chain is validated to prevent infinite parent-tas
 - POST /api/requisitionorders/generate — generate requisition orders for cycle
 - POST /api/requisitionorders/reconcile — reconcile requisition orders for cycle
 
+## TaskDeliveryRequirement entity payload (request/response)
+
+- `taskDeliveryRequirementId` (Long)
+- `projectCode` (String)
+- `projectTaskId` (Long) — task that requires the inventory
+- `activityId` (Long) — task/stream activity id
+- `activityName` (String)
+- `inventoryType` (String) — Asset, Stock, Bundle, StreamAsset, StreamBundle
+- `inventoryId` (Long) — source inventory id
+- `productId` (Long)
+- `productCode` (String)
+- `productName` (String)
+- `productUom` (String)
+- `requiredQuantity` (Long) — quantity planned for whole task consumption
+- `availableQuantity` (Long) — current stock at central warehouse
+- `deliveryQuantity` (Long) — quantity user wants to dispatch
+- `selected` (Integer) — `0` not selected, `1` selected
+- `status` (String) — `EXTRACTED`, `SELECTED`, `GENERATED`
+- `weekStartDate` (String) — Monday of target week (yyyy-MM-dd)
+- `extractionDate` (String)
+- `deliveryOrderId` (String) — populated after DO generation
+- `deliveryDate` (String) — DO delivery date
+
+## TaskDeliveryRequirement endpoints
+
+- GET /api/taskdeliveryrequirements — list/filter task delivery requirements (`weekStartDate`, `projectCode`, `productId`, `status`, `deliveryOrderId`)
+- GET /api/taskdeliveryrequirements/week/{weekStartDate} — list requirements for a week (yyyy-MM-dd)
+- GET /api/taskdeliveryrequirements/{id} — get requirement by id
+- POST /api/taskdeliveryrequirements — create requirement
+- POST /api/taskdeliveryrequirements/extract?weekStartDate=YYYY-MM-DD — extract task inventory requirements for the given week (defaults to next Monday if omitted)
+- POST /api/taskdeliveryrequirements/generate-do — create DO(s) from submitted requirement rows where `selected=1`; groups by `projectCode + deliveryDate`, aggregates duplicate products into single line items, resolves `customerId` from project, computes item price from average PO cost + `deliveryPriceMargin` param, and updates requirements with `deliveryOrderId` and `status=GENERATED`
+- PUT /api/taskdeliveryrequirements/{id} — update requirement (`deliveryQuantity`, `selected`, `deliveryDate`, `status`)
+- DELETE /api/taskdeliveryrequirements/{id} — delete requirement
+
 ## Notable other endpoints (summary)
 
 - /api/customers — customer CRUD/read endpoints

@@ -2,12 +2,12 @@ package com.hcteol.jwt.backend.services;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.UUID;
 
 import com.hcteol.jwt.backend.dtos.PurchaseOrderDto;
 import com.hcteol.jwt.backend.dtos.PurchaseOrderItemDto;
@@ -194,6 +194,9 @@ public class PurchaseOrderService {
     @Autowired
     private com.hcteol.jwt.backend.services.DocumentSeqService documentSeqService;
 
+    @Autowired
+    private AutoHoldMovementService autoHoldMovementService;
+
     /**
      * Create a new purchase order with its items
      */
@@ -359,6 +362,7 @@ public class PurchaseOrderService {
 
         // Delete all items first
         purchaseOrderItemRepository.deleteByOrderId(orderId);
+        autoHoldMovementService.deletePurchaseOrderHolds(orderId);
 
         // Delete the order
         purchaseOrderRepository.deleteById(orderId);
@@ -374,6 +378,10 @@ public class PurchaseOrderService {
 
         order.setOrderStatus(newStatus);
         PurchaseOrder updatedOrder = purchaseOrderRepository.save(order);
+
+        if (newStatus != null && "RECEIVED".equalsIgnoreCase(newStatus.trim())) {
+            autoHoldMovementService.deletePurchaseOrderHolds(orderId);
+        }
 
         List<PurchaseOrderItem> items = purchaseOrderItemRepository.findByOrderId(orderId);
         return convertToDto(updatedOrder, items);

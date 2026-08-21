@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS task_delivery_requirement (
+    task_delivery_requirement_id BIGSERIAL PRIMARY KEY,
+    project_code VARCHAR(255),
+    project_task_id BIGINT,
+    activity_id BIGINT,
+    activity_name VARCHAR(500),
+    inventory_type VARCHAR(50),
+    inventory_id BIGINT,
+    product_id BIGINT,
+    product_code VARCHAR(255),
+    product_name VARCHAR(500),
+    product_uom VARCHAR(50),
+    required_quantity BIGINT,
+    available_quantity BIGINT,
+    delivery_quantity BIGINT,
+    selected INTEGER,
+    status VARCHAR(50),
+    week_start_date VARCHAR(20),
+    extraction_date VARCHAR(20),
+    delivery_order_id VARCHAR(50),
+    delivery_date VARCHAR(20)
+);

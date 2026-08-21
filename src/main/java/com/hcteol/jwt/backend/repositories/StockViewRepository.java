@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.hcteol.jwt.backend.entities.StockView;
 
-public interface StockViewRepository extends JpaRepository<StockView, Long> {
+public interface StockViewRepository extends JpaRepository<StockView, Long>, StockViewRepositoryCustom {
 
     List<StockView> findByProductId(Long productId);
 

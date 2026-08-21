@@ -52,6 +52,9 @@ public class WorkStepsService {
     private com.hcteol.jwt.backend.repositories.DeliveryOrderItemRepository deliveryOrderItemRepository;
 
     @Autowired
+    private AutoHoldMovementService autoHoldMovementService;
+
+    @Autowired
     private com.hcteol.jwt.backend.repositories.PurchaseReturnRepository purchaseReturnRepository;
 
     @Autowired
@@ -455,7 +458,8 @@ public class WorkStepsService {
                             var d = doOpt.get();
                             d.setOrderStatus("IN_TRANSIT");
                             deliveryOrderRepository.save(d);
-                            logger.info("Marked DeliveryOrder {} as IN_TRANSIT", doCandidateTransferOut);
+                            autoHoldMovementService.deleteDeliveryOrderHolds(doCandidateTransferOut);
+                            logger.info("Marked DeliveryOrder {} as IN_TRANSIT and deleted DO hold movements", doCandidateTransferOut);
                         }
                     } else {
                         logger.warn("Candidate delivery order id '{}' not found, skipping DO status update", doCandidateTransferOut);

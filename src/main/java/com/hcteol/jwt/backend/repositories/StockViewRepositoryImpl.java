@@ -21,6 +21,7 @@ public class StockViewRepositoryImpl implements StockViewRepositoryCustom {
     private static final String FIND_BY_PRODUCT_ID_SQL_PATH = "sql/stock-view-find-by-product-id.sql";
     private static final String FIND_BY_STOCK_CODE_SQL_PATH = "sql/stock-view-find-by-stock-code.sql";
     private static final String FIND_BY_WORKORDER_ID_SQL_PATH = "sql/stock-view-find-by-workorder-id.sql";
+    private static final String AVAILABLE_QTY_SQL_PATH = "sql/stock-view-available-quantity.sql";
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -29,6 +30,7 @@ public class StockViewRepositoryImpl implements StockViewRepositoryCustom {
     private String findByProductIdSql;
     private String findByStockCodeSql;
     private String findByWorkOrderIdSql;
+    private String availableQtySql;
 
     @PostConstruct
     public void init() {
@@ -36,6 +38,7 @@ public class StockViewRepositoryImpl implements StockViewRepositoryCustom {
         this.findByProductIdSql = loadSql(FIND_BY_PRODUCT_ID_SQL_PATH);
         this.findByStockCodeSql = loadSql(FIND_BY_STOCK_CODE_SQL_PATH);
         this.findByWorkOrderIdSql = loadSql(FIND_BY_WORKORDER_ID_SQL_PATH);
+        this.availableQtySql = loadSql(AVAILABLE_QTY_SQL_PATH);
     }
 
     @Override
@@ -68,6 +71,18 @@ public class StockViewRepositoryImpl implements StockViewRepositoryCustom {
         return entityManager.createNativeQuery(findByWorkOrderIdSql, StockView.class)
                 .setParameter("workOrderId", workOrderId)
                 .getResultList();
+    }
+
+    @Override
+    public Long getAvailableQuantityByProductIdAndLocation(Long productId, String location) {
+        Object result = entityManager.createNativeQuery(availableQtySql)
+                .setParameter("productId", productId)
+                .setParameter("location", location != null ? location : "central")
+                .getSingleResult();
+        if (result == null) {
+            return 0L;
+        }
+        return ((Number) result).longValue();
     }
 
     private String loadSql(String path) {
