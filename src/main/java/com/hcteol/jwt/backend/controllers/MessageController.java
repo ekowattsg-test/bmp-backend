@@ -2,6 +2,7 @@ package com.hcteol.jwt.backend.controllers;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -73,8 +74,9 @@ public class MessageController {
     public ResponseEntity<Map<String, Long>> getUnreadCount(
             Authentication authentication,
             @RequestParam String mobileNumber) {
-        String staffId = resolveStaffId(authentication, mobileNumber);
-        long count = messageService.getUnreadCount(staffId);
+        long count = resolveStaffIdOptional(authentication, mobileNumber)
+                .map(messageService::getUnreadCount)
+                .orElse(0L);
         return ResponseEntity.ok(Map.of("count", count));
     }
 
@@ -98,6 +100,11 @@ public class MessageController {
     }
 
     private String resolveStaffId(Authentication authentication, String mobileNumber) {
+        return resolveStaffIdOptional(authentication, mobileNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Staff not found for user"));
+    }
+
+    private Optional<String> resolveStaffIdOptional(Authentication authentication, String mobileNumber) {
         if (authentication == null || !(authentication.getPrincipal() instanceof UserDto user)) {
             throw new IllegalArgumentException("Authentication required");
         }
@@ -108,8 +115,7 @@ public class MessageController {
         if (currentUser == null || !mobileNumber.trim().equalsIgnoreCase(currentUser.getMobileNumber())) {
             throw new IllegalArgumentException("Mobile number does not match authenticated user");
         }
-        return staffService.getStaffByMobileNumber(mobileNumber)
-                .map(com.hcteol.jwt.backend.entities.Staff::getStaffId)
-                .orElseThrow(() -> new IllegalArgumentException("Staff not found for user"));
+        var staffOpt = staffService.getStaffByMobileNumber(mobileNumber);
+        return staffOpt.isPresent() ? Optional.of(staffOpt.get().getStaffId()) : Optional.empty();
     }
 }
