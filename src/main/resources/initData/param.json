@@ -68,5 +68,15 @@
     "param_key": "systemStockCode",
     "value_string": "SYSSTOCK",
     "changeable": 1
+  },
+  {
+    "param_key": "chatProjectGroupDefaultScope",
+    "value_string": "LEADERSHIP",
+    "changeable": 1
+  },
+  {
+    "param_key": "chatAllowProjectGroupScopeChoice",
+    "value_string": 1,
+    "changeable": 1
   }
 ]

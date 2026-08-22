@@ -2,6 +2,8 @@ package com.hcteol.jwt.backend.config;
 
 import java.io.IOException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -23,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
+    private static final Logger LOG = LoggerFactory.getLogger(JwtAuthFilter.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private final UserAuthenticationProvider userAuthenticationProvider;
 
@@ -32,6 +35,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             HttpServletResponse httpServletResponse,
             FilterChain filterChain) throws ServletException, IOException {
         String header = httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION);
+
+        LOG.debug("JwtAuthFilter path={} headerPresent={} authHeader={}",
+                httpServletRequest.getRequestURI(), header != null, header);
 
         if (header != null) {
             String[] authElements = header.split(" ");
@@ -48,12 +54,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     return;
                 } catch (JWTVerificationException e) {
                     SecurityContextHolder.clearContext();
-                    writeUnauthorized(httpServletResponse, "Invalid token");
+                    writeUnauthorized(httpServletResponse, "Invalid token: " + e.getMessage());
                     return;
                 } catch (RuntimeException e) {
                     SecurityContextHolder.clearContext();
-                    throw e;
+                    writeUnauthorized(httpServletResponse, "Token validation error: " + e.getMessage());
+                    return;
                 }
+            } else {
+                writeUnauthorized(httpServletResponse, "Malformed authorization header");
+                return;
             }
         }
 
