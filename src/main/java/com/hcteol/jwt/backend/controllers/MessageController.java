@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,6 +36,9 @@ public class MessageController {
 
     @Autowired
     private UserService userService;
+
+    @Value("${MOBILE_LOGIN_USERNAME:}")
+    private String mobileLoginUsername;
 
     @GetMapping("/conversations")
     public ResponseEntity<List<MessageDto>> getConversations(
@@ -111,9 +115,13 @@ public class MessageController {
         if (mobileNumber == null || mobileNumber.isBlank()) {
             throw new IllegalArgumentException("Mobile number is required");
         }
-        UserDto currentUser = userService.findByLogin(user.getLogin());
-        if (currentUser == null || !mobileNumber.trim().equalsIgnoreCase(currentUser.getMobileNumber())) {
-            throw new IllegalArgumentException("Mobile number does not match authenticated user");
+        boolean isMobileLoginUser = mobileLoginUsername != null && !mobileLoginUsername.isBlank()
+                && mobileLoginUsername.equalsIgnoreCase(user.getLogin());
+        if (!isMobileLoginUser) {
+            UserDto currentUser = userService.findByLogin(user.getLogin());
+            if (currentUser == null || !mobileNumber.trim().equalsIgnoreCase(currentUser.getMobileNumber())) {
+                throw new IllegalArgumentException("Mobile number does not match authenticated user");
+            }
         }
         var staffOpt = staffService.getStaffByMobileNumber(mobileNumber);
         return staffOpt.isPresent() ? Optional.of(staffOpt.get().getStaffId()) : Optional.empty();
