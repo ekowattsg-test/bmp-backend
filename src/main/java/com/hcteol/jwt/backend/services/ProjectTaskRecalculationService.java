@@ -66,8 +66,37 @@ public class ProjectTaskRecalculationService {
         processLinkedMilestone(changedTask, branchVisited, processedMilestones, affectedStreamIds);
         recalculateDependentBranch(changedTaskId, branchVisited, processedMilestones, affectedStreamIds);
 
+        Set<Long> processedStreamIds = new HashSet<>();
         for (Long streamId : affectedStreamIds) {
-            projectStreamDateRecalculationService.recalculateStreamDatesFromTasks(streamId);
+            recalculateStreamAndAncestors(streamId, processedStreamIds);
+        }
+    }
+
+    private void recalculateStreamAndAncestors(Long streamId, Set<Long> processedStreamIds) {
+        if (streamId == null || !processedStreamIds.add(streamId)) {
+            return;
+        }
+
+        projectStreamDateRecalculationService.recalculateStreamDatesFromTasks(streamId);
+
+        Optional<ProjectStream> streamOptional = projectStreamRepository.findById(streamId);
+        if (streamOptional.isEmpty()) {
+            return;
+        }
+
+        ProjectStream stream = streamOptional.get();
+        Long parentStreamNumber = stream.getParentStreamNumber();
+        if (parentStreamNumber == null) {
+            return;
+        }
+
+        List<ProjectStream> parents = projectStreamRepository
+                .findByProjectCodeAndStreamNumber(stream.getProjectCode(), parentStreamNumber);
+        for (ProjectStream parent : parents) {
+            Long parentId = parent.getProjectStreamId();
+            if (parentId != null) {
+                recalculateStreamAndAncestors(parentId, processedStreamIds);
+            }
         }
     }
 

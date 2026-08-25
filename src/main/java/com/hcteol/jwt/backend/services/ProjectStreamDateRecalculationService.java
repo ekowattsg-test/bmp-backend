@@ -53,6 +53,23 @@ public class ProjectStreamDateRecalculationService {
         String latestEndStr = null;
         Date latestEnd = null;
 
+        List<ProjectStream> childStreams = projectStreamRepository
+                .findByProjectCodeAndParentStreamNumber(stream.getProjectCode(), stream.getStreamNumber());
+        for (ProjectStream child : childStreams) {
+            Date childStart = parseProjectDate(child.getStreamStartDate());
+            Date childEnd = parseProjectDate(child.getStreamEndDate());
+
+            if (childStart != null && (earliestStart == null || childStart.before(earliestStart))) {
+                earliestStart = childStart;
+                earliestStartStr = child.getStreamStartDate();
+            }
+
+            if (childEnd != null && (latestEnd == null || childEnd.after(latestEnd))) {
+                latestEnd = childEnd;
+                latestEndStr = child.getStreamEndDate();
+            }
+        }
+
         for (ProjectTask task : tasks) {
             String taskStartStr = resolveEffectiveTaskStartDate(task);
             String taskEndStr = resolveEffectiveTaskEndDate(task);

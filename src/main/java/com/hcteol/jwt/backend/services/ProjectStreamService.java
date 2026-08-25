@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -58,7 +59,54 @@ public class ProjectStreamService {
         return projectStreamRepository.findByProjectCode(projectCode);
     }
 
+    public Long resolveNextStreamNumber(String projectCode) {
+        if (projectCode == null || projectCode.isBlank()) {
+            throw new IllegalArgumentException("projectCode is required");
+        }
+        return projectStreamRepository.findMaxStreamNumberByProjectCode(projectCode)
+                .map(max -> max + 1)
+                .orElse(1L);
+    }
+
+    private void validateUniqueStreamNumber(String projectCode, Long streamNumber, Long currentStreamId) {
+        if (projectCode == null || projectCode.isBlank() || streamNumber == null) {
+            return;
+        }
+        for (ProjectStream existing : projectStreamRepository.findByProjectCodeAndStreamNumber(projectCode, streamNumber)) {
+            if (!Objects.equals(currentStreamId, existing.getProjectStreamId())) {
+                throw new IllegalArgumentException("Stream number must be unique within a project");
+            }
+        }
+    }
+
+    private void validateParentStreamNumber(ProjectStream projectStream) {
+        Long parentStreamNumber = projectStream.getParentStreamNumber();
+        if (parentStreamNumber == null) {
+            return;
+        }
+        String projectCode = projectStream.getProjectCode();
+        if (projectCode == null || projectCode.isBlank()) {
+            throw new IllegalArgumentException("projectCode is required when parentStreamNumber is set");
+        }
+        Long streamNumber = projectStream.getStreamNumber();
+        if (parentStreamNumber.equals(streamNumber)) {
+            throw new IllegalArgumentException("A stream cannot be its own parent");
+        }
+        List<ProjectStream> parents = projectStreamRepository
+                .findByProjectCodeAndStreamNumber(projectCode, parentStreamNumber);
+        if (parents.isEmpty()) {
+            throw new IllegalArgumentException("Parent stream not found for project " + projectCode
+                    + " with stream number " + parentStreamNumber);
+        }
+    }
+
     public ProjectStream createProjectStream(ProjectStream projectStream) {
+        if (projectStream.getStreamNumber() == null) {
+            projectStream.setStreamNumber(resolveNextStreamNumber(projectStream.getProjectCode()));
+        } else {
+            validateUniqueStreamNumber(projectStream.getProjectCode(), projectStream.getStreamNumber(), null);
+        }
+        validateParentStreamNumber(projectStream);
         ProjectStream savedStream = projectStreamRepository.save(projectStream);
         if (savedStream.getProjectCode() != null && "S".equalsIgnoreCase(savedStream.getStreamType())) {
             createStreamTasks(savedStream);
@@ -71,6 +119,9 @@ public class ProjectStreamService {
             projectStream.setProjectCode(projectStreamDetails.getProjectCode());
             projectStream.setStreamType(projectStreamDetails.getStreamType());
             projectStream.setStreamNumber(projectStreamDetails.getStreamNumber());
+            validateUniqueStreamNumber(projectStream.getProjectCode(), projectStream.getStreamNumber(), id);
+            projectStream.setParentStreamNumber(projectStreamDetails.getParentStreamNumber());
+            validateParentStreamNumber(projectStream);
             projectStream.setStreamName(projectStreamDetails.getStreamName());
             projectStream.setStreamDescription(projectStreamDetails.getStreamDescription());
             projectStream.setStreamStartDate(projectStreamDetails.getStreamStartDate());

@@ -143,6 +143,7 @@ public class ProjectService {
             stream.setProjectCode(project.getProjectCode());
             stream.setStreamType(template.getStreamType());
             stream.setStreamNumber(template.getStreamNumber());
+            stream.setParentStreamNumber(template.getParentStreamNumber());
             stream.setStreamName(template.getStreamName());
             stream.setStreamDescription(template.getStreamDescription());
             stream.setStreamStartDate(template.getStreamStartDate() != null ? template.getStreamStartDate() : project.getStartDate());

@@ -75,6 +75,9 @@ public class ProjectStreamReplicationService {
     @Autowired
     private ProjectStreamDateRecalculationService projectStreamDateRecalculationService;
 
+    @Autowired
+    private ProjectStreamService projectStreamService;
+
     @Transactional
     public ProjectStream replicateStream(Long sourceStreamId, ProjectStreamReplicationRequest request) {
         if (request == null || request.getStreamName() == null || request.getStreamName().isBlank()) {
@@ -94,7 +97,8 @@ public class ProjectStreamReplicationService {
         ProjectStream newStream = new ProjectStream();
         newStream.setProjectCode(sourceStream.getProjectCode());
         newStream.setStreamType(sourceStream.getStreamType());
-        newStream.setStreamNumber(sourceStream.getStreamNumber());
+        newStream.setStreamNumber(projectStreamService.resolveNextStreamNumber(sourceStream.getProjectCode()));
+        newStream.setParentStreamNumber(sourceStream.getStreamNumber());
         newStream.setStreamName(replicatedStreamName);
         newStream.setStreamDescription(sourceStream.getStreamDescription());
         newStream.setStreamStartDate(anchorStartDate.toString());
