@@ -7,9 +7,11 @@ import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,16 +25,15 @@ import com.hcteol.jwt.backend.dtos.ProjectUnitWorkProgressDto;
 import com.hcteol.jwt.backend.entities.ProjectBlock;
 import com.hcteol.jwt.backend.entities.ProjectStack;
 import com.hcteol.jwt.backend.entities.ProjectStorey;
+import com.hcteol.jwt.backend.entities.ProjectStream;
 import com.hcteol.jwt.backend.entities.ProjectTask;
 import com.hcteol.jwt.backend.entities.ProjectUnit;
-import com.hcteol.jwt.backend.entities.ProjectUnitWork;
 import com.hcteol.jwt.backend.repositories.ProjectBlockRepository;
 import com.hcteol.jwt.backend.repositories.ProjectStackRepository;
 import com.hcteol.jwt.backend.repositories.ProjectStoreyRepository;
 import com.hcteol.jwt.backend.repositories.ProjectStreamRepository;
 import com.hcteol.jwt.backend.repositories.ProjectTaskRepository;
 import com.hcteol.jwt.backend.repositories.ProjectUnitRepository;
-import com.hcteol.jwt.backend.repositories.ProjectUnitWorkRepository;
 
 @Service
 public class ProjectBuildingProgressService {
@@ -48,9 +49,6 @@ public class ProjectBuildingProgressService {
 
     @Autowired
     private ProjectUnitRepository projectUnitRepository;
-
-    @Autowired
-    private ProjectUnitWorkRepository projectUnitWorkRepository;
 
     @Autowired
     private ProjectStreamRepository projectStreamRepository;
@@ -139,13 +137,15 @@ public class ProjectBuildingProgressService {
         if (projectStreamId != null) {
             projectStreamRepository.findById(Objects.requireNonNull(projectStreamId, "projectStreamId cannot be null")).ifPresent(stream -> {
                 unitDto.setStreamName(stream.getStreamName());
-                tasks.addAll(projectTaskRepository.findByProjectStreamId(stream.getProjectStreamId()));
+                Set<Long> streamIds = collectDescendantStreamIds(stream, new HashSet<>());
+                for (Long streamId : streamIds) {
+                    tasks.addAll(projectTaskRepository.findByProjectStreamId(streamId));
+                }
             });
         }
 
-        List<ProjectUnitWork> works = projectUnitWorkRepository.findByProjectUnitIdOrderByProjectUnitWorkIdAsc(unit.getProjectUnitId());
-        for (ProjectUnitWork work : works) {
-            workDtos.add(buildWorkDto(work));
+        for (ProjectTask task : tasks) {
+            workDtos.add(buildTaskWorkDto(task));
         }
         unitDto.setWorks(workDtos);
 
@@ -179,31 +179,29 @@ public class ProjectBuildingProgressService {
         return unitDto;
     }
 
-    private ProjectUnitWorkProgressDto buildWorkDto(ProjectUnitWork work) {
+    private Set<Long> collectDescendantStreamIds(ProjectStream stream, Set<Long> visited) {
+        if (stream == null || stream.getProjectStreamId() == null || !visited.add(stream.getProjectStreamId())) {
+            return visited;
+        }
+        List<ProjectStream> children = projectStreamRepository.findByProjectCodeAndParentStreamNumber(
+                stream.getProjectCode(), stream.getStreamNumber());
+        for (ProjectStream child : children) {
+            collectDescendantStreamIds(child, visited);
+        }
+        return visited;
+    }
+
+    private ProjectUnitWorkProgressDto buildTaskWorkDto(ProjectTask task) {
         ProjectUnitWorkProgressDto workDto = new ProjectUnitWorkProgressDto();
-        workDto.setProjectUnitWorkId(work.getProjectUnitWorkId());
-        workDto.setProjectTaskId(work.getProjectTaskId());
-        workDto.setWorkName(work.getWorkName());
-        workDto.setStatus(work.getStatus());
-
-        if (work.getProjectTaskId() == null) {
-            workDto.setProgress(0);
-            return workDto;
-        }
-
-        projectTaskRepository.findById(Objects.requireNonNull(work.getProjectTaskId(), "projectTaskId cannot be null")).ifPresent(task -> {
-            Integer taskProgress = task.getProgress();
-            workDto.setProgress(taskProgress == null ? 0 : taskProgress);
-            workDto.setPlannedStartDate(task.getTaskStartDate());
-            workDto.setPlannedEndDate(task.getTaskEndDate());
-            workDto.setActualStartDate(task.getActualStartDate());
-            workDto.setActualEndDate(task.getActualEndDate());
-        });
-
-        if (workDto.getProgress() == null) {
-            workDto.setProgress(0);
-        }
-
+        workDto.setProjectTaskId(task.getProjectTaskId());
+        workDto.setWorkName(task.getTaskName());
+        workDto.setStatus(task.getTaskStatus());
+        Integer taskProgress = task.getProgress();
+        workDto.setProgress(taskProgress == null ? 0 : taskProgress);
+        workDto.setPlannedStartDate(task.getTaskStartDate());
+        workDto.setPlannedEndDate(task.getTaskEndDate());
+        workDto.setActualStartDate(task.getActualStartDate());
+        workDto.setActualEndDate(task.getActualEndDate());
         return workDto;
     }
 
