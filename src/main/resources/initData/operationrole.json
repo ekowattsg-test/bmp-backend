@@ -14,5 +14,9 @@
   {
     "roleName": "SiteLeader",
     "roleDescription": "Work Site Leader, can manage task activities and stock operations"
+  },
+  {
+    "roleName": "SiteInspect",
+    "roleDescription": "Site Inspector, revieww and certify the progress of tasks"
   }
 ]

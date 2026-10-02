@@ -1,5 +1,6 @@
 package com.hcteol.jwt.backend.entities;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -20,4 +21,11 @@ public class ProjectTaskProgress {
     private Integer completed;
     private String reportedBy; // staff Id of person who reported the day's task progress
     private String marker; // M - Marked task for manpower planning, C - Confirmed task, U - progress updated
+    private String inspectionDate; // date when the progress was inspected
+    private String inspectedBy; // staff Id of person who inspected the progress
+    private Integer verifiedProgress; // progress percentage verified during inspection, 0-100
+    @Column(length = 2000)
+    private String inspectionPhotos; // inspection photo URLs as comma-separated values
+    @Column(columnDefinition = "TEXT")
+    private String inspectionRemark;
 }
