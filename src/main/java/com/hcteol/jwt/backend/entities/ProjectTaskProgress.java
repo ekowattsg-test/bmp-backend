@@ -23,6 +23,7 @@ public class ProjectTaskProgress {
     private String marker; // M - Marked task for manpower planning, C - Confirmed task, U - progress updated
     private String inspectionDate; // date when the progress was inspected
     private String inspectedBy; // staff Id of person who inspected the progress
+    private Integer reportedProgress; // progress percentage reported for inspection, 0-100
     private Integer verifiedProgress; // progress percentage verified during inspection, 0-100
     @Column(length = 2000)
     private String inspectionPhotos; // inspection photo URLs as comma-separated values
